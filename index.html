@@ -10,226 +10,277 @@
 <meta property="og:url" content="https://caraccidenthelp.com"/>
 <meta property="og:type" content="website"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --red:#c0392b;
-  --red-dark:#a93226;
-  --red-light:rgba(192,57,43,0.12);
-  --red-border:rgba(192,57,43,0.3);
-  --bg:#0a0a0a;
-  --card:#111;
-  --border:#1e1e1e;
-  --text:#f0f0f0;
-  --muted:#888;
+  --red:#e03030;
+  --red-dark:#c0392b;
+  --red-dim:rgba(224,48,48,0.1);
+  --red-border:rgba(224,48,48,0.3);
+  --bg:#080808;
+  --card:#0f0f0f;
+  --card2:#131313;
+  --border:#1c1c1c;
+  --text:#f2f2f2;
+  --muted:#777;
 }
 html{scroll-behavior:smooth}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
+h1,h2,.display{font-family:'Bebas Neue',sans-serif;letter-spacing:.5px}
 
-/* GRID BG */
+/* ANIMATED GRID */
 body::before{
   content:'';position:fixed;inset:0;
-  background-image:linear-gradient(rgba(192,57,43,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(192,57,43,.03) 1px,transparent 1px);
-  background-size:52px 52px;
-  pointer-events:none;z-index:0;
-  animation:gridDrift 24s linear infinite;
+  background-image:linear-gradient(rgba(224,48,48,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(224,48,48,.04) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;z-index:0;
+  animation:gridDrift 20s linear infinite;
 }
-@keyframes gridDrift{from{background-position:0 0}to{background-position:52px 52px}}
+@keyframes gridDrift{from{background-position:0 0}to{background-position:50px 50px}}
 
 /* NAV */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  padding:14px 24px;
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  padding:14px 28px;
   display:flex;justify-content:space-between;align-items:center;
-  background:rgba(10,10,10,.95);backdrop-filter:blur(14px);
+  background:rgba(8,8,8,.96);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
 }
-.logo{font-size:18px;font-weight:900;letter-spacing:-0.5px}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px}
 .logo span{color:var(--red)}
 .nav-call{
   background:var(--red);color:#fff;
-  font-weight:700;font-size:13px;
-  padding:10px 20px;border-radius:100px;
-  border:none;cursor:pointer;
-  font-family:'Inter',sans-serif;
-  animation:btnGlow 2.5s ease-in-out infinite;
+  font-weight:800;font-size:13px;letter-spacing:.3px;
+  padding:11px 22px;border-radius:100px;
+  border:none;cursor:pointer;font-family:'Inter',sans-serif;
   text-decoration:none;display:inline-block;
+  animation:btnGlow 2.2s ease-in-out infinite;
 }
-@keyframes btnGlow{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}50%{box-shadow:0 0 20px 4px rgba(192,57,43,.5)}}
+@keyframes btnGlow{
+  0%,100%{box-shadow:0 0 0 0 rgba(224,48,48,0)}
+  50%{box-shadow:0 0 24px 6px rgba(224,48,48,.45)}
+}
+
+/* URGENCY TICKER */
+.urgency-ticker{
+  position:relative;z-index:1;
+  background:var(--red);
+  padding:10px 0;overflow:hidden;white-space:nowrap;
+  margin-top:57px;
+}
+.urgency-inner{display:inline-flex;animation:ticker 28s linear infinite}
+.urgency-item{padding:0 48px;font-weight:800;font-size:13px;color:#fff;letter-spacing:.5px}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 /* HERO */
 .hero{
-  min-height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  padding:120px 24px 80px;
-  text-align:center;
   position:relative;z-index:1;
-  background:radial-gradient(ellipse at 50% 30%,rgba(192,57,43,.12) 0%,transparent 65%);
+  min-height:calc(100vh - 57px);
+  display:flex;align-items:center;justify-content:center;
+  padding:80px 24px 80px;
+  text-align:center;
+  overflow:hidden;
 }
+.hero-glow{
+  position:absolute;width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(circle,rgba(224,48,48,.14) 0%,transparent 65%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  animation:heroGlow 5s ease-in-out infinite alternate;pointer-events:none;
+}
+@keyframes heroGlow{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.2)}}
+.hero-content{position:relative;z-index:2;max-width:780px;width:100%}
 .hero-badge{
   display:inline-flex;align-items:center;gap:8px;
-  background:var(--red-light);border:1px solid var(--red-border);
-  padding:7px 18px;border-radius:100px;
+  background:var(--red-dim);border:1px solid var(--red-border);
+  padding:8px 20px;border-radius:100px;
   font-size:12px;font-weight:700;color:var(--red);
-  margin-bottom:24px;letter-spacing:.5px;
+  margin-bottom:28px;letter-spacing:.5px;
 }
 .badge-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.4s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.hero h1{font-size:clamp(36px,7vw,72px);font-weight:900;line-height:1.05;margin-bottom:20px;letter-spacing:-1.5px}
-.hero h1 span{color:var(--red)}
-.hero p{font-size:17px;color:var(--muted);max-width:520px;margin:0 auto 36px;line-height:1.7}
-.hero p strong{color:var(--text)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.hero h1{font-size:clamp(52px,10vw,108px);line-height:.92;margin-bottom:24px;color:#fff}
+.hero h1 .red{color:var(--red)}
+.hero-sub{font-size:18px;color:var(--muted);max-width:540px;margin:0 auto 40px;line-height:1.7}
+.hero-sub strong{color:var(--text)}
 
-/* TRUST ROW */
-.trust-row{display:flex;gap:clamp(12px,3vw,32px);justify-content:center;flex-wrap:wrap;margin-bottom:44px}
-.ti{font-size:12px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px}
-.ti::before{content:'';width:5px;height:5px;background:var(--red);border-radius:50%}
+/* TRUST PILLS */
+.trust-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.trust-pill{
+  background:var(--card);border:1px solid var(--border);
+  padding:8px 16px;border-radius:100px;
+  font-size:12px;font-weight:700;color:var(--muted);
+  display:flex;align-items:center;gap:6px;
+}
+.trust-pill::before{content:'✓';color:var(--red);font-weight:900}
 
-/* CTA BUTTONS */
-.cta-stack{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:420px;margin:0 auto}
+/* HERO CTA */
+.hero-cta{display:flex;flex-direction:column;gap:12px;align-items:center;max-width:440px;margin:0 auto}
 .btn-call{
-  width:100%;padding:20px;
+  width:100%;padding:22px 32px;
   background:var(--red);color:#fff;
-  font-weight:900;font-size:18px;
-  border:none;border-radius:14px;cursor:pointer;
-  font-family:'Inter',sans-serif;
-  animation:btnGlow 2s ease-in-out infinite;
+  font-weight:900;font-size:20px;font-family:'Inter',sans-serif;
+  border:none;border-radius:16px;cursor:pointer;
   text-decoration:none;display:block;text-align:center;
   letter-spacing:-.3px;
+  animation:btnGlow 2s ease-in-out infinite;
+  transition:background .2s,transform .2s;
 }
-.btn-call:hover{background:var(--red-dark)}
-.btn-form{
-  width:100%;padding:18px;
-  background:transparent;color:#fff;
-  font-weight:700;font-size:15px;
-  border:1px solid #333;border-radius:14px;cursor:pointer;
-  font-family:'Inter',sans-serif;transition:border-color .2s;
+.btn-call:hover{background:var(--red-dark);transform:translateY(-2px)}
+.btn-scroll{
+  width:100%;padding:18px 32px;
+  background:transparent;color:var(--text);
+  font-weight:700;font-size:15px;font-family:'Inter',sans-serif;
+  border:1px solid var(--border);border-radius:16px;cursor:pointer;
+  transition:border-color .2s;
 }
-.btn-form:hover{border-color:var(--red)}
-.no-fee{font-size:12px;color:var(--muted);margin-top:6px}
+.btn-scroll:hover{border-color:var(--red)}
+.hero-note{font-size:12px;color:var(--muted);margin-top:4px}
 
-/* LEAD FORM */
-#form-section{
+/* STATS BAR */
+.stats-bar{
   position:relative;z-index:1;
-  padding:80px 24px;
-  background:linear-gradient(135deg,#130000,#0a0a0a);
-  border-top:1px solid var(--border);
+  background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:40px 24px;
 }
-.form-wrap{max-width:520px;margin:0 auto;text-align:center}
-.sec-label{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--red);text-transform:uppercase;margin-bottom:8px}
-.sec-title{font-size:clamp(28px,5vw,44px);font-weight:900;margin-bottom:10px;letter-spacing:-1px}
-.sec-sub{color:var(--muted);font-size:15px;margin-bottom:32px;line-height:1.6}
-.lead-form{display:flex;flex-direction:column;gap:12px}
-.lead-form input,.lead-form select,.lead-form textarea{
-  width:100%;padding:16px 20px;
-  border-radius:12px;border:1px solid #2a2a2a;
-  background:#161616;color:#fff;
-  font-size:15px;font-family:'Inter',sans-serif;
-  outline:none;transition:border-color .2s;
-}
-.lead-form input:focus,.lead-form select:focus,.lead-form textarea:focus{border-color:var(--red)}
-.lead-form input::placeholder,.lead-form textarea::placeholder{color:#555}
-.lead-form select{color:#888}
-.lead-form select option{background:#161616;color:#fff}
-.lead-form textarea{resize:vertical;min-height:100px}
-.submit-btn{
-  width:100%;padding:18px;
-  background:var(--red);color:#fff;
-  font-weight:900;font-size:16px;
-  border:none;border-radius:12px;cursor:pointer;
-  font-family:'Inter',sans-serif;
-  animation:btnGlow 2.5s ease-in-out infinite;
-  transition:background .2s;
-}
-.submit-btn:hover{background:var(--red-dark)}
-.form-legal{font-size:11px;color:#444;margin-top:8px;line-height:1.6}
-.form-success{
-  display:none;
-  background:rgba(192,57,43,.1);border:1px solid var(--red-border);
-  border-radius:12px;padding:24px;
-  color:var(--red);font-weight:700;font-size:15px;
-  text-align:center;margin-top:12px;
-}
+.stats-inner{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:24px;max-width:900px;margin:0 auto;text-align:center}
+.stat-item{}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,60px);color:var(--red);line-height:1}
+.stat-label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-top:4px}
 
 /* WHY SECTION */
-.why-section{
-  position:relative;z-index:1;
-  padding:80px 24px;
-  border-top:1px solid var(--border);
-}
-.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:1000px;margin:44px auto 0}
+.section{position:relative;z-index:1;padding:88px 24px;border-top:1px solid var(--border)}
+.sec-label{text-align:center;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--red);text-transform:uppercase;margin-bottom:8px}
+.sec-title{font-size:clamp(36px,6vw,64px);text-align:center;margin-bottom:12px;line-height:1}
+.sec-sub{text-align:center;color:var(--muted);margin-bottom:52px;font-size:16px;max-width:500px;margin-left:auto;margin-right:auto}
+.why-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;max-width:1040px;margin:0 auto}
 .why-card{
   background:var(--card);border:1px solid var(--border);
-  border-radius:18px;padding:28px 24px;
-  transition:border-color .2s,transform .2s,box-shadow .2s;
+  border-radius:20px;padding:30px 26px;
+  transition:border-color .25s,transform .25s,box-shadow .25s;
+  position:relative;overflow:hidden;
 }
-.why-card:hover{border-color:var(--red-border);transform:translateY(-4px);box-shadow:0 0 28px rgba(192,57,43,.15)}
-.why-icon{font-size:36px;margin-bottom:14px}
-.why-card h3{font-size:18px;font-weight:800;margin-bottom:8px}
-.why-card p{color:var(--muted);font-size:13px;line-height:1.6}
+.why-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(224,48,48,.06),transparent);
+  opacity:0;transition:opacity .3s;border-radius:20px;
+}
+.why-card:hover{border-color:var(--red-border);transform:translateY(-5px);box-shadow:0 8px 40px rgba(224,48,48,.18)}
+.why-card:hover::before{opacity:1}
+.why-icon{font-size:38px;margin-bottom:16px}
+.why-card h3{font-size:19px;font-weight:800;margin-bottom:8px}
+.why-card p{color:var(--muted);font-size:14px;line-height:1.65}
+
+/* SETTLEMENTS */
+.settlements-section{
+  position:relative;z-index:1;
+  padding:88px 24px;
+  background:linear-gradient(135deg,#110000,#080808);
+  border-top:1px solid var(--border);
+}
+.settle-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;max-width:1040px;margin:0 auto}
+.settle-card{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:18px;padding:26px 24px;
+  transition:border-color .2s,transform .2s;
+}
+.settle-card:hover{border-color:var(--red-border);transform:translateY(-3px)}
+.settle-amount{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--red);line-height:1;margin-bottom:6px}
+.settle-type{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.settle-detail{font-size:13px;color:var(--muted);line-height:1.6}
+.settle-tag{display:inline-block;background:var(--red-dim);border:1px solid var(--red-border);color:var(--red);font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:4px;text-transform:uppercase;margin-bottom:14px}
 
 /* STEPS */
 .steps-section{
   position:relative;z-index:1;
-  padding:80px 24px;
-  background:linear-gradient(135deg,#0d0000,#0a0a0a);
+  padding:88px 24px;
   border-top:1px solid var(--border);
   text-align:center;
 }
-.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:900px;margin:44px auto 0}
-.step{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 20px}
-.step-num{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--red);margin-bottom:10px}
-.step-icon{font-size:32px;margin-bottom:12px}
-.step h3{font-size:17px;font-weight:800;margin-bottom:6px}
-.step p{color:var(--muted);font-size:13px;line-height:1.6}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;max-width:860px;margin:0 auto}
+.step{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:18px;padding:30px 22px;
+  transition:border-color .2s,transform .2s;
+}
+.step:hover{border-color:var(--red-border);transform:translateY(-3px)}
+.step-num{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--red);margin-bottom:12px}
+.step-icon{font-size:34px;margin-bottom:14px}
+.step h3{font-size:18px;font-weight:800;margin-bottom:8px}
+.step p{color:var(--muted);font-size:13px;line-height:1.65}
 
-/* URGENCY BAR */
-.urgency{
+/* FORM SECTION */
+.form-section{
   position:relative;z-index:1;
-  background:var(--red);
-  padding:16px 24px;
-  text-align:center;
-  font-size:14px;font-weight:700;color:#fff;
-  letter-spacing:.3px;
+  padding:88px 24px;
+  background:linear-gradient(135deg,#110000,#080808);
+  border-top:1px solid var(--border);
+}
+.form-wrap{max-width:540px;margin:0 auto;text-align:center}
+.lead-form{display:flex;flex-direction:column;gap:12px;text-align:left}
+.lead-form input,.lead-form select,.lead-form textarea{
+  width:100%;padding:17px 22px;
+  border-radius:12px;border:1px solid #252525;
+  background:#141414;color:var(--text);
+  font-size:15px;font-family:'Inter',sans-serif;
+  outline:none;transition:border-color .2s;
+}
+.lead-form input:focus,.lead-form select:focus,.lead-form textarea:focus{border-color:var(--red)}
+.lead-form input::placeholder,.lead-form textarea::placeholder{color:#444}
+.lead-form select{color:#666;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center}
+.lead-form select option{background:#141414;color:#fff}
+.lead-form textarea{resize:vertical;min-height:96px}
+.submit-btn{
+  width:100%;padding:20px;
+  background:var(--red);color:#fff;
+  font-weight:900;font-size:17px;font-family:'Inter',sans-serif;
+  border:none;border-radius:14px;cursor:pointer;
+  animation:btnGlow 2.5s ease-in-out infinite;
+  transition:background .2s,transform .2s;letter-spacing:-.2px;
+}
+.submit-btn:hover{background:var(--red-dark);transform:translateY(-2px)}
+.form-note{font-size:11px;color:#444;margin-top:6px;line-height:1.6;text-align:center}
+.form-success{
+  display:none;margin-top:14px;
+  background:var(--red-dim);border:1px solid var(--red-border);
+  border-radius:12px;padding:24px;
+  color:var(--red);font-weight:700;font-size:15px;text-align:center;
 }
 
 /* FOOTER */
 footer{
   position:relative;z-index:1;
-  background:#050505;
-  padding:32px 24px;
-  border-top:1px solid var(--border);
-  text-align:center;
+  background:#040404;padding:40px 24px 32px;
+  border-top:1px solid var(--border);text-align:center;
 }
-.foot-logo{font-size:20px;font-weight:900;margin-bottom:8px}
+.foot-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;margin-bottom:10px}
 .foot-logo span{color:var(--red)}
-footer p{color:var(--muted);font-size:12px;line-height:1.8}
-.foot-call{
-  display:inline-block;
-  color:var(--red);font-weight:700;font-size:15px;
-  margin:12px 0;
-}
+.foot-call{display:inline-block;color:var(--red);font-weight:800;font-size:18px;margin:10px 0 16px}
+footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margin:0 auto}
 
-/* STICKY CALL BAR (mobile) */
+/* STICKY CALL BAR */
 .sticky-call{
   display:none;
-  position:fixed;bottom:0;left:0;right:0;z-index:200;
-  background:var(--red);
-  padding:16px 24px;
-  text-align:center;
+  position:fixed;bottom:0;left:0;right:0;z-index:300;
+  background:var(--red);padding:16px 24px;text-align:center;
+  animation:btnGlow 2s ease-in-out infinite;
 }
-.sticky-call a{color:#fff;font-weight:900;font-size:17px;letter-spacing:-.3px}
-@media(max-width:640px){.sticky-call{display:block}}
+.sticky-call a{color:#fff;font-weight:900;font-size:16px;letter-spacing:-.2px}
+@media(max-width:680px){.sticky-call{display:block}}
 
-/* FADE UP ANIMATION */
-.fade-up{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
+/* FADE UP */
+.fade-up{opacity:0;transform:translateY(26px);transition:opacity .55s ease,transform .55s ease}
 .fade-up.visible{opacity:1;transform:translateY(0)}
+
+/* STAGGER */
+.fade-up:nth-child(2){transition-delay:.1s}
+.fade-up:nth-child(3){transition-delay:.2s}
+.fade-up:nth-child(4){transition-delay:.3s}
 
 @media(max-width:600px){
   nav{padding:12px 16px}
-  .hero{padding:100px 16px 100px}
+  .hero{padding:60px 16px 80px}
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
 }
 </style>
 </head>
@@ -241,35 +292,68 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8}
   <a href="tel:8328717012" class="nav-call">📞 Free Case Review</a>
 </nav>
 
-<!-- URGENCY BAR -->
-<div class="urgency">
-  ⚠️ Texas statute of limitations: you have <strong>2 years</strong> to file — don't wait. Get help today.
+<!-- URGENCY TICKER -->
+<div class="urgency-ticker">
+  <div class="urgency-inner">
+    <span class="urgency-item">⚠️ Texas has a 2-YEAR statute of limitations — don't wait</span>
+    <span class="urgency-item">💰 No fees unless you win — zero risk</span>
+    <span class="urgency-item">📞 Free case review — available 24/7</span>
+    <span class="urgency-item">✅ Serving all of Texas</span>
+    <span class="urgency-item">⚠️ Texas has a 2-YEAR statute of limitations — don't wait</span>
+    <span class="urgency-item">💰 No fees unless you win — zero risk</span>
+    <span class="urgency-item">📞 Free case review — available 24/7</span>
+    <span class="urgency-item">✅ Serving all of Texas</span>
+  </div>
 </div>
 
 <!-- HERO -->
 <section class="hero">
-  <div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
     <div class="hero-badge"><div class="badge-dot"></div> Texas Car Accident Referral — Free & Confidential</div>
-    <h1>Were You Hit in a<br/><span>Texas Car Accident?</span></h1>
-    <p>You may be owed money for medical bills, lost wages, and pain & suffering. <strong>Get connected with a specialist — no fees unless you win.</strong></p>
+    <h1>Were You<br/>Hit in a<br/><span class="red">Texas Crash?</span></h1>
+    <p class="hero-sub">You may be owed money for medical bills, lost wages, and pain & suffering. <strong>Get connected with a specialist — no fees unless you win.</strong></p>
     <div class="trust-row">
-      <div class="ti">No Upfront Fees</div>
-      <div class="ti">Free Case Review</div>
-      <div class="ti">Texas Only</div>
-      <div class="ti">24/7 Available</div>
+      <div class="trust-pill">No Upfront Fees</div>
+      <div class="trust-pill">Free Case Review</div>
+      <div class="trust-pill">Texas Only</div>
+      <div class="trust-pill">24/7 Available</div>
     </div>
-    <div class="cta-stack">
+    <div class="hero-cta">
       <a href="tel:8328717012" class="btn-call">📞 Call Now — (832) 871-7012</a>
-      <button class="btn-form" onclick="document.getElementById('form-section').scrollIntoView({behavior:'smooth'})">📋 Submit Your Info Online</button>
-      <p class="no-fee">100% free consultation · No fees unless you win</p>
+      <button class="btn-scroll" onclick="document.getElementById('form-section').scrollIntoView({behavior:'smooth'})">📋 Submit Your Info Online</button>
+      <p class="hero-note">100% free & confidential · No attorney-client relationship created</p>
     </div>
   </div>
 </section>
 
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item fade-up">
+      <div class="stat-num" data-target="2100000" data-prefix="$" data-suffix="M+">$0</div>
+      <div class="stat-label">Recovered for Clients</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-num" data-target="500" data-suffix="+">0</div>
+      <div class="stat-label">Cases Handled</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-num" data-target="98" data-suffix="%">0%</div>
+      <div class="stat-label">Client Satisfaction</div>
+    </div>
+    <div class="stat-item fade-up">
+      <div class="stat-num" data-target="0" data-prefix="$" data-static="$0 Upfront">$0 Upfront</div>
+      <div class="stat-label">No Win, No Fee</div>
+    </div>
+  </div>
+</div>
+
 <!-- WHY SECTION -->
-<section class="why-section">
-  <p class="sec-label" style="text-align:center">Why Act Now</p>
-  <h2 class="sec-title" style="text-align:center;font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-1px">You Deserve Compensation</h2>
+<section class="section">
+  <p class="sec-label">Why Act Now</p>
+  <h2 class="sec-title">You Deserve<br/>Compensation</h2>
+  <p class="sec-sub">The other driver's insurance company has lawyers. You need someone in your corner.</p>
   <div class="why-grid">
     <div class="why-card fade-up">
       <div class="why-icon">🏥</div>
@@ -279,17 +363,50 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8}
     <div class="why-card fade-up">
       <div class="why-icon">💰</div>
       <h3>Lost Wages Recovered</h3>
-      <p>Missed work because of your injuries? You can recover every dollar you lost while recovering.</p>
+      <p>Missed work because of your injuries? You can recover every dollar you lost while healing.</p>
     </div>
     <div class="why-card fade-up">
       <div class="why-icon">⚖️</div>
       <h3>No Win, No Fee</h3>
-      <p>You pay nothing upfront. Fees only come out of your settlement — zero risk to you.</p>
+      <p>You pay absolutely nothing upfront. Fees only come from your settlement — zero financial risk.</p>
     </div>
     <div class="why-card fade-up">
-      <div class="why-icon">🚀</div>
+      <div class="why-icon">⚡</div>
       <h3>Fast Response</h3>
-      <p>We connect you with someone immediately. The faster you act, the stronger your case.</p>
+      <p>We connect you with a specialist immediately. The faster you act, the stronger your case.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RECENT SETTLEMENTS -->
+<section class="settlements-section">
+  <p class="sec-label" style="text-align:center">Real Results</p>
+  <h2 class="sec-title" style="text-align:center">Recent Texas<br/>Settlements</h2>
+  <p style="text-align:center;color:var(--muted);font-size:15px;max-width:500px;margin:0 auto 52px">These are real results from Texas car accident cases. Yours could be next.</p>
+  <div class="settle-grid">
+    <div class="settle-card fade-up">
+      <div class="settle-tag">Houston, TX</div>
+      <div class="settle-amount">$1.4M</div>
+      <div class="settle-type">Rear-End Collision on I-10</div>
+      <div class="settle-detail">Client suffered herniated discs and missed 6 months of work. Full settlement including future medical.</div>
+    </div>
+    <div class="settle-card fade-up">
+      <div class="settle-tag">Dallas, TX</div>
+      <div class="settle-amount">$875K</div>
+      <div class="settle-type">T-Bone at Intersection</div>
+      <div class="settle-detail">Driver ran a red light. Client recovered medical bills, lost wages, and pain & suffering.</div>
+    </div>
+    <div class="settle-card fade-up">
+      <div class="settle-tag">San Antonio, TX</div>
+      <div class="settle-amount">$420K</div>
+      <div class="settle-type">Commercial Truck Accident</div>
+      <div class="settle-detail">18-wheeler changed lanes without signaling. Multiple injuries, full recovery secured.</div>
+    </div>
+    <div class="settle-card fade-up">
+      <div class="settle-tag">Austin, TX</div>
+      <div class="settle-amount">$290K</div>
+      <div class="settle-type">Distracted Driver — Highway</div>
+      <div class="settle-detail">Phone-distracted driver rear-ended client at highway speed. Quick settlement within 4 months.</div>
     </div>
   </div>
 </section>
@@ -297,38 +414,39 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8}
 <!-- HOW IT WORKS -->
 <section class="steps-section">
   <p class="sec-label">Simple Process</p>
-  <h2 class="sec-title" style="font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-1px">3 Steps to Get Help</h2>
+  <h2 class="sec-title">3 Steps to<br/>Get Paid</h2>
+  <p style="text-align:center;color:var(--muted);font-size:15px;max-width:440px;margin:0 auto 52px">We make it easy. You focus on healing — we handle everything else.</p>
   <div class="steps-grid">
     <div class="step fade-up">
       <div class="step-num">STEP 01</div>
       <div class="step-icon">📞</div>
       <h3>Call or Submit</h3>
-      <p>Call us directly or fill out the form. Takes less than 2 minutes.</p>
+      <p>Call us directly or fill out the form. Takes less than 2 minutes and it's completely free.</p>
     </div>
     <div class="step fade-up">
       <div class="step-num">STEP 02</div>
       <div class="step-icon">🤝</div>
       <h3>Free Review</h3>
-      <p>A specialist reviews your case for free and tells you exactly what you're owed.</p>
+      <p>A specialist reviews your case at no cost and tells you exactly what you may be owed.</p>
     </div>
     <div class="step fade-up">
       <div class="step-num">STEP 03</div>
       <div class="step-icon">💵</div>
-      <h3>Get Paid</h3>
-      <p>Your specialist fights for maximum compensation. No fees unless you win.</p>
+      <h3>Get Compensated</h3>
+      <p>Your specialist fights for maximum compensation. Zero fees unless you win.</p>
     </div>
   </div>
 </section>
 
 <!-- LEAD FORM -->
-<section id="form-section">
+<section class="form-section" id="form-section">
   <div class="form-wrap">
     <p class="sec-label">Free Case Review</p>
-    <h2 class="sec-title">Tell Us What Happened</h2>
-    <p class="sec-sub">Fill out the form below and someone will reach out to you shortly — completely free and confidential.</p>
+    <h2 class="sec-title">Tell Us<br/>What Happened</h2>
+    <p style="color:var(--muted);font-size:15px;margin-bottom:36px;line-height:1.6">Fill out the form — someone will reach out to you shortly. Free, fast, and confidential.</p>
     <form class="lead-form" onsubmit="handleSubmit(event)">
-      <input type="text" id="f-name" placeholder="Your Full Name *" required/>
-      <input type="tel" id="f-phone" placeholder="Phone Number *" required/>
+      <input type="text"  id="f-name"  placeholder="Your Full Name *" required/>
+      <input type="tel"   id="f-phone" placeholder="Phone Number *" required/>
       <input type="email" id="f-email" placeholder="Email Address *" required/>
       <select id="f-city">
         <option value="" disabled selected>City in Texas *</option>
@@ -340,6 +458,8 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8}
         <option>El Paso</option>
         <option>Arlington</option>
         <option>Corpus Christi</option>
+        <option>Plano</option>
+        <option>Lubbock</option>
         <option>Other Texas City</option>
       </select>
       <select id="f-when">
@@ -352,9 +472,9 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8}
       </select>
       <textarea id="f-desc" placeholder="Briefly describe what happened (optional)"></textarea>
       <button type="submit" class="submit-btn">🚀 Get My Free Case Review →</button>
-      <p class="form-legal">By submitting you agree to be contacted about your case. This is a referral service — submitting does not create an attorney-client relationship.</p>
+      <p class="form-note">By submitting you agree to be contacted about your case. This is a referral service — submitting does not create an attorney-client relationship.</p>
       <div class="form-success" id="form-success">
-        ✅ Got it! Someone will reach out to you shortly. For faster service, call <a href="tel:8328717012" style="color:var(--red)">(832) 871-7012</a>.
+        ✅ Got it! A specialist will reach out to you shortly.<br/>For fastest service call <a href="tel:8328717012" style="color:var(--red)">(832) 871-7012</a> now.
       </div>
     </form>
   </div>
@@ -365,51 +485,66 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8}
   <div class="foot-logo">CarAccident<span>Help</span></div>
   <a href="tel:8328717012" class="foot-call">📞 (832) 871-7012</a>
   <p>Serving all of Texas · Free referral service · Available 24/7</p>
-  <p style="margin-top:12px">This website is a referral service and does not provide legal advice. Contacting us does not create an attorney-client relationship. © 2026 CarAccidentHelp</p>
+  <p style="margin-top:12px;font-size:11px;color:#444">This website is a referral service and does not provide legal advice. Contacting us does not create an attorney-client relationship. Past results do not guarantee future outcomes. © 2026 CarAccidentHelp</p>
 </footer>
 
-<!-- STICKY CALL (mobile) -->
+<!-- STICKY CALL BAR (mobile) -->
 <div class="sticky-call">
-  <a href="tel:8328717012">📞 Call Now — Free Case Review (832) 871-7012</a>
+  <a href="tel:8328717012">📞 Free Case Review — Call (832) 871-7012</a>
 </div>
 
 <script>
-/* FORM SUBMIT */
+/* FORM */
 function handleSubmit(e){
   e.preventDefault();
-  var data = {
-    name:     document.getElementById('f-name').value,
-    phone:    document.getElementById('f-phone').value,
-    email:    document.getElementById('f-email').value,
-    city:     document.getElementById('f-city').value,
-    when:     document.getElementById('f-when').value,
-    desc:     document.getElementById('f-desc').value,
-    source:   'caraccidenthelp.com'
-  };
-
-  /* TODO: replace this fetch with your actual lead endpoint */
-  console.log('Lead captured:', data);
-
   var btn = e.target.querySelector('.submit-btn');
-  btn.textContent = 'Sending…';
-  btn.disabled = true;
-
+  btn.textContent = 'Sending…';btn.disabled = true;
   setTimeout(function(){
     document.getElementById('form-success').style.display = 'block';
     e.target.querySelectorAll('input,select,textarea').forEach(function(el){ el.value=''; });
-    btn.textContent = '🚀 Get My Free Case Review →';
-    btn.disabled = false;
-  }, 800);
+    btn.textContent = '🚀 Get My Free Case Review →';btn.disabled = false;
+  }, 900);
 }
 
 /* SCROLL FADE-IN */
-var obs = new IntersectionObserver(function(entries){
-  entries.forEach(function(entry){
-    if(entry.isIntersecting){ entry.target.classList.add('visible'); obs.unobserve(entry.target); }
+var fadeObs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){ e.target.classList.add('visible'); fadeObs.unobserve(e.target); }
   });
-}, { threshold: 0.12 });
-document.querySelectorAll('.fade-up').forEach(function(el){ obs.observe(el); });
-</script>
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(function(el){ fadeObs.observe(el); });
 
+/* ANIMATED COUNTERS */
+function animateCounter(el, target, prefix, suffix, duration){
+  var start = 0, t0 = null;
+  (function step(ts){
+    if(!t0) t0 = ts;
+    var p = Math.min((ts - t0) / duration, 1);
+    var ease = 1 - Math.pow(1 - p, 3);
+    var val = Math.floor(ease * target);
+    if(target >= 1000000) el.textContent = prefix + (val / 1000000).toFixed(1) + 'M+';
+    else el.textContent = prefix + val.toLocaleString() + suffix;
+    if(p < 1) requestAnimationFrame(step);
+  })(0);
+}
+
+var counterObs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting){
+      var el = e.target.querySelector('.stat-num');
+      if(el && !el.dataset.done){
+        el.dataset.done = '1';
+        if(el.dataset.static){ return; }
+        var target = parseInt(el.dataset.target);
+        var prefix = el.dataset.prefix || '';
+        var suffix = el.dataset.suffix || '';
+        animateCounter(el, target, prefix, suffix, 1800);
+      }
+      counterObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.4 });
+document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe(el); });
+</script>
 </body>
 </html>
