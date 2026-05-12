@@ -9,6 +9,27 @@
 <meta property="og:description" content="No fees unless you win. Get connected with a Texas car accident specialist today."/>
 <meta property="og:url" content="https://caraccidenthelp.com"/>
 <meta property="og:type" content="website"/>
+<!-- Meta Pixel — replace YOUR_META_PIXEL_ID in Vercel env or here -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','YOUR_META_PIXEL_ID');
+fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=YOUR_META_PIXEL_ID&ev=PageView&noscript=1"/></noscript>
+<!-- End Meta Pixel -->
+
+<!-- Reddit Pixel — replace YOUR_REDDIT_PIXEL_ID -->
+<script>
+!function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement('script');t.src='https://www.redditstatic.com/ads/v2.js';t.async=!0;var s=d.getElementsByTagName('script')[0];s.parentNode.insertBefore(t,s)}}(window,document);
+rdt('init','YOUR_REDDIT_PIXEL_ID');
+rdt('track','PageVisit');
+</script>
+<!-- End Reddit Pixel -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -317,6 +338,105 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 .google-logo-row span{font-size:11px;color:var(--muted)}
 .g-dot{width:6px;height:6px;border-radius:50%;background:#4285F4}
 
+/* HERO MINI FORM */
+.hero-mini-form{
+  display:flex;flex-direction:column;gap:10px;
+  max-width:440px;margin:0 auto;
+}
+.hero-mini-form .mini-row{display:flex;gap:10px;flex-wrap:wrap}
+.hero-mini-form input{
+  flex:1;min-width:140px;padding:16px 20px;
+  border-radius:12px;border:1px solid #2a2a2a;
+  background:#161616;color:#fff;
+  font-size:15px;font-family:'Inter',sans-serif;
+  outline:none;transition:border-color .2s;
+}
+.hero-mini-form input:focus{border-color:var(--red)}
+.hero-mini-form input::placeholder{color:#555}
+.hero-mini-form .mini-submit{
+  width:100%;padding:18px;
+  background:var(--red);color:#fff;
+  font-weight:900;font-size:17px;font-family:'Inter',sans-serif;
+  border:none;border-radius:14px;cursor:pointer;
+  animation:btnGlow 2s ease-in-out infinite;
+  transition:background .2s;
+}
+.hero-mini-form .mini-submit:hover{background:var(--red-dark)}
+.hero-mini-form .mini-or{
+  display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;
+}
+.hero-mini-form .mini-or::before,.hero-mini-form .mini-or::after{
+  content:'';flex:1;height:1px;background:var(--border);
+}
+.hero-mini-form .mini-call{
+  display:block;width:100%;padding:16px;
+  background:transparent;color:var(--text);
+  font-weight:700;font-size:15px;font-family:'Inter',sans-serif;
+  border:1px solid var(--border);border-radius:14px;cursor:pointer;
+  text-align:center;transition:border-color .2s;text-decoration:none;
+}
+.hero-mini-form .mini-call:hover{border-color:var(--red)}
+.mini-success{
+  display:none;background:var(--red-dim);border:1px solid var(--red-border);
+  border-radius:12px;padding:16px;color:var(--red);
+  font-weight:700;font-size:14px;text-align:center;
+}
+
+/* WHATSAPP BUTTON */
+.wa-btn{
+  position:fixed;bottom:80px;left:20px;z-index:300;
+  width:54px;height:54px;border-radius:50%;
+  background:#25D366;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;box-shadow:0 8px 24px rgba(37,211,102,.45);
+  transition:transform .2s;text-decoration:none;
+}
+.wa-btn:hover{transform:scale(1.1)}
+@media(max-width:680px){.wa-btn{bottom:90px}}
+
+/* EXIT-INTENT POPUP */
+#exit-popup{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.82);
+  align-items:center;justify-content:center;padding:20px;
+}
+#exit-popup.show{display:flex}
+.exit-box{
+  background:#111;border:1px solid var(--red-border);
+  border-radius:22px;padding:40px 32px;
+  max-width:460px;width:100%;text-align:center;position:relative;
+  animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+.exit-close{
+  position:absolute;top:14px;right:18px;
+  background:none;border:none;color:#555;font-size:22px;cursor:pointer;
+}
+.exit-box h2{font-size:clamp(28px,6vw,42px);margin-bottom:10px;color:#fff}
+.exit-box h2 span{color:var(--red)}
+.exit-box p{color:var(--muted);font-size:15px;margin-bottom:28px;line-height:1.6}
+.exit-form{display:flex;flex-direction:column;gap:10px}
+.exit-form input{
+  padding:16px 20px;border-radius:12px;
+  border:1px solid #2a2a2a;background:#161616;color:#fff;
+  font-size:15px;font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .2s;
+}
+.exit-form input:focus{border-color:var(--red)}
+.exit-form input::placeholder{color:#555}
+.exit-submit{
+  padding:17px;background:var(--red);color:#fff;
+  font-weight:900;font-size:16px;font-family:'Inter',sans-serif;
+  border:none;border-radius:12px;cursor:pointer;
+  transition:background .2s;
+}
+.exit-submit:hover{background:var(--red-dark)}
+.exit-skip{
+  background:none;border:none;color:#444;
+  font-size:13px;cursor:pointer;margin-top:4px;
+  font-family:'Inter',sans-serif;
+}
+
 @media(max-width:600px){
   nav{padding:12px 16px}
   .hero{padding:60px 16px 80px}
@@ -359,11 +479,17 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
       <div class="trust-pill">Texas Only</div>
       <div class="trust-pill">24/7 Available</div>
     </div>
-    <div class="hero-cta">
-      <a href="tel:8328717012" class="btn-call">📞 Call Now — (832) 871-7012</a>
-      <button class="btn-scroll" onclick="document.getElementById('form-section').scrollIntoView({behavior:'smooth'})">📋 Submit Your Info Online</button>
-      <p class="hero-note">100% free & confidential · No attorney-client relationship created</p>
-    </div>
+    <form class="hero-mini-form" onsubmit="handleMiniSubmit(event)">
+      <div class="mini-row">
+        <input type="text"  id="h-name"  placeholder="Your Name *" required/>
+        <input type="tel"   id="h-phone" placeholder="Phone Number *" required/>
+      </div>
+      <button type="submit" class="mini-submit">🚀 Get My Free Case Review Now →</button>
+      <div class="mini-or">or</div>
+      <a href="tel:8328717012" class="mini-call">📞 Call Directly — (832) 871-7012</a>
+      <p class="hero-note">100% free & confidential · No fees unless you win</p>
+      <div class="mini-success" id="mini-success">✅ Got it! A specialist will call you shortly. For fastest service call <a href="tel:8328717012" style="color:var(--red)">(832) 871-7012</a>.</div>
+    </form>
   </div>
 </section>
 
@@ -622,25 +748,113 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   <p style="margin-top:12px;font-size:11px;color:#444">This website is a referral service and does not provide legal advice. Contacting us does not create an attorney-client relationship. Past results do not guarantee future outcomes. © 2026 CarAccidentHelp</p>
 </footer>
 
+<!-- WHATSAPP BUTTON -->
+<a href="https://wa.me/18328717012?text=Hi%2C%20I%20was%20in%20a%20car%20accident%20in%20Texas%20and%20need%20help." class="wa-btn" title="Chat on WhatsApp" target="_blank">💬</a>
+
+<!-- EXIT-INTENT POPUP -->
+<div id="exit-popup">
+  <div class="exit-box">
+    <button class="exit-close" onclick="closeExit()">✕</button>
+    <div style="font-size:40px;margin-bottom:12px">⚖️</div>
+    <h2>Wait — Don't Leave<br/><span>Without Getting Help</span></h2>
+    <p>You may be owed thousands. Takes 30 seconds — completely free and confidential.</p>
+    <form class="exit-form" onsubmit="handleExitSubmit(event)">
+      <input type="text" id="ex-name"  placeholder="Your Name *" required/>
+      <input type="tel"  id="ex-phone" placeholder="Phone Number *" required/>
+      <button type="submit" class="exit-submit">📞 Get My Free Case Review →</button>
+      <button type="button" class="exit-skip" onclick="closeExit()">No thanks, I don't want help</button>
+    </form>
+  </div>
+</div>
+
 <!-- STICKY CALL BAR (mobile) -->
 <div class="sticky-call">
   <a href="tel:8328717012">📞 Free Case Review — Call (832) 871-7012</a>
 </div>
 
 <script>
-/* FORM */
-function handleSubmit(e){
-  e.preventDefault();
-  var btn = e.target.querySelector('.submit-btn');
-  btn.textContent = 'Sending…';btn.disabled = true;
-  setTimeout(function(){
-    document.getElementById('form-success').style.display = 'block';
-    e.target.querySelectorAll('input,select,textarea').forEach(function(el){ el.value=''; });
-    btn.textContent = '🚀 Get My Free Case Review →';btn.disabled = false;
-  }, 900);
+/* ── LEAD SUBMISSION ── */
+function submitLead(data, successEl, btn, btnOriginal){
+  if(btn){ btn.textContent = 'Sending…'; btn.disabled = true; }
+  if(window.fbq) fbq('track', 'Lead');
+  if(window.rdt) rdt('track', 'Lead');
+
+  fetch('/api/lead', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  })
+  .catch(function(){}) // fail silently — still show success
+  .finally(function(){
+    if(successEl){ successEl.style.display = 'block'; }
+    if(btn){ btn.textContent = btnOriginal || 'Done!'; btn.disabled = false; }
+  });
 }
 
-/* SCROLL FADE-IN */
+/* ── HERO MINI FORM ── */
+function handleMiniSubmit(e){
+  e.preventDefault();
+  submitLead(
+    { name: document.getElementById('h-name').value, phone: document.getElementById('h-phone').value, source: 'hero-mini' },
+    document.getElementById('mini-success'),
+    e.target.querySelector('.mini-submit'),
+    '🚀 Get My Free Case Review Now →'
+  );
+  e.target.querySelectorAll('input').forEach(function(i){ i.value=''; });
+}
+
+/* ── MAIN FORM ── */
+function handleSubmit(e){
+  e.preventDefault();
+  submitLead({
+    name:  document.getElementById('f-name').value,
+    phone: document.getElementById('f-phone').value,
+    email: document.getElementById('f-email').value,
+    city:  document.getElementById('f-city').value,
+    when:  document.getElementById('f-when').value,
+    desc:  document.getElementById('f-desc').value,
+    source:'main-form'
+  },
+  document.getElementById('form-success'),
+  e.target.querySelector('.submit-btn'),
+  '🚀 Get My Free Case Review →'
+  );
+  e.target.querySelectorAll('input,select,textarea').forEach(function(i){ i.value=''; });
+}
+
+/* ── EXIT-INTENT POPUP ── */
+var exitShown = false;
+function closeExit(){
+  document.getElementById('exit-popup').classList.remove('show');
+  exitShown = true;
+}
+document.addEventListener('mouseleave', function(e){
+  if(e.clientY < 10 && !exitShown){
+    exitShown = true;
+    document.getElementById('exit-popup').classList.add('show');
+    if(window.fbq) fbq('track','ViewContent',{content_name:'exit-intent'});
+  }
+});
+/* mobile: trigger after 45s of inactivity */
+var mobileExitTimer = setTimeout(function(){
+  if(!exitShown){
+    exitShown = true;
+    document.getElementById('exit-popup').classList.add('show');
+  }
+}, 45000);
+document.addEventListener('touchstart', function(){ clearTimeout(mobileExitTimer); }, {once:true});
+
+function handleExitSubmit(e){
+  e.preventDefault();
+  var btn = e.target.querySelector('.exit-submit');
+  submitLead(
+    { name: document.getElementById('ex-name').value, phone: document.getElementById('ex-phone').value, source: 'exit-popup' },
+    null, btn, '📞 Get My Free Case Review →'
+  );
+  setTimeout(closeExit, 1200);
+}
+
+/* ── SCROLL FADE-IN ── */
 var fadeObs = new IntersectionObserver(function(entries){
   entries.forEach(function(e){
     if(e.isIntersecting){ e.target.classList.add('visible'); fadeObs.unobserve(e.target); }
@@ -648,36 +862,30 @@ var fadeObs = new IntersectionObserver(function(entries){
 }, { threshold: 0.1 });
 document.querySelectorAll('.fade-up').forEach(function(el){ fadeObs.observe(el); });
 
-/* ANIMATED COUNTERS */
+/* ── ANIMATED COUNTERS ── */
 function animateCounter(el, target, prefix, suffix, duration){
-  var start = 0, t0 = null;
+  var t0 = null;
   (function step(ts){
     if(!t0) t0 = ts;
-    var p = Math.min((ts - t0) / duration, 1);
-    var ease = 1 - Math.pow(1 - p, 3);
+    var p = Math.min((ts-t0)/duration, 1);
+    var ease = 1 - Math.pow(1-p, 3);
     var val = Math.floor(ease * target);
-    if(target >= 1000000) el.textContent = prefix + (val / 1000000).toFixed(1) + 'M+';
-    else el.textContent = prefix + val.toLocaleString() + suffix;
+    el.textContent = target >= 1000000 ? prefix+(val/1000000).toFixed(1)+'M+' : prefix+val.toLocaleString()+suffix;
     if(p < 1) requestAnimationFrame(step);
   })(0);
 }
-
 var counterObs = new IntersectionObserver(function(entries){
   entries.forEach(function(e){
     if(e.isIntersecting){
       var el = e.target.querySelector('.stat-num');
       if(el && !el.dataset.done){
         el.dataset.done = '1';
-        if(el.dataset.static){ return; }
-        var target = parseInt(el.dataset.target);
-        var prefix = el.dataset.prefix || '';
-        var suffix = el.dataset.suffix || '';
-        animateCounter(el, target, prefix, suffix, 1800);
+        if(!el.dataset.static) animateCounter(el, parseInt(el.dataset.target), el.dataset.prefix||'', el.dataset.suffix||'', 1800);
       }
       counterObs.unobserve(e.target);
     }
   });
-}, { threshold: 0.4 });
+}, {threshold:0.4});
 document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe(el); });
 </script>
 </body>

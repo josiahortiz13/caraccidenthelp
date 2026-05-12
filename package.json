@@ -1,0 +1,8 @@
+{
+  "name": "caraccidenthelp",
+  "version": "1.0.0",
+  "dependencies": {
+    "resend": "^3.0.0",
+    "twilio": "^5.0.0"
+  }
+}
