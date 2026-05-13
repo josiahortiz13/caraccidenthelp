@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       await resend.emails.send({
-        from: 'leads@caraccidenthelp.com',
+        from: 'Car Accident Help <onboarding@resend.dev>',
         to: notifyEmail,
         subject: `🚨 New Lead: ${name || 'Unknown'} — ${city || 'TX'} — ${phone || 'no phone'}`,
         html: `

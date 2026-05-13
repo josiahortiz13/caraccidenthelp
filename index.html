@@ -100,30 +100,110 @@ nav{
   min-height:calc(100vh - 57px);
   display:flex;align-items:center;justify-content:center;
   padding:80px 24px 80px;
-  text-align:center;
   overflow:hidden;
+  background:radial-gradient(ellipse 120% 80% at 50% -10%,rgba(224,48,48,.18) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 60% at 80% 80%,rgba(224,48,48,.07) 0%,transparent 60%);
 }
-.hero-glow{
-  position:absolute;width:800px;height:800px;border-radius:50%;
-  background:radial-gradient(circle,rgba(224,48,48,.14) 0%,transparent 65%);
-  top:50%;left:50%;transform:translate(-50%,-50%);
-  animation:heroGlow 5s ease-in-out infinite alternate;pointer-events:none;
+
+/* PARTICLES */
+.hero-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.particle{
+  position:absolute;border-radius:50%;
+  background:var(--red);opacity:0;
+  animation:floatUp var(--dur,8s) var(--delay,0s) infinite ease-in;
 }
-@keyframes heroGlow{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-50%,-50%) scale(1.2)}}
-.hero-content{position:relative;z-index:2;max-width:780px;width:100%}
+@keyframes floatUp{
+  0%{opacity:0;transform:translateY(0) scale(1)}
+  10%{opacity:.4}
+  90%{opacity:.1}
+  100%{opacity:0;transform:translateY(-100vh) scale(.3)}
+}
+
+/* HERO GLOW ORBS */
+.hero-orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(80px)}
+.hero-orb-1{width:600px;height:600px;background:rgba(224,48,48,.12);top:-100px;left:-100px;animation:orbFloat 9s ease-in-out infinite alternate}
+.hero-orb-2{width:400px;height:400px;background:rgba(224,48,48,.08);bottom:-50px;right:-50px;animation:orbFloat 7s ease-in-out infinite alternate-reverse}
+@keyframes orbFloat{from{transform:translate(0,0)}to{transform:translate(40px,30px)}}
+
+/* HERO LAYOUT */
+.hero-inner{
+  position:relative;z-index:2;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;
+  max-width:1100px;width:100%;
+}
+@media(max-width:860px){
+  .hero-inner{grid-template-columns:1fr;text-align:center;gap:40px}
+  .hero-left{order:1}.hero-right{order:2}
+  .trust-row{justify-content:center}
+}
+
+/* HERO LEFT */
 .hero-badge{
   display:inline-flex;align-items:center;gap:8px;
   background:var(--red-dim);border:1px solid var(--red-border);
   padding:8px 20px;border-radius:100px;
   font-size:12px;font-weight:700;color:var(--red);
-  margin-bottom:28px;letter-spacing:.5px;
+  margin-bottom:24px;letter-spacing:.5px;
 }
 .badge-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1.4s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
-.hero h1{font-size:clamp(52px,10vw,108px);line-height:.92;margin-bottom:24px;color:#fff}
-.hero h1 .red{color:var(--red)}
-.hero-sub{font-size:18px;color:var(--muted);max-width:540px;margin:0 auto 40px;line-height:1.7}
+
+.hero h1{
+  font-size:clamp(48px,6vw,80px);
+  line-height:.95;margin-bottom:10px;
+}
+.hero h1 .white{color:#fff}
+.hero h1 .gradient{
+  background:linear-gradient(135deg,#ff6b6b,#e03030,#ff4444);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:gradShift 3s ease-in-out infinite alternate;
+}
+@keyframes gradShift{
+  from{background-position:0% 50%}to{background-position:100% 50%}
+}
+
+/* TYPEWRITER */
+.typewriter-wrap{
+  font-size:clamp(18px,2.5vw,26px);font-weight:800;
+  color:var(--red);margin-bottom:20px;min-height:36px;
+  font-family:'Bebas Neue',sans-serif;letter-spacing:1px;
+}
+.typewriter-cursor{
+  display:inline-block;width:3px;height:1em;
+  background:var(--red);margin-left:3px;
+  vertical-align:text-bottom;
+  animation:cursorBlink .7s step-end infinite;
+}
+@keyframes cursorBlink{0%,100%{opacity:1}50%{opacity:0}}
+
+.hero-sub{font-size:16px;color:var(--muted);margin-bottom:28px;line-height:1.7;max-width:480px}
 .hero-sub strong{color:var(--text)}
+
+/* HERO RIGHT — CARD */
+.hero-right-card{
+  background:rgba(15,15,15,.9);
+  border:1px solid var(--red-border);
+  border-radius:24px;padding:36px 32px;
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 60px rgba(224,48,48,.15),inset 0 1px 0 rgba(255,255,255,.05);
+  animation:cardFloat 6s ease-in-out infinite alternate;
+}
+@keyframes cardFloat{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+.card-label{
+  font-size:11px;font-weight:700;letter-spacing:3px;
+  color:var(--red);text-transform:uppercase;margin-bottom:6px;
+}
+.card-title{font-size:clamp(22px,3vw,30px);font-weight:900;margin-bottom:24px;line-height:1.1}
+.card-stat{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 0;border-bottom:1px solid var(--border);
+}
+.card-stat:last-of-type{border-bottom:none}
+.card-stat-icon{font-size:24px;flex-shrink:0}
+.card-stat-num{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--red);line-height:1}
+.card-stat-label{font-size:12px;color:var(--muted);margin-top:2px}
 
 /* TRUST PILLS */
 .trust-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
@@ -468,28 +548,74 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-content">
-    <div class="hero-badge"><div class="badge-dot"></div> Texas Car Accident Referral — Free & Confidential</div>
-    <h1>Were You<br/>Hit in a<br/><span class="red">Texas Crash?</span></h1>
-    <p class="hero-sub">You may be owed money for medical bills, lost wages, and pain & suffering. <strong>Get connected with a specialist — no fees unless you win.</strong></p>
-    <div class="trust-row">
-      <div class="trust-pill">No Upfront Fees</div>
-      <div class="trust-pill">Free Case Review</div>
-      <div class="trust-pill">Texas Only</div>
-      <div class="trust-pill">24/7 Available</div>
-    </div>
-    <form class="hero-mini-form" onsubmit="handleMiniSubmit(event)">
-      <div class="mini-row">
-        <input type="text"  id="h-name"  placeholder="Your Name *" required/>
-        <input type="tel"   id="h-phone" placeholder="Phone Number *" required/>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-particles" id="hero-particles"></div>
+
+  <div class="hero-inner">
+    <!-- LEFT -->
+    <div class="hero-left">
+      <div class="hero-badge"><div class="badge-dot"></div> Texas Accident Referral — Free & Confidential</div>
+      <h1>
+        <span class="white">Were You in a</span><br/>
+        <span class="gradient" id="typewriter-text">Texas Crash?</span>
+      </h1>
+      <div class="typewriter-wrap"><span id="accident-type">Rear-End Collision</span><span class="typewriter-cursor"></span></div>
+      <p class="hero-sub">You may be owed money for medical bills, lost wages, and pain & suffering. <strong>Get connected now — no fees unless you win.</strong></p>
+      <div class="trust-row">
+        <div class="trust-pill">No Upfront Fees</div>
+        <div class="trust-pill">Free Review</div>
+        <div class="trust-pill">Texas Only</div>
+        <div class="trust-pill">24/7</div>
       </div>
-      <button type="submit" class="mini-submit">🚀 Get My Free Case Review Now →</button>
-      <div class="mini-or">or</div>
-      <a href="tel:8328717012" class="mini-call">📞 Call Directly — (832) 871-7012</a>
-      <p class="hero-note">100% free & confidential · No fees unless you win</p>
-      <div class="mini-success" id="mini-success">✅ Got it! A specialist will call you shortly. For fastest service call <a href="tel:8328717012" style="color:var(--red)">(832) 871-7012</a>.</div>
-    </form>
+      <form class="hero-mini-form" onsubmit="handleMiniSubmit(event)">
+        <div class="mini-row">
+          <input type="text" id="h-name"  placeholder="Your Name *" required/>
+          <input type="tel"  id="h-phone" placeholder="Phone Number *" required/>
+        </div>
+        <button type="submit" class="mini-submit">🚀 Get My Free Case Review →</button>
+        <div class="mini-or">or</div>
+        <a href="tel:8328717012" class="mini-call">📞 Call — (832) 871-7012</a>
+        <p class="hero-note">100% free & confidential · No fees unless you win</p>
+        <div class="mini-success" id="mini-success">✅ A specialist will call you shortly. Fastest: <a href="tel:8328717012" style="color:var(--red)">(832) 871-7012</a></div>
+      </form>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="hero-right">
+      <div class="hero-right-card">
+        <div class="card-label">Real Results · Texas</div>
+        <div class="card-title">We Fight.<br/>You Get Paid.</div>
+        <div class="card-stat">
+          <div class="card-stat-icon">💰</div>
+          <div>
+            <div class="card-stat-num">$2.1M+</div>
+            <div class="card-stat-label">Recovered for Clients</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon">⚖️</div>
+          <div>
+            <div class="card-stat-num">500+</div>
+            <div class="card-stat-label">Cases Won</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon">⚡</div>
+          <div>
+            <div class="card-stat-num">$0</div>
+            <div class="card-stat-label">Upfront Cost — No Win No Fee</div>
+          </div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-icon">📞</div>
+          <div>
+            <div class="card-stat-num">24/7</div>
+            <div class="card-stat-label">Available — Call Anytime</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -773,6 +899,46 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 </div>
 
 <script>
+/* ── PARTICLES ── */
+(function(){
+  var container = document.getElementById('hero-particles');
+  if(!container) return;
+  for(var i = 0; i < 18; i++){
+    var p = document.createElement('div');
+    p.className = 'particle';
+    var size = Math.random() * 4 + 2;
+    p.style.cssText = [
+      'width:'+size+'px','height:'+size+'px',
+      'left:'+Math.random()*100+'%',
+      'bottom:'+(-size)+'px',
+      '--dur:'+(Math.random()*10+6)+'s',
+      '--delay:'+(Math.random()*8)+'s'
+    ].join(';');
+    container.appendChild(p);
+  }
+})();
+
+/* ── TYPEWRITER ── */
+(function(){
+  var types = ['Rear-End Collision','T-Bone Crash','Highway Accident','Truck Accident','Drunk Driver Hit','Intersection Crash'];
+  var el = document.getElementById('accident-type');
+  if(!el) return;
+  var idx = 0, charIdx = 0, deleting = false;
+  function tick(){
+    var word = types[idx];
+    if(!deleting){
+      el.textContent = word.slice(0, ++charIdx);
+      if(charIdx === word.length){ deleting = true; setTimeout(tick, 1800); return; }
+      setTimeout(tick, 80);
+    } else {
+      el.textContent = word.slice(0, --charIdx);
+      if(charIdx === 0){ deleting = false; idx = (idx+1) % types.length; setTimeout(tick, 300); return; }
+      setTimeout(tick, 40);
+    }
+  }
+  setTimeout(tick, 1000);
+})();
+
 /* ── LEAD SUBMISSION ── */
 function submitLead(data, successEl, btn, btnOriginal){
   if(btn){ btn.textContent = 'Sending…'; btn.disabled = true; }
