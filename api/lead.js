@@ -1,4 +1,4 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,16 +8,21 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { name, phone, email, city, when, desc, source } = req.body || {};
-  const notifyEmail = process.env.NOTIFY_EMAIL || 'crashhelptx@gmail.com';
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
 
-  // Email notification via Resend
-  if (process.env.RESEND_API_KEY) {
+  // Email via Gmail SMTP
+  if (process.env.GMAIL_APP_PASSWORD) {
     try {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: 'Car Accident Help <onboarding@resend.dev>',
-        to: notifyEmail,
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'crashhelptx@gmail.com',
+          pass: process.env.GMAIL_APP_PASSWORD
+        }
+      });
+      await transporter.sendMail({
+        from: 'CrashHelpTX Leads <crashhelptx@gmail.com>',
+        to: 'crashhelptx@gmail.com',
         subject: `🚨 New Lead: ${name || 'Unknown'} — ${city || 'TX'} — ${phone || 'no phone'}`,
         html: `
           <div style="font-family:sans-serif;max-width:500px;margin:0 auto">
@@ -39,18 +44,18 @@ module.exports = async (req, res) => {
         `
       });
     } catch (err) {
-      console.error('Resend error:', err.message);
+      console.error('Gmail error:', err.message);
     }
   }
 
-  // SMS notification via Twilio (optional)
+  // SMS via Twilio (optional)
   if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) {
     try {
       const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       await twilio.messages.create({
         body: `🚨 NEW LEAD\nName: ${name}\nPhone: ${phone}\nCity: ${city || 'TX'}\nSource: ${source}\nCall them NOW!`,
         from: process.env.TWILIO_FROM,
-        to: process.env.TWILIO_TO || notifyEmail
+        to: process.env.TWILIO_TO
       });
     } catch (err) {
       console.error('Twilio error:', err.message);
