@@ -65,3 +65,4 @@ module.exports = async (req, res) => {
   console.log('Lead received:', { name, phone, city, source, timestamp });
   return res.status(200).json({ ok: true });
 };
+
