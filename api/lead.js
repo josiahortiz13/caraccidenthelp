@@ -8,7 +8,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { name, phone, email, city, when, desc, source } = req.body || {};
-  const notifyEmail = process.env.NOTIFY_EMAIL || 'josiah5.jo@gmail.com';
+  const notifyEmail = process.env.NOTIFY_EMAIL || 'crashhelptx@gmail.com';
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
 
   // Email notification via Resend
