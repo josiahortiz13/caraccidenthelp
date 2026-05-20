@@ -9,12 +9,15 @@ module.exports = async (req, res) => {
 
   const { name, phone, email, city, when, desc, source } = req.body || {};
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+  let emailError = null;
 
   // Email via Gmail SMTP
   if (process.env.GMAIL_APP_PASSWORD) {
     try {
       const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
         auth: {
           user: 'crashhelptx@gmail.com',
           pass: process.env.GMAIL_APP_PASSWORD
@@ -44,6 +47,7 @@ module.exports = async (req, res) => {
         `
       });
     } catch (err) {
+      emailError = err.message;
       console.error('Gmail error:', err.message);
     }
   }
@@ -63,6 +67,5 @@ module.exports = async (req, res) => {
   }
 
   console.log('Lead received:', { name, phone, city, source, timestamp });
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, emailError });
 };
-
