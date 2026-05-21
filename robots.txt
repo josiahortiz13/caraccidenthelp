@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /privacy.html
+Disallow: /terms.html
+
+Sitemap: https://www.crashhelptx.com/sitemap.xml
