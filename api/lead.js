@@ -1,15 +1,42 @@
 const nodemailer = require('nodemailer');
 
+const rateMap = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateMap.get(ip) || { count: 0, reset: now + 60000 };
+  if (now > entry.reset) { entry.count = 0; entry.reset = now + 60000; }
+  entry.count++;
+  rateMap.set(ip, entry);
+  return entry.count > 5;
+}
+
+function sanitize(str) {
+  if (!str) return '';
+  return String(str).replace(/[<>]/g, '').slice(0, 500);
+}
+
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://www.crashhelptx.com');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { name, phone, email, city, when, desc, source } = req.body || {};
+  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  if (isRateLimited(ip)) return res.status(429).json({ error: 'Too many requests' });
+
+  const raw = req.body || {};
+  const name   = sanitize(raw.name);
+  const phone  = sanitize(raw.phone);
+  const email  = sanitize(raw.email);
+  const city   = sanitize(raw.city);
+  const when   = sanitize(raw.when);
+  const desc   = sanitize(raw.desc);
+  const source = sanitize(raw.source);
+
+  if (!name && !phone) return res.status(400).json({ error: 'Name or phone required' });
+
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
-  let emailError = null;
 
   // Email via Gmail SMTP
   if (process.env.GMAIL_APP_PASSWORD) {
@@ -47,7 +74,6 @@ module.exports = async (req, res) => {
         `
       });
     } catch (err) {
-      emailError = err.message;
       console.error('Gmail error:', err.message);
     }
   }
