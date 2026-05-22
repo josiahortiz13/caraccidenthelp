@@ -17,26 +17,8 @@
 <link rel="canonical" href="https://www.crashhelptx.com/"/>
 <meta name="google-site-verification" content="Y0xTA_yX-ZHNKGhWd_9X9oJOWRCXEyWuTKlI0Z8ci3o"/>
 <link rel="sitemap" type="application/xml" href="/sitemap.xml"/>
-<!-- Meta Pixel — replace YOUR_META_PIXEL_ID in Vercel env or here -->
-<script>
-!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','YOUR_META_PIXEL_ID');
-fbq('track','PageView');
-</script>
-<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=YOUR_META_PIXEL_ID&ev=PageView&noscript=1"/></noscript>
-<!-- End Meta Pixel -->
-
-<!-- Reddit Pixel — replace YOUR_REDDIT_PIXEL_ID -->
-<script>
-!function(w,d){if(!w.rdt){var p=w.rdt=function(){p.sendEvent?p.sendEvent.apply(p,arguments):p.callQueue.push(arguments)};p.callQueue=[];var t=d.createElement('script');t.src='https://www.redditstatic.com/ads/v2.js';t.async=!0;var s=d.getElementsByTagName('script')[0];s.parentNode.insertBefore(t,s)}}(window,document);
-rdt('init','YOUR_REDDIT_PIXEL_ID');
-rdt('track','PageVisit');
-</script>
-<!-- End Reddit Pixel -->
+<!-- Meta Pixel — add META_PIXEL_ID when ready -->
+<!-- Reddit Pixel — add REDDIT_PIXEL_ID when ready -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -90,6 +72,20 @@ nav{
   0%,100%{box-shadow:0 0 0 0 rgba(224,48,48,0)}
   50%{box-shadow:0 0 24px 6px rgba(224,48,48,.45)}
 }
+
+/* TRUST BAR */
+.trust-bar{
+  position:relative;z-index:150;
+  background:#0d0d0d;border-bottom:1px solid #1a1a1a;
+  padding:8px 24px;display:flex;justify-content:center;
+  flex-wrap:wrap;gap:20px;
+}
+.trust-bar-item{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;color:#888;letter-spacing:.5px;text-transform:uppercase;
+}
+.trust-bar-item span{color:#bbb}
+@media(max-width:600px){.trust-bar{gap:12px}.trust-bar-item{font-size:10px}}
 
 /* URGENCY TICKER */
 .urgency-ticker{
@@ -540,6 +536,16 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   <a href="tel:3468601929" class="nav-call">📞 Free Case Review</a>
 </nav>
 
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-bar-item">🔒 <span>SSL Secured</span></div>
+  <div class="trust-bar-item">⚖️ <span>Licensed Texas Attorneys</span></div>
+  <div class="trust-bar-item">★★★★★ <span>5-Star Rated</span></div>
+  <div class="trust-bar-item">🏛️ <span>State Bar of Texas</span></div>
+  <div class="trust-bar-item">💯 <span>Free Consultation</span></div>
+  <div class="trust-bar-item">🛡️ <span>No Win, No Fee</span></div>
+</div>
+
 <!-- URGENCY TICKER -->
 <div class="urgency-ticker">
   <div class="urgency-inner">
@@ -565,11 +571,11 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
     <div class="hero-left">
       <div class="hero-badge"><div class="badge-dot"></div> Texas Accident Referral — Free & Confidential</div>
       <h1>
-        <span class="white">Were You in a</span><br/>
+        <span class="white">Injured in a</span><br/>
         <span class="gradient" id="typewriter-text">Texas Crash?</span>
       </h1>
       <div class="typewriter-wrap"><span id="accident-type">Rear-End Collision</span><span class="typewriter-cursor"></span></div>
-      <p class="hero-sub">You may be owed money for medical bills, lost wages, and pain & suffering. <strong>Get connected now — no fees unless you win.</strong></p>
+      <p class="hero-sub">Insurance companies have lawyers. <strong>So should you.</strong> Get connected with a licensed Texas injury attorney — <strong>free, no fees unless you win.</strong></p>
       <div class="trust-row">
         <div class="trust-pill">No Upfront Fees</div>
         <div class="trust-pill">Free Review</div>
