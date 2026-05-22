@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff3333"/>
+      <stop offset="100%" style="stop-color:#cc0000"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="96" fill="#0a0a0a" stroke="#e03030" stroke-width="2"/>
+  <!-- Shield shape -->
+  <path d="M100 28 L148 50 L148 108 Q148 148 100 172 Q52 148 52 108 L52 50 Z" fill="url(#g)" opacity="0.15"/>
+  <path d="M100 34 L142 54 L142 108 Q142 144 100 166 Q58 144 58 108 L58 54 Z" fill="none" stroke="#e03030" stroke-width="1.5" opacity="0.6"/>
+  <!-- Crash bolt -->
+  <text x="100" y="118" font-family="Arial Black, sans-serif" font-size="62" font-weight="900" fill="url(#g)" text-anchor="middle">⚡</text>
+  <!-- TX text -->
+  <text x="100" y="155" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="#fff" text-anchor="middle" letter-spacing="6">TX</text>
+</svg>

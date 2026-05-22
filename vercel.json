@@ -15,6 +15,8 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/logo.svg", "destination": "/logo.svg" },
+    { "source": "/og-image.svg", "destination": "/og-image.svg" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
     { "source": "/privacy.html", "destination": "/privacy.html" },
     { "source": "/terms.html", "destination": "/terms.html" },

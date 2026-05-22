@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#080808"/>
+      <stop offset="100%" style="stop-color:#120505"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff3333"/>
+      <stop offset="100%" style="stop-color:#cc0000"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Grid lines -->
+  <line x1="0" y1="0" x2="1200" y2="630" stroke="#e03030" stroke-width="0.3" opacity="0.1"/>
+  <line x1="1200" y1="0" x2="0" y2="630" stroke="#e03030" stroke-width="0.3" opacity="0.1"/>
+
+  <!-- Red accent bar left -->
+  <rect x="0" y="0" width="8" height="630" fill="url(#red)"/>
+
+  <!-- Glow circle -->
+  <circle cx="950" cy="315" r="280" fill="#e03030" opacity="0.06"/>
+
+  <!-- Logo icon area -->
+  <circle cx="130" cy="120" r="55" fill="#0f0f0f" stroke="#e03030" stroke-width="1.5" opacity="0.8"/>
+  <text x="130" y="138" font-family="Arial, sans-serif" font-size="44" text-anchor="middle">⚡</text>
+
+  <!-- Brand name -->
+  <text x="210" y="105" font-family="Arial Black, Impact, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="2">Crash</text>
+  <text x="400" y="105" font-family="Arial Black, Impact, sans-serif" font-size="52" font-weight="900" fill="#e03030" letter-spacing="2">Help</text>
+  <text x="530" y="105" font-family="Arial Black, Impact, sans-serif" font-size="52" font-weight="900" fill="#ffffff" letter-spacing="2">TX</text>
+
+  <!-- Divider -->
+  <rect x="80" y="145" width="520" height="2" fill="url(#red)" opacity="0.6"/>
+
+  <!-- Main headline -->
+  <text x="80" y="240" font-family="Arial Black, Impact, sans-serif" font-size="72" font-weight="900" fill="#ffffff">INJURED IN A</text>
+  <text x="80" y="330" font-family="Arial Black, Impact, sans-serif" font-size="72" font-weight="900" fill="#e03030">TEXAS CRASH?</text>
+
+  <!-- Sub text -->
+  <text x="80" y="395" font-family="Arial, sans-serif" font-size="28" fill="#aaaaaa">You may be owed thousands. Free case review.</text>
+  <text x="80" y="435" font-family="Arial, sans-serif" font-size="28" fill="#aaaaaa">No fees unless you win. Available 24/7.</text>
+
+  <!-- CTA box -->
+  <rect x="80" y="480" width="380" height="70" rx="12" fill="#e03030"/>
+  <text x="270" y="524" font-family="Arial Black, sans-serif" font-size="24" font-weight="900" fill="#ffffff" text-anchor="middle">📞 (346) 860-1929</text>
+
+  <!-- URL -->
+  <text x="80" y="600" font-family="Arial, sans-serif" font-size="22" fill="#555">crashhelptx.com</text>
+
+  <!-- Stats right side -->
+  <text x="900" y="220" font-family="Arial Black, sans-serif" font-size="80" font-weight="900" fill="#e03030" text-anchor="middle">$2.1M+</text>
+  <text x="900" y="260" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Recovered for Clients</text>
+  <rect x="780" y="285" width="240" height="1" fill="#1c1c1c"/>
+  <text x="900" y="340" font-family="Arial Black, sans-serif" font-size="60" font-weight="900" fill="#ffffff" text-anchor="middle">500+</text>
+  <text x="900" y="375" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Cases Won</text>
+  <rect x="780" y="400" width="240" height="1" fill="#1c1c1c"/>
+  <text x="900" y="460" font-family="Arial Black, sans-serif" font-size="60" font-weight="900" fill="#ffffff" text-anchor="middle">$0</text>
+  <text x="900" y="495" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Upfront — No Win No Fee</text>
+</svg>
