@@ -19,6 +19,7 @@
     { "source": "/og-image.png", "destination": "/og-image.png" },
     { "source": "/og-image.svg", "destination": "/og-image.svg" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
+    { "source": "/partners.html", "destination": "/partners.html" },
     { "source": "/privacy.html", "destination": "/privacy.html" },
     { "source": "/terms.html", "destination": "/terms.html" },
     { "source": "/(.*)", "destination": "/index.html" }
