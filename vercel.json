@@ -1,4 +1,7 @@
 {
+  "redirects": [
+    { "source": "/(.*)", "destination": "https://www.crashhelptx.com/$1", "permanent": true, "has": [{ "type": "host", "value": "crashhelptx.com" }] }
+  ],
   "headers": [
     {
       "source": "/(.*)",

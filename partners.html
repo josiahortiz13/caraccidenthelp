@@ -200,9 +200,14 @@ function handlePartnerSubmit(e){
       desc: 'PARTNER SIGNUP — Business: ' + document.getElementById('p-business').value + ' | Type: ' + document.getElementById('p-type').value,
       source: 'partner-signup'
     })
-  }).catch(function(){}).finally(function(){
+  }).then(function(r){
+    if(!r.ok) throw new Error('Server error');
     document.getElementById('partner-success').style.display = 'block';
     btn.textContent = '✅ Submitted!';
+  }).catch(function(){
+    btn.textContent = '⚠️ Error — Call (346) 860-1929';
+    btn.disabled = false;
+    btn.style.background = '#333';
   });
 }
 </script>

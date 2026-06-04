@@ -8,7 +8,7 @@
 <meta name="keywords" content="crash, personal injury, injury, accidents, help, car accident Texas, Texas crash help, personal injury Texas, accident claim, injury lawyer Texas, free case review, car wreck Texas, auto accident help, Texas injury claim, crash help TX"/>
 <meta property="og:title" content="CrashHelpTX — Texas Car Accident? Get Help Now"/>
 <meta property="og:description" content="Free case review. No fees unless you win. Serving all of Texas. Call (346) 860-1929 anytime."/>
-<meta property="og:url" content="https://crashhelptx.com"/>
+<meta property="og:url" content="https://www.crashhelptx.com/"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="CrashHelpTX"/>
 <meta name="twitter:card" content="summary_large_image"/>
@@ -581,7 +581,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 
 <!-- NAV -->
 <nav>
-  <div class="logo">CarAccident<span>Help</span></div>
+  <div class="logo">CrashHelp<span>TX</span></div>
   <a href="tel:3468601929" class="nav-call">📞 Free Case Review</a>
 </nav>
 
@@ -978,10 +978,10 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 
 <!-- FOOTER -->
 <footer>
-  <div class="foot-logo">CarAccident<span>Help</span></div>
+  <div class="foot-logo">CrashHelp<span>TX</span></div>
   <a href="tel:3468601929" class="foot-call">📞 (346) 860-1929</a>
   <p>Serving all of Texas · Free referral service · Available 24/7</p>
-  <p style="margin-top:12px;font-size:11px;color:#444">This website is a referral service and does not provide legal advice. Contacting us does not create an attorney-client relationship. Past results do not guarantee future outcomes. © 2026 CarAccidentHelp</p>
+  <p style="margin-top:12px;font-size:11px;color:#444">This website is a referral service and does not provide legal advice. Contacting us does not create an attorney-client relationship. Past results do not guarantee future outcomes. © 2026 CrashHelpTX</p>
   <p style="margin-top:10px;font-size:11px"><a href="/privacy.html" style="color:#555;text-decoration:none;margin:0 8px">Privacy Policy</a>·<a href="/terms.html" style="color:#555;text-decoration:none;margin:0 8px">Terms & Conditions</a></p>
 </footer>
 
@@ -1053,18 +1053,20 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 /* ── LEAD SUBMISSION ── */
 function submitLead(data, successEl, btn, btnOriginal){
   if(btn){ btn.textContent = 'Sending…'; btn.disabled = true; }
-  if(window.fbq) fbq('track', 'Lead');
-  if(window.rdt) rdt('track', 'Lead');
-
   fetch('/api/lead', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify(data)
   })
-  .catch(function(){}) // fail silently — still show success
-  .finally(function(){
+  .then(function(r){
+    if(!r.ok) throw new Error('Server error');
+    if(window.fbq) fbq('track', 'Lead');
+    if(window.rdt) rdt('track', 'Lead');
     if(successEl){ successEl.style.display = 'block'; }
     if(btn){ btn.textContent = btnOriginal || 'Done!'; btn.disabled = false; }
+  })
+  .catch(function(){
+    if(btn){ btn.textContent = '⚠️ Error — Try Calling Us'; btn.disabled = false; btn.style.background='#333'; }
   });
 }
 
