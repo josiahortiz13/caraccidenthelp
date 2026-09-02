@@ -1,18 +1,13 @@
 const nodemailer = require('nodemailer');
 
-const rateMap = new Map();
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = rateMap.get(ip) || { count: 0, reset: now + 60000 };
-  if (now > entry.reset) { entry.count = 0; entry.reset = now + 60000; }
-  entry.count++;
-  rateMap.set(ip, entry);
-  return entry.count > 5;
-}
-
 function sanitize(str) {
   if (!str) return '';
-  return String(str).replace(/[<>]/g, '').slice(0, 500);
+  return String(str).replace(/[<>'"]/g, '').slice(0, 500);
+}
+
+function isValidPhone(p) {
+  if (!p) return true; // optional
+  return /^\+?[\d\s\-().]{7,20}$/.test(p);
 }
 
 module.exports = async (req, res) => {
@@ -24,9 +19,6 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  if (isRateLimited(ip)) return res.status(429).json({ error: 'Too many requests' });
-
   const raw = req.body || {};
   const name   = sanitize(raw.name);
   const phone  = sanitize(raw.phone);
@@ -37,6 +29,7 @@ module.exports = async (req, res) => {
   const source = sanitize(raw.source);
 
   if (!name && !phone) return res.status(400).json({ error: 'Name or phone required' });
+  if (phone && !isValidPhone(phone)) return res.status(400).json({ error: 'Invalid phone number' });
 
   const timestamp = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
 
