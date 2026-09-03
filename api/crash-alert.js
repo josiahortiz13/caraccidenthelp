@@ -83,6 +83,27 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  const testMode = req.query && req.query.test === '1';
+
+  // Test mode: send a real SMS without needing a live crash in the feed
+  if (testMode) {
+    const partnerPhones = (process.env.PARTNER_PHONES || '')
+      .split(',').map(p => p.trim()).filter(Boolean);
+    if (!partnerPhones.length)
+      return res.json({ error: 'No PARTNER_PHONES set. Add it in Vercel dashboard first.' });
+    if (!process.env.TWILIO_ACCOUNT_SID)
+      return res.status(500).json({ error: 'Twilio not configured' });
+    const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    for (const phone of partnerPhones) {
+      await twilio.messages.create({
+        body: `CRASHHELPTX TEST\nCrash alert system is live. When a real crash hits Houston freeways, you'll get a text like this.\nFree legal case review: (346) 860-1929\nReply STOP to opt out`,
+        from: process.env.TWILIO_FROM,
+        to: phone,
+      });
+    }
+    return res.json({ ok: true, test: true, sent_to: partnerPhones });
+  }
+
   let xml;
   try {
     xml = await fetchRSS();
