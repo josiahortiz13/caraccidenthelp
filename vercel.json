@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/crash-alert",
+      "schedule": "*/3 * * * *"
+    }
+  ],
   "redirects": [
     { "source": "/(.*)", "destination": "https://www.crashhelptx.com/$1", "permanent": true, "has": [{ "type": "host", "value": "crashhelptx.com" }] }
   ],
@@ -16,6 +22,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/crash-alert", "destination": "/api/crash-alert.js" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
