@@ -73,14 +73,15 @@ module.exports = async (req, res) => {
     }
   }
 
-  // SMS via Twilio (optional)
-  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) {
+  // SMS via Twilio — alert owner on every new lead
+  const ownerPhone = process.env.OWNER_PHONE || process.env.TWILIO_TO;
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM && ownerPhone) {
     try {
       const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       await twilio.messages.create({
-        body: `🚨 NEW LEAD\nName: ${name}\nPhone: ${phone}\nCity: ${city || 'TX'}\nSource: ${source}\nCall them NOW!`,
+        body: `🚨 NEW LEAD — Call NOW!\nName: ${name}\nPhone: ${phone}\nCity: ${city || 'TX'}\nSource: ${source}`,
         from: process.env.TWILIO_FROM,
-        to: process.env.TWILIO_TO
+        to: ownerPhone
       });
     } catch (err) {
       console.error('Twilio error:', err.message);

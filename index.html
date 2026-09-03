@@ -1016,15 +1016,19 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 <!-- LEAD FORM -->
 <section class="form-section" id="form-section">
   <div class="form-wrap">
-    <p class="sec-label">Free Case Review</p>
-    <h2 class="sec-title">Tell Us<br/>What Happened</h2>
-    <p style="color:var(--muted);font-size:15px;margin-bottom:36px;line-height:1.6">Fill out the form — someone will reach out to you shortly. Free, fast, and confidential.</p>
+    <p class="sec-label">Free Case Review · 60 Seconds</p>
+    <h2 class="sec-title">You May Be Owed<br/><span style="color:var(--red)">Thousands.</span></h2>
+    <p style="color:var(--muted);font-size:15px;margin-bottom:12px;line-height:1.6">Drop your name and number — a specialist calls you back fast. Free, confidential, no fees unless you win.</p>
+    <div style="display:flex;justify-content:center;gap:20px;margin-bottom:28px;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:700;color:#555">⚡ Average callback: 4 min</span>
+      <span style="font-size:12px;font-weight:700;color:#555">🔒 100% Confidential</span>
+      <span style="font-size:12px;font-weight:700;color:#555">✅ No fees unless you win</span>
+    </div>
     <form class="lead-form" onsubmit="handleSubmit(event)">
       <input type="text"  id="f-name"  placeholder="Your Full Name *" required/>
       <input type="tel"   id="f-phone" placeholder="Phone Number *" required/>
-      <input type="email" id="f-email" placeholder="Email Address *" required/>
       <select id="f-city">
-        <option value="" disabled selected>City in Texas *</option>
+        <option value="" selected>City (optional)</option>
         <option>Houston</option>
         <option>Dallas</option>
         <option>San Antonio</option>
@@ -1037,19 +1041,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
         <option>Lubbock</option>
         <option>Other Texas City</option>
       </select>
-      <select id="f-when">
-        <option value="" disabled selected>When did the accident happen?</option>
-        <option>Within the last 30 days</option>
-        <option>1–3 months ago</option>
-        <option>3–6 months ago</option>
-        <option>6–12 months ago</option>
-        <option>Over a year ago</option>
-      </select>
-      <div style="position:relative">
-        <textarea id="f-desc" placeholder="Briefly describe what happened (optional) — or tap 🎤 to speak"></textarea>
-        <button type="button" id="mic-btn" onclick="toggleVoice()" title="Tap to speak" style="position:absolute;right:12px;bottom:12px;background:var(--red);border:none;border-radius:50%;width:36px;height:36px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s">🎤</button>
-      </div>
-      <button type="submit" class="submit-btn">🚀 Get My Free Case Review →</button>
+      <button type="submit" class="submit-btn">📞 Get My FREE Case Review Now →</button>
       <p class="form-note">By submitting you agree to be contacted about your case. This is a referral service — submitting does not create an attorney-client relationship.</p>
       <div class="form-success" id="form-success">
         ✅ Got it! A specialist will reach out to you shortly.<br/>For fastest service call <a href="tel:+13468601929" style="color:var(--red)">(346) 860-1929</a> now.
@@ -1169,17 +1161,14 @@ function handleSubmit(e){
   submitLead({
     name:  document.getElementById('f-name').value,
     phone: document.getElementById('f-phone').value,
-    email: document.getElementById('f-email').value,
     city:  document.getElementById('f-city').value,
-    when:  document.getElementById('f-when').value,
-    desc:  document.getElementById('f-desc').value,
     source:'main-form'
   },
   document.getElementById('form-success'),
   e.target.querySelector('.submit-btn'),
-  '🚀 Get My Free Case Review →'
+  '📞 Get My FREE Case Review Now →'
   );
-  e.target.querySelectorAll('input,select,textarea').forEach(function(i){ i.value=''; });
+  e.target.querySelectorAll('input,select').forEach(function(i){ i.value=''; });
 }
 
 /* ── EXIT-INTENT POPUP ── */
