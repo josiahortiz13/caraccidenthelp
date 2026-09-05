@@ -51,7 +51,6 @@
     { "source": "/austin", "destination": "/austin.html" },
     { "source": "/austin.html", "destination": "/austin.html" },
     { "source": "/es", "destination": "/es.html" },
-    { "source": "/es.html", "destination": "/es.html" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/es.html", "destination": "/es.html" }
   ]
 }
