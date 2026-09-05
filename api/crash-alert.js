@@ -56,11 +56,9 @@ function minutesAgo(desc) {
   if (ampm === 'AM' && hour === 12) hour = 0;
 
   const now = new Date();
-  // Convert now to Houston time (CDT = UTC-5 Mar-Nov, CST = UTC-6 Nov-Mar)
-  const housonOffset = -5; // CDT (summer)
-  const nowHouston = new Date(now.getTime() + housonOffset * 60 * 60 * 1000);
-  const nowHour = nowHouston.getUTCHours();
-  const nowMin = nowHouston.getUTCMinutes();
+  const houstonTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Chicago' }));
+  const nowHour = houstonTime.getHours();
+  const nowMin = houstonTime.getMinutes();
 
   let diffMin = (nowHour * 60 + nowMin) - (hour * 60 + min);
   // Handle midnight rollover
@@ -140,7 +138,8 @@ module.exports = async (req, res) => {
   }
 
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_FROM) {
-    return res.status(500).json({ error: 'Twilio env vars not configured' });
+    console.log('Twilio not configured — crashes found but SMS disabled:', crashes.map(c => c.title));
+    return res.json({ sent: 0, crashes: crashes.map(c => c.title), warning: 'Twilio env vars not set — add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM in Vercel dashboard' });
   }
 
   const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
