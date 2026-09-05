@@ -1,5 +1,16 @@
 const https = require('https');
 
+function getTwilioClient() {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  if (!sid) return null;
+  const apiKey = process.env.TWILIO_API_KEY;
+  const apiSecret = process.env.TWILIO_API_SECRET;
+  if (apiKey && apiSecret) return require('twilio')(apiKey, apiSecret, { accountSid: sid });
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (authToken) return require('twilio')(sid, authToken);
+  return null;
+}
+
 const CRASH_KEYWORDS = [
   'accident', 'crash', 'multi-vehicle', 'multi vehicle',
   'collision', 'rollover', 'fatal', 'injury', 'hit and run', 'struck'
@@ -89,9 +100,8 @@ module.exports = async (req, res) => {
       .split(',').map(p => p.trim()).filter(Boolean);
     if (!partnerPhones.length)
       return res.json({ error: 'No PARTNER_PHONES set. Add it in Vercel dashboard first.' });
-    if (!process.env.TWILIO_ACCOUNT_SID)
-      return res.status(500).json({ error: 'Twilio not configured' });
-    const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    const twilio = getTwilioClient();
+    if (!twilio) return res.status(500).json({ error: 'Twilio not configured — add TWILIO_ACCOUNT_SID + TWILIO_API_KEY + TWILIO_API_SECRET in Vercel' });
     for (const phone of partnerPhones) {
       await twilio.messages.create({
         body: `CRASHHELPTX TEST\nCrash alert system is live. When a real crash hits Houston freeways, you'll get a text like this.\nFree legal case review: (346) 860-1929\nReply STOP to opt out`,
@@ -137,12 +147,11 @@ module.exports = async (req, res) => {
     return res.json({ sent: 0, crashes: crashes.map(c => c.title), warning: 'No PARTNER_PHONES set' });
   }
 
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_FROM) {
+  const twilio = getTwilioClient();
+  if (!twilio || !process.env.TWILIO_FROM) {
     console.log('Twilio not configured — crashes found but SMS disabled:', crashes.map(c => c.title));
-    return res.json({ sent: 0, crashes: crashes.map(c => c.title), warning: 'Twilio env vars not set — add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM in Vercel dashboard' });
+    return res.json({ sent: 0, crashes: crashes.map(c => c.title), warning: 'Add TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_FROM in Vercel dashboard' });
   }
-
-  const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   let sent = 0;
   const errors = [];
 

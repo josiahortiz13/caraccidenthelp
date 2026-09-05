@@ -1,5 +1,16 @@
 const nodemailer = require('nodemailer');
 
+function getTwilioClient() {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  if (!sid) return null;
+  const apiKey = process.env.TWILIO_API_KEY;
+  const apiSecret = process.env.TWILIO_API_SECRET;
+  if (apiKey && apiSecret) return require('twilio')(apiKey, apiSecret, { accountSid: sid });
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (authToken) return require('twilio')(sid, authToken);
+  return null;
+}
+
 function sanitize(str) {
   if (!str) return '';
   return String(str).replace(/[<>'"]/g, '').slice(0, 500);
@@ -75,10 +86,10 @@ module.exports = async (req, res) => {
 
   // SMS via Twilio — alert owner on every new lead
   const ownerPhone = process.env.OWNER_PHONE || process.env.TWILIO_TO;
-  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM && ownerPhone) {
+  const twilioClient = getTwilioClient();
+  if (twilioClient && process.env.TWILIO_FROM && ownerPhone) {
     try {
-      const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      await twilio.messages.create({
+      await twilioClient.messages.create({
         body: `🚨 NEW LEAD — Call NOW!\nName: ${name}\nPhone: ${phone}\nCity: ${city || 'TX'}\nSource: ${source}`,
         from: process.env.TWILIO_FROM,
         to: ownerPhone
