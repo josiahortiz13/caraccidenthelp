@@ -1237,53 +1237,6 @@ var counterObs = new IntersectionObserver(function(entries){
 }, {threshold:0.4});
 document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe(el); });
 
-/* ── VOICE RECORDING ── */
-var recognition = null;
-var isRecording = false;
-function toggleVoice(){
-  var btn = document.getElementById('mic-btn');
-  var desc = document.getElementById('f-desc');
-  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    alert('Voice input is not supported on this browser. Try Chrome or Samsung Browser.');
-    return;
-  }
-  if(isRecording){
-    if(recognition) recognition.stop();
-    return;
-  }
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.lang = 'en-US';
-  var base = desc.value;
-  recognition.onstart = function(){
-    isRecording = true;
-    btn.textContent = '⏹️';
-    btn.style.background = '#ff4444';
-    btn.style.animation = 'micPulse 1s infinite';
-  };
-  recognition.onresult = function(e){
-    var interim = '';
-    var final = '';
-    for(var i = e.resultIndex; i < e.results.length; i++){
-      if(e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    desc.value = base + final + interim;
-    if(final) base = base + final;
-  };
-  recognition.onend = function(){
-    isRecording = false;
-    btn.textContent = '🎤';
-    btn.style.background = 'var(--red)';
-    btn.style.animation = '';
-  };
-  recognition.start();
-}
 </script>
-<style>
-@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,68,.6)}50%{box-shadow:0 0 0 8px rgba(255,68,68,0)}}
-</style>
 </body>
 </html>
