@@ -86,17 +86,34 @@ module.exports = async (req, res) => {
 
   // SMS via Twilio — alert owner on every new lead
   const ownerPhone = process.env.OWNER_PHONE || process.env.TWILIO_TO;
-  const twilioClient = getTwilioClient();
+  console.log('Twilio env check:', {
+    hasSid: !!process.env.TWILIO_ACCOUNT_SID,
+    hasApiKey: !!process.env.TWILIO_API_KEY,
+    hasApiSecret: !!process.env.TWILIO_API_SECRET,
+    hasAuthToken: !!process.env.TWILIO_AUTH_TOKEN,
+    hasFrom: !!process.env.TWILIO_FROM,
+    hasOwnerPhone: !!ownerPhone,
+  });
+  let twilioClient = null;
+  try {
+    twilioClient = getTwilioClient();
+  } catch (err) {
+    console.error('getTwilioClient threw:', err.message);
+  }
+  console.log('twilioClient:', twilioClient ? 'OK' : 'null');
   if (twilioClient && process.env.TWILIO_FROM && ownerPhone) {
     try {
       await twilioClient.messages.create({
-        body: `🚨 NEW LEAD — Call NOW!\nName: ${name}\nPhone: ${phone}\nCity: ${city || 'TX'}\nSource: ${source}`,
+        body: `NEW LEAD - Call NOW!\nName: ${name}\nPhone: ${phone}\nCity: ${city || 'TX'}\nSource: ${source}`,
         from: process.env.TWILIO_FROM,
         to: ownerPhone
       });
+      console.log('Twilio SMS sent to', ownerPhone);
     } catch (err) {
-      console.error('Twilio error:', err.message);
+      console.error('Twilio error:', err.message, err.code);
     }
+  } else {
+    console.log('Twilio SMS skipped — client:', !!twilioClient, 'from:', !!process.env.TWILIO_FROM, 'to:', !!ownerPhone);
   }
 
   console.log('Lead received:', { name, phone, city, source, timestamp });
