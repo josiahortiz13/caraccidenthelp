@@ -10,6 +10,11 @@
           "value": "crashhelptx.com"
         }
       ]
+    },
+    {
+      "source": "/partners(.html)?",
+      "destination": "/",
+      "permanent": false
     }
   ],
   "headers": [
@@ -101,14 +106,6 @@
     {
       "source": "/apple-touch-icon.png",
       "destination": "/apple-touch-icon.png"
-    },
-    {
-      "source": "/partners",
-      "destination": "/partners.html"
-    },
-    {
-      "source": "/partners.html",
-      "destination": "/partners.html"
     },
     {
       "source": "/privacy",
