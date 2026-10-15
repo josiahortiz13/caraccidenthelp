@@ -111,6 +111,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .st-card .v{font:900 20px var(--sign);margin-top:4px}
 .st-card .d{font-size:12.5px;color:var(--dim);margin-top:4px;word-break:break-word}
 .v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.na{color:var(--amber)}
+.res-PASS,.res-CONFIGURED,.res-READY{color:var(--green);font-weight:700}.res-FAIL,.res-MISSING,.res-INVALID{color:var(--red);font-weight:700}.res-WAITING,.res-PENDING{color:var(--amber);font-weight:700}.res-ACTION{color:var(--red);font-weight:700}
 .settings{display:grid;gap:18px;max-width:760px;padding-bottom:60px}
 .settings fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;background:var(--panel)}
 .settings legend{font:900 13px var(--sign);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);padding:0 6px}
@@ -155,7 +156,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div data-panel="leads">
       <div class="toolbar">
         <input id="search" placeholder="Search name, phone, email, lead ID" aria-label="Search leads">
-        <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option></select>
+        <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option value="TEST">🧪 TEST leads only</option></select>
         <div class="legend"><span><i style="background:var(--green)"></i>0–5 min</span><span><i style="background:var(--amber)"></i>5–15</span><span><i style="background:var(--orange)"></i>15–30</span><span><i style="background:var(--red)"></i>30+ uncontacted</span></div>
       </div>
       <div class="queue" id="queue"></div>
@@ -172,6 +173,24 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <button class="btn red" id="testSms">Send test text to owner</button>
         <button class="btn" id="testCall">Test text + call to owner</button>
         <button class="btn" id="runTick">Run escalation check now</button>
+      </div>
+      <div class="owner-only">
+        <div class="sec" style="margin:0 0 10px">Staging checks</div>
+        <div class="row" style="margin-bottom:12px">
+          <button class="btn" id="envBtn">Check environment variables</button>
+          <button class="btn" id="numBtn">Check Twilio number &amp; A2P</button>
+          <button class="btn" id="pointBtn">Point CrashHelp number at this deployment</button>
+        </div>
+        <div class="tablebox hidden" id="envBox"><table><thead><tr><th>Setting</th><th>Status</th><th>Note</th></tr></thead><tbody id="envBody"></tbody></table></div>
+        <div class="tablebox hidden" id="numBox"><table><thead><tr><th>Twilio check</th><th>Status</th><th>Note</th></tr></thead><tbody id="numBody"></tbody></table></div>
+        <div class="sec" style="margin:8px 0 10px">End-to-end test (test mode only)</div>
+        <div class="row" style="margin-bottom:12px;align-items:end">
+          <label>Test lead's phone (from ALLOWED_TEST_NUMBERS) <select id="e2ePhone"></select></label>
+          <button class="btn red" id="e2eChain">Run chain test (TEST CRASHHELP, prefers CALL)</button>
+          <button class="btn" id="e2eEsc">Run escalation test (accelerated)</button>
+        </div>
+        <p style="color:var(--dim);font-size:13px;margin:-4px 0 12px">Use a different phone than the owner's for the lead, so pressing 1 can actually bridge two phones. Test leads are hidden from normal reporting; see them with the TEST filter on the Leads tab.</p>
+        <div class="tablebox hidden" id="e2eBox"><table><thead><tr><th>Step</th><th>Result</th><th>Detail</th></tr></thead><tbody id="e2eBody"></tbody></table></div>
       </div>
     </div>
 
@@ -228,7 +247,7 @@ function leadCard(l) {
     <div class="stripe"></div>
     <div class="main" data-open="${esc(l.lead_id)}">
       <h3>${esc(name)} ${l.lead_priority === 'HIGH PRIORITY' ? '<span class="chip hi">HIGH PRIORITY</span>' : l.lead_priority === 'LOW INFORMATION' ? '<span class="chip">LOW INFO</span>' : ''}</h3>
-      <div class="chips"><span class="chip st">${esc(l.lead_status)}</span>${l.preferred_contact ? `<span class="chip">PREFERS ${esc(l.preferred_contact.toUpperCase())}</span>` : ''}${!l.contact_consent ? '<span class="chip warn">NO CONSENT YET</span>' : ''}${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}${l.repeat_count ? `<span class="chip">+${l.repeat_count} REPEAT</span>` : ''}${l.assigned_to ? `<span class="chip">→ ${esc(l.assigned_to)}</span>` : ''}</div>
+      <div class="chips"><span class="chip st">${esc(l.lead_status)}</span>${l.preferred_contact ? `<span class="chip">PREFERS ${esc(l.preferred_contact.toUpperCase())}</span>` : ''}${!l.contact_consent ? '<span class="chip warn">NO CONSENT YET</span>' : ''}${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}${l.repeat_count ? `<span class="chip">+${l.repeat_count} REPEAT</span>` : ''}${l.assigned_to ? `<span class="chip">→ ${esc(l.assigned_to)}</span>` : ''}${l.is_test ? '<span class="chip warn">🧪 TEST</span>' : ''}</div>
       <div class="meta"><span><b>${esc(l.phone || '—')}</b></span><span>${esc(l.crash_city || '—')}${l.crash_county ? ', ' + esc(l.crash_county) : ''}</span><span>Injury: <b>${esc(pretty(l.injury_status))}</b></span><span>Source: ${esc(l.utm_source || l.source || '—')}</span><span>${esc(l.lead_id)}</span></div>
     </div>
     <div class="age" data-age="${esc(l.lead_id)}">${open ? fmtAge(liveAge(l)) : 'contacted'}</div>
@@ -281,7 +300,7 @@ async function loadLeads() {
 }
 
 async function loadMetrics() {
-  const m = await api('metrics');
+  const m = await api('metrics', { params: $('#statusFilter').value === 'TEST' ? { test: '1' } : {} });
   const c = m.counts, t = m.times;
   const avg = t.avg_attempt_sec;
   const over = avg != null && avg > m.target_min * 60;
@@ -300,7 +319,7 @@ async function loadMetrics() {
 async function refresh() { try { await Promise.all([loadLeads(), loadMetrics()]); } catch (e) { if (e.message !== 'Signed out') console.warn(e); } }
 
 // ---------- Lead file (drawer) ----------
-const GOOD = ['sms_sent', 'email_sent', 'internal_alert_sent', 'call_connected', 'crm_synced', 'owner_alert_answered', 'inbound_call_answered', 'consent_received', 'sms_opt_in'];
+const GOOD = ['owner_keypress', 'sms_sent', 'email_sent', 'internal_alert_sent', 'call_connected', 'crm_synced', 'owner_alert_answered', 'inbound_call_answered', 'consent_received', 'sms_opt_in'];
 const BAD = ['sms_failed', 'sms_blocked', 'call_failed', 'call_blocked', 'email_failed', 'crm_failed', 'internal_alert_failed', 'escalated', 'sms_undelivered', 'inbound_call_missed', 'sms_opt_out', 'bridge_blocked', 'call_no_answer', 'call_busy'];
 function eventText(e) {
   const d = e.detail || {};
@@ -316,7 +335,7 @@ function eventText(e) {
     repeat_submission: 'Submitted the form again', sms_opt_out: `Opted out of texts (${d.keyword})`, sms_received: `Text received: "${d.preview}"`,
     consumer_confirmation_skipped: `Confirmation not sent · ${pretty(d.reason)}`, backup_call_scheduled: `Backup call scheduled · ${d.delay_min} min`,
     inbound_call_missed: 'Missed inbound call', inbound_call_answered: `Inbound call answered · ${fmtDur(d.duration)}`, consent_received: 'Consent received by text',
-    priority_changed: `Priority → ${d.to}`,
+    priority_changed: `Priority → ${d.to}`, owner_keypress: `Owner pressed ${d.digits || 'nothing'}`, repeat_contact: 'Called or texted again',
   };
   return map[e.type] || pretty(e.type);
 }
@@ -402,6 +421,28 @@ $('#testSms').onclick = async () => { try { const r = await api('test-alerts', {
 $('#testCall').onclick = async () => { try { const r = await api('test-alerts', { method: 'POST', body: { voice: true } }); toast(r.result.voice?.ok ? 'Calling your phone…' : 'Test call failed: ' + (r.result.voice?.reason || r.result.voice?.error || 'no owner phone')); loadStatus(); } catch (e) { toast(e.message); } };
 $('#runTick').onclick = async () => { try { const r = await api('run-tick', { method: 'POST', body: {} }); toast(`Escalations sent: ${r.escalation?.escalated ?? 0}`); refresh(); } catch (e) { toast(e.message); } };
 
+// ---------- Staging checks ----------
+const rows = (list) => list.map((c) => `<tr><td>${esc(c.name)}</td><td class="res-${esc(String(c.state || c.result).split(' ')[0])}">${esc(c.state || c.result)}</td><td>${esc(c.note || '')}</td></tr>`).join('');
+$('#envBtn').onclick = async () => { try { const r = await api('env-check'); $('#envBody').innerHTML = rows(r.checks); $('#envBox').classList.remove('hidden'); } catch (e) { toast(e.message); } };
+$('#numBtn').onclick = async () => { try { const r = await api('twilio-check'); $('#numBody').innerHTML = rows(r.items.length ? r.items : [{ name: 'Twilio', state: r.state, note: r.note }]); $('#numBox').classList.remove('hidden'); } catch (e) { toast(e.message); } };
+$('#pointBtn').onclick = async () => {
+  const c = prompt('This changes where the CrashHelp number sends calls and texts: to THIS deployment. Type POINT NUMBER HERE to confirm.');
+  if (c === null) return;
+  try { const r = await api('point-number', { method: 'POST', body: { confirm: c } }); toast('Number now points here. Previous voice URL: ' + (r.previous.voiceUrl || 'none')); $('#numBtn').click(); } catch (e) { toast(e.message); }
+};
+async function loadTestNumbers() {
+  try { const r = await api('test-numbers'); $('#e2ePhone').innerHTML = r.numbers.map((n) => `<option value="${n.index}">${esc(n.label)}</option>`).join('') || '<option value="">None set</option>'; } catch {}
+}
+async function runE2E(kind) {
+  try {
+    const r = await api('run-e2e', { method: 'POST', body: { phone_index: $('#e2ePhone').value, kind } });
+    $('#e2eBody').innerHTML = rows(r.steps) + `<tr><td colspan="3"><button class="btn" data-open="${esc(r.lead_id)}">Open ${esc(r.lead_id)} timeline</button></td></tr>`;
+    $('#e2eBox').classList.remove('hidden'); toast(kind === 'escalation' ? 'Escalation test lead created' : 'Chain test ran. Answer your phone.');
+  } catch (e) { toast(e.message); }
+}
+$('#e2eChain').onclick = () => runE2E('chain');
+$('#e2eEsc').onclick = () => runE2E('escalation');
+
 // ---------- Settings ----------
 async function loadSettings() {
   const { settings: s, can_edit } = await api('settings');
@@ -452,10 +493,10 @@ async function loadSettings() {
 document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
   document.querySelectorAll('nav button').forEach((x) => x.setAttribute('aria-selected', x === b));
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== b.dataset.tab));
-  if (b.dataset.tab === 'status') loadStatus(); if (b.dataset.tab === 'settings') loadSettings();
+  if (b.dataset.tab === 'status') { loadStatus(); loadTestNumbers(); } if (b.dataset.tab === 'settings') loadSettings();
 });
 $('#search').oninput = () => { clearTimeout(window._s); window._s = setTimeout(loadLeads, 250); };
-$('#statusFilter').onchange = loadLeads;
+$('#statusFilter').onchange = () => { loadLeads(); loadMetrics(); };
 $('#soundBtn').onclick = () => { sound = !sound; $('#soundBtn').textContent = sound ? '🔔 Sound' : '🔕 Sound'; if (sound) beep(); };
 $('#logout').onclick = async () => { await api('logout', { method: 'POST' }).catch(() => {}); showLogin(); };
 $('#loginForm').onsubmit = async (e) => {
@@ -467,6 +508,7 @@ $('#loginForm').onsubmit = async (e) => {
 async function boot() {
   $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
   $('#who').textContent = `${me.name} · ${me.role}`;
+  document.querySelectorAll('.owner-only').forEach((el) => el.classList.toggle('hidden', me.role !== 'owner'));
   await refresh(); loadStatus().catch(() => {});
   const id = decodeURIComponent(location.hash.slice(1)); if (id) openLead(id).catch(() => {});
   setInterval(refresh, 10000); setInterval(tickAges, 1000);

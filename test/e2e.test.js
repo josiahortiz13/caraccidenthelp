@@ -342,3 +342,122 @@ test('16. old site form (name/city/when) still works and nothing texts the lead 
   assert.equal(smsTo(TESTER).length, 0, 'no consent → no confirmation text');
   assert.equal(smsTo(OWNER).length, 1, 'owner still alerted');
 });
+
+// ---------------- Staging acceptance (mirrors the owner's go-live test plan) ----------------
+const SPARE = '+18325550199'; // approved test number used as the TEST lead's phone (owner is ...0101)
+
+test('17. one-tap chain test: TEST CRASHHELP lead → every step verified → ring → keypress → bridge → connected', async () => {
+  const idx = h.ENV.ALLOWED_TEST_NUMBERS.split(',').indexOf(SPARE);
+  const r = await admin('run-e2e', { method: 'POST', body: { phone_index: idx, kind: 'chain' } });
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  const byName = Object.fromEntries(r.json.steps.map((s) => [s.name, s.result]));
+  for (const s of ['Database save', 'Lead ID assigned', 'Marked is_test (hidden from real reporting)', 'Duplicate check', 'Confirmation SMS to test number',
+    'Owner SMS alert', 'Backup SMS alert', 'Owner phone ringing (voice alert placed)', 'Email notification', 'CRM sync', 'Admin dashboard entry (TEST filter)', 'Response timer running']) {
+    assert.equal(byName[s], 'PASS', s);
+  }
+  const id = r.json.lead_id;
+  const l = await lead(id);
+  assert.deepEqual([l.first_name, l.last_name, l.crash_city, l.crash_county, l.preferred_contact, l.injury_status, l.medical_status, l.vehicle_damage, l.utm_source, l.utm_campaign, l.is_test],
+    ['TEST', 'CRASHHELP', 'Houston', 'Harris', 'call', 'unsure', 'not_yet', 'yes', 'END_TO_END_TEST', 'CRASHHELP_TEST', true]);
+  assert.match(smsTo(OWNER)[0].body, /^🧪 TEST — 🚨 NEW CRASHHELP TX LEAD/);
+
+  const ring = await h.twilioPost(base, `r=owner-alert&lead=${id}`, { CallSid: 'CAe2e', AnsweredBy: 'human' });
+  assert.match(ring.text, /New CrashHelp T X test lead from Test in Houston\. Press 1 to connect\./);
+  const press = await h.twilioPost(base, `r=owner-gather&lead=${id}`, { CallSid: 'CAe2e', Digits: '1' });
+  assert.match(press.text, /<Dial callerId="\+13468601929"[^>]*>\+18325550199<\/Dial>/);
+  await h.twilioPost(base, `r=bridge-status&lead=${id}&actor=owner`, { CallSid: 'CAe2e', DialCallStatus: 'completed', DialCallDuration: '37' });
+  const types = (await events(id)).map((e) => e.type);
+  for (const t of ['call_started', 'owner_alert_answered', 'owner_keypress', 'bridge_dialing', 'call_connected']) assert.ok(types.includes(t), t);
+  assert.equal((await events(id)).find((e) => e.type === 'call_connected').detail.duration, 37);
+  assert.equal((await lead(id)).lead_status, 'CONTACTED');
+
+  // Test leads stay out of real reporting, but show under the TEST filter.
+  assert.equal((await admin('leads')).json.leads.some((x) => x.lead_id === id), false);
+  assert.equal((await admin('leads', { params: { status: 'TEST' } })).json.leads.some((x) => x.lead_id === id), true);
+  assert.equal((await admin('metrics')).json.counts.contacted, 0);
+  assert.equal((await admin('metrics', { params: { test: '1' } })).json.counts.contacted, 1);
+});
+
+test('18. accelerated escalation on a TEST lead: 1/2/3 min stand in for 5/15/30, stops when CONTACTED', async () => {
+  const idx = h.ENV.ALLOWED_TEST_NUMBERS.split(',').indexOf(SPARE);
+  const r = await admin('run-e2e', { method: 'POST', body: { phone_index: idx, kind: 'escalation' } });
+  const id = r.json.lead_id;
+  assert.equal(r.json.steps.find((s) => s.name === '0 min: owner alert sent').result, 'PASS');
+  reset();
+  await backdate(id, 1); await tick();
+  assert.match(smsTo(OWNER)[0].body, /^🧪 TEST \(accelerated\) — ⚠️ CRASHHELP LEAD STILL UNCONTACTED/);
+  assert.equal(smsTo(BACKUP).length, 0);
+  await backdate(id, 2); await tick();
+  assert.match(smsTo(OWNER)[1].body, /15-MINUTE RESPONSE ALERT/); assert.equal(smsTo(BACKUP).length, 1);
+  await admin('mark-contacted', { method: 'POST', body: { lead_id: id } });
+  await backdate(id, 3); await tick();
+  assert.equal(smsTo(OWNER).length, 2, 'stopped immediately after CONTACTED');
+  assert.equal(callsTo(OWNER).length, 0);
+  assert.equal(smsTo(SPARE).length, 0, 'test lead never re-texted by escalation');
+
+  // Real leads still use 5/15/30 (a 3-minute-old real lead does not escalate).
+  const real = await submit({ phone: '832-555-0150', email: 'real@example.com' });
+  reset(); await backdate(real.json.lead_id, 3); await tick();
+  assert.equal(smsTo(OWNER).length, 0);
+});
+
+test('19b. running the chain test twice in a row confirms the tester both times', async () => {
+  const idx = h.ENV.ALLOWED_TEST_NUMBERS.split(',').indexOf(SPARE);
+  await submit(); // a real lead on the same phone earlier the same day must not block test confirmations
+  for (let i = 0; i < 2; i++) {
+    const r = await admin('run-e2e', { method: 'POST', body: { phone_index: idx } });
+    assert.equal(r.json.steps.find((s) => s.name === 'Confirmation SMS to test number').result, 'PASS', 'run ' + (i + 1));
+  }
+});
+
+test('19. a TEST marker on a non-approved number is ignored (real leads can never be hidden)', async () => {
+  const r = await submit({ phone: '713-555-0142', utm_source: 'END_TO_END_TEST', utm_campaign: 'CRASHHELP_TEST' });
+  assert.equal((await lead(r.json.lead_id)).is_test, false);
+  assert.ok((await admin('leads')).json.leads.some((x) => x.lead_id === r.json.lead_id));
+});
+
+test('20. environment check reports CONFIGURED/MISSING/INVALID and never leaks a secret', async () => {
+  const r = await admin('env-check');
+  const st = Object.fromEntries(r.json.checks.map((c) => [c.name, c.state]));
+  assert.equal(st.TWILIO_ACCOUNT_SID, 'CONFIGURED');
+  assert.equal(st.TWILIO_AUTH_TOKEN, 'INVALID', 'harness token is not a real 32-hex token, so it must be flagged');
+  assert.equal(st.TWILIO_PHONE_NUMBER, 'CONFIGURED');
+  assert.equal(st.TWILIO_TEST_MODE, 'CONFIGURED');
+  assert.equal(st.ALLOWED_TEST_NUMBERS, 'CONFIGURED');
+  assert.equal(st.SESSION_SECRET, 'CONFIGURED');
+  assert.equal(st['ADMIN credentials'], 'CONFIGURED');
+  assert.equal(st.DATABASE_URL, 'CONFIGURED');
+  assert.equal(st['Email (GMAIL_APP_PASSWORD)'], 'MISSING');
+  assert.equal(st['CRM / HighLevel'], 'CONFIGURED');
+  const raw = JSON.stringify(r.json);
+  for (const secret of [h.ENV.TWILIO_AUTH_TOKEN, h.ENV.SESSION_SECRET, 'owner-pass', 'staff-pass', h.ENV.GHL_API_KEY, h.ENV.CRON_SECRET]) assert.ok(!raw.includes(secret), 'leaked ' + secret.slice(0, 4));
+  assert.equal((await admin('env-check', { cookie: staffCookie })).status, 403, 'owner only');
+});
+
+test('21. Twilio number check + one-click webhook setup + A2P status', async () => {
+  const fake = global.__crashhelpFakeTwilio;
+  fake.number = { sid: 'PN1', phoneNumber: '+13468601929', capabilities: { sms: true, voice: true }, voiceUrl: '', smsUrl: 'https://demo.twilio.com/welcome/sms/reply', statusCallback: '' };
+  fake.brands = [{ status: 'APPROVED' }]; fake.services = [{ sid: 'MG1' }]; fake.campaigns = { MG1: [{ campaignStatus: 'PENDING' }] };
+  let c = await admin('twilio-check');
+  const st = () => Object.fromEntries(c.json.items.map((i) => [i.name, i.state]));
+  assert.equal(st()['SMS capable'], 'READY'); assert.equal(st()['Inbound voice webhook'], 'ACTION REQUIRED'); assert.equal(st()['A2P 10DLC'], 'PENDING');
+  assert.equal((await admin('point-number', { method: 'POST', body: { confirm: 'yes' } })).status, 400, 'needs typed confirmation');
+  const p = await admin('point-number', { method: 'POST', body: { confirm: 'POINT NUMBER HERE' } });
+  assert.equal(p.json.previous.smsUrl, 'https://demo.twilio.com/welcome/sms/reply');
+  assert.equal(fake.number.voiceUrl, 'https://www.crashhelptx.com/api/twilio?r=voice');
+  assert.equal(fake.number.smsUrl, 'https://www.crashhelptx.com/api/twilio?r=sms');
+  assert.equal(fake.number.statusCallback, 'https://www.crashhelptx.com/api/twilio?r=call-status&purpose=inbound');
+  fake.campaigns.MG1[0].campaignStatus = 'VERIFIED';
+  c = await admin('twilio-check');
+  assert.equal(c.json.state, 'READY');
+  fake.number = null;
+  c = await admin('twilio-check'); assert.equal(c.json.state, 'ACTION REQUIRED');
+});
+
+test('22. run-e2e refuses when test mode is off', async () => {
+  process.env.TWILIO_TEST_MODE = 'false';
+  try {
+    const r = await admin('run-e2e', { method: 'POST', body: { phone_index: 0 } });
+    assert.equal(r.status, 500); assert.match(r.json.error, /Test mode is OFF/);
+  } finally { process.env.TWILIO_TEST_MODE = 'true'; }
+});

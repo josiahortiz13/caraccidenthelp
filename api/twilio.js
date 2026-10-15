@@ -225,13 +225,13 @@ async function handleOwnerAlert(req, res) {
     return sendXml(res, twiml('<Hangup/>'));
   }
   if (!lead) return sendXml(res, twiml(say('This lead could not be found. Check the dashboard.')));
-  const who = `${lead.first_name || 'a caller'}${lead.crash_city ? ` in ${lead.crash_city}` : ''}`;
+  const who = `${lead.is_test ? (lead.first_name || 'Test').charAt(0) + (lead.first_name || 'test').slice(1).toLowerCase() : (lead.first_name || 'a caller')}${lead.crash_city ? ` in ${lead.crash_city}` : ''}`;
   const canBridge = !!lead.phone && lead.contact_consent;
   await store.event(lead.lead_id, 'owner_alert_answered', { purpose: req.query.purpose || 'owner_alert' });
   if (!canBridge) {
     return sendXml(res, twiml(say(`New CrashHelp T X lead from ${who}. They prefer ${lead.preferred_contact || 'a callback'}. Check your texts for details.`)));
   }
-  const prompt = say(`New CrashHelp T X lead from ${who}. Press 1 to connect.`);
+  const prompt = say(`New CrashHelp T X ${lead.is_test ? 'test ' : ''}lead from ${who}. Press 1 to connect.`);
   return sendXml(res, twiml(
     `<Gather numDigits="1" timeout="8" action="${url(`r=owner-gather&lead=${encodeURIComponent(lead.lead_id)}`)}">${prompt}</Gather>` +
     `<Gather numDigits="1" timeout="8" action="${url(`r=owner-gather&lead=${encodeURIComponent(lead.lead_id)}`)}">${prompt}</Gather>` +
@@ -260,6 +260,7 @@ async function bridgeTo(lead, actor) {
 async function handleOwnerGather(req, res) {
   const lead = await leadById(req.query.lead);
   if (!lead) return sendXml(res, twiml(say('Lead not found.')));
+  await store.event(lead.lead_id, 'owner_keypress', { digits: String(req.body.Digits || '') }, 'owner');
   if (String(req.body.Digits) !== '1') return sendXml(res, twiml(say('Okay. The lead is in your dashboard.')));
   return sendXml(res, await bridgeTo(lead, 'owner'));
 }

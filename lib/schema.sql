@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS leads (
   backup_call_due_at      TIMESTAMPTZ,
   notes                   TEXT
 );
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS leads_phone_idx   ON leads (phone);
 CREATE INDEX IF NOT EXISTS leads_email_idx   ON leads (lower(email));
 CREATE INDEX IF NOT EXISTS leads_status_idx  ON leads (lead_status);

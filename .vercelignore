@@ -8,3 +8,4 @@ lead-engine-agent.md
 test/
 *.py
 .env.example
+STAGING.md

@@ -8,14 +8,20 @@ const crm = require('../lib/crm');
 const leads = require('../lib/leads');
 const escalation = require('../lib/escalation');
 const email = require('../lib/email');
+const staging = require('../lib/staging');
 const { sendJson, clientIp, clean, maskPhone, normalizePhone } = require('../lib/util');
 
-const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings'];
+const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers'];
 
 async function listLeads(q) {
   const params = [];
   let where = 'duplicate_of IS NULL';
-  if (q.status) { params.push(q.status); where += ` AND lead_status = $${params.length}`; }
+  // TEST leads are hidden from the normal queue and only shown under the TEST filter.
+  if (q.status === 'TEST') where += ' AND is_test = true';
+  else {
+    where += ' AND is_test = false';
+    if (q.status) { params.push(q.status); where += ` AND lead_status = $${params.length}`; }
+  }
   if (q.search) {
     params.push(`%${String(q.search).toLowerCase()}%`);
     where += ` AND (lower(coalesce(first_name,'')||' '||coalesce(last_name,'')) LIKE $${params.length} OR phone LIKE $${params.length} OR lower(coalesce(email,'')) LIKE $${params.length} OR lower(lead_id) LIKE $${params.length})`;
@@ -42,7 +48,7 @@ async function leadDetail(id) {
   return { lead, timeline: events.rows, messages: messages.rows, calls: calls.rows, repeats: repeats.rows };
 }
 
-async function metrics() {
+async function metrics(test = false) {
   const settings = await store.getSettings();
   const target = Number(settings.response_target_min) || 5;
   const one = (sql, p) => db.one(sql, p);
@@ -56,25 +62,26 @@ async function metrics() {
       count(*) FILTER (WHERE lead_status = 'REFERRED')::int AS referred,
       count(*) FILTER (WHERE lead_status = 'NO RESPONSE')::int AS no_response,
       count(*) FILTER (WHERE lead_priority = 'HIGH PRIORITY' AND lead_status = ANY($1))::int AS high_open
-    FROM leads WHERE duplicate_of IS NULL`, [leads.OPEN_STATUSES]);
+    FROM leads WHERE duplicate_of IS NULL AND is_test = $2`, [leads.OPEN_STATUSES, test]);
   const times = await one(`SELECT
       round(avg(EXTRACT(EPOCH FROM (first_alert_at - created_at))))::int AS avg_alert_sec,
       round(avg(EXTRACT(EPOCH FROM (first_response_at - created_at))))::int AS avg_attempt_sec,
       round(avg(EXTRACT(EPOCH FROM (first_contact_at - created_at))))::int AS avg_contact_sec,
       round(avg(EXTRACT(EPOCH FROM (appointment_at - created_at))))::int AS avg_appointment_sec,
       count(*) FILTER (WHERE first_response_at IS NOT NULL AND first_response_at - created_at > make_interval(mins => $1::int))::int AS over_target
-    FROM leads WHERE duplicate_of IS NULL AND created_at >= now() - interval '30 days' AND source <> 'inbound_call'`, [target]);
+    FROM leads WHERE duplicate_of IS NULL AND is_test = $2 AND created_at >= now() - interval '30 days' AND source <> 'inbound_call'`, [target, test]);
   const sources = await db.query(`SELECT coalesce(nullif(utm_source,''), source, 'direct') AS source, coalesce(nullif(utm_campaign,''),'—') AS campaign,
       count(*)::int AS leads,
       count(*) FILTER (WHERE first_contact_at IS NOT NULL)::int AS contacted,
       count(*) FILTER (WHERE lead_status IN ('QUALIFIED','APPOINTMENT SET','REFERRED'))::int AS qualified
-    FROM leads WHERE duplicate_of IS NULL AND created_at >= now() - interval '30 days'
-    GROUP BY 1,2 ORDER BY leads DESC LIMIT 12`);
+    FROM leads WHERE duplicate_of IS NULL AND is_test = $1 AND created_at >= now() - interval '30 days'
+    GROUP BY 1,2 ORDER BY leads DESC LIMIT 12`, [test]);
+  const notTest = `(lead_id IS NULL OR lead_id IN (SELECT lead_id FROM leads WHERE is_test = ${test ? 'true' : 'false'}))`;
   const activity = await one(`SELECT
-      (SELECT count(*)::int FROM messages WHERE direction='outbound' AND status NOT IN ('blocked','failed') AND created_at >= now() - interval '7 days') AS texts_sent,
-      (SELECT count(*)::int FROM calls WHERE direction='outbound' AND status <> 'failed' AND created_at >= now() - interval '7 days') AS calls_made,
-      (SELECT count(*)::int FROM messages WHERE status IN ('failed','undelivered') AND created_at >= now() - interval '7 days') AS twilio_sms_failures,
-      (SELECT count(*)::int FROM calls WHERE status = 'failed' AND created_at >= now() - interval '7 days') AS twilio_call_failures,
+      (SELECT count(*)::int FROM messages WHERE direction='outbound' AND status NOT IN ('blocked','failed') AND created_at >= now() - interval '7 days' AND ${notTest}) AS texts_sent,
+      (SELECT count(*)::int FROM calls WHERE direction='outbound' AND status <> 'failed' AND created_at >= now() - interval '7 days' AND ${notTest}) AS calls_made,
+      (SELECT count(*)::int FROM messages WHERE status IN ('failed','undelivered') AND created_at >= now() - interval '7 days' AND ${notTest}) AS twilio_sms_failures,
+      (SELECT count(*)::int FROM calls WHERE status = 'failed' AND created_at >= now() - interval '7 days' AND ${notTest}) AS twilio_call_failures,
       (SELECT count(*)::int FROM crm_queue WHERE done = false) AS crm_pending,
       (SELECT count(*)::int FROM crm_queue WHERE done = false AND attempts >= 8) AS crm_gave_up`);
   return { counts, times, target_min: target, sources: sources.rows, activity };
@@ -214,7 +221,7 @@ module.exports = async (req, res) => {
         return sendJson(res, 200, { ok: true });
       }
 
-      case 'metrics': return sendJson(res, 200, await metrics());
+      case 'metrics': return sendJson(res, 200, await metrics(q.test === '1'));
       case 'status': return sendJson(res, 200, await twilioStatus());
 
       case 'settings': {
@@ -262,6 +269,25 @@ module.exports = async (req, res) => {
       }
 
       case 'run-tick': return sendJson(res, 200, await escalation.tick());
+
+      // ---- Staging self-checks (owner only; never return secret values) ----
+      case 'env-check':
+      case 'twilio-check':
+      case 'test-numbers':
+      case 'point-number':
+      case 'run-e2e': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        if (a === 'env-check') return sendJson(res, 200, { checks: await staging.envCheck(req) });
+        if (a === 'twilio-check') return sendJson(res, 200, await staging.twilioCheck());
+        if (a === 'test-numbers') return sendJson(res, 200, { numbers: staging.allowedForPicker(), test_mode: tw.testMode() });
+        if (a === 'point-number') {
+          if (body.confirm !== 'POINT NUMBER HERE') return sendJson(res, 400, { error: 'Type POINT NUMBER HERE to confirm.' });
+          return sendJson(res, 200, await staging.pointNumberHere(user.name));
+        }
+        const result = await staging.runE2E({ leadPhoneIndex: body.phone_index, kind: body.kind === 'escalation' ? 'escalation' : 'chain' }, user.name);
+        await store.audit(user.name, 'e2e_test_run', result.lead_id, { kind: result.kind });
+        return sendJson(res, 200, result);
+      }
 
       default: return sendJson(res, 404, { error: 'Unknown action' });
     }
