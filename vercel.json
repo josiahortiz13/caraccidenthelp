@@ -1,102 +1,382 @@
 {
   "redirects": [
-    { "source": "/(.*)", "destination": "https://www.crashhelptx.com/$1", "permanent": true, "has": [{ "type": "host", "value": "crashhelptx.com" }] }
+    {
+      "source": "/(.*)",
+      "destination": "https://www.crashhelptx.com/$1",
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "crashhelptx.com"
+        }
+      ]
+    }
   ],
   "headers": [
     {
+      "source": "/admin(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(self), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(self), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/logo.svg", "destination": "/logo.svg" },
-    { "source": "/og-image.png", "destination": "/og-image.png" },
-    { "source": "/og-image.svg", "destination": "/og-image.svg" },
-    { "source": "/apple-touch-icon.png", "destination": "/apple-touch-icon.png" },
-    { "source": "/partners", "destination": "/partners.html" },
-    { "source": "/partners.html", "destination": "/partners.html" },
-    { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/privacy.html", "destination": "/privacy.html" },
-    { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/terms.html", "destination": "/terms.html" },
-    { "source": "/thank-you", "destination": "/thank-you.html" },
-    { "source": "/thank-you.html", "destination": "/thank-you.html" },
-    { "source": "/houston", "destination": "/houston.html" },
-    { "source": "/houston.html", "destination": "/houston.html" },
-    { "source": "/dallas", "destination": "/dallas.html" },
-    { "source": "/dallas.html", "destination": "/dallas.html" },
-    { "source": "/san-antonio", "destination": "/san-antonio.html" },
-    { "source": "/san-antonio.html", "destination": "/san-antonio.html" },
-    { "source": "/austin", "destination": "/austin.html" },
-    { "source": "/austin.html", "destination": "/austin.html" },
-    { "source": "/es", "destination": "/es.html" },
-    { "source": "/es.html", "destination": "/es.html" },
-    { "source": "/corpus-christi", "destination": "/corpus-christi.html" },
-    { "source": "/corpus-christi.html", "destination": "/corpus-christi.html" },
-    { "source": "/beaumont", "destination": "/beaumont.html" },
-    { "source": "/beaumont.html", "destination": "/beaumont.html" },
-    { "source": "/lubbock", "destination": "/lubbock.html" },
-    { "source": "/lubbock.html", "destination": "/lubbock.html" },
-    { "source": "/amarillo", "destination": "/amarillo.html" },
-    { "source": "/amarillo.html", "destination": "/amarillo.html" },
-    { "source": "/arlington", "destination": "/arlington.html" },
-    { "source": "/arlington.html", "destination": "/arlington.html" },
-    { "source": "/plano", "destination": "/plano.html" },
-    { "source": "/plano.html", "destination": "/plano.html" },
-    { "source": "/garland", "destination": "/garland.html" },
-    { "source": "/garland.html", "destination": "/garland.html" },
-    { "source": "/grand-prairie", "destination": "/grand-prairie.html" },
-    { "source": "/grand-prairie.html", "destination": "/grand-prairie.html" },
-    { "source": "/laredo", "destination": "/laredo.html" },
-    { "source": "/laredo.html", "destination": "/laredo.html" },
-    { "source": "/killeen", "destination": "/killeen.html" },
-    { "source": "/killeen.html", "destination": "/killeen.html" },
-    { "source": "/waco", "destination": "/waco.html" },
-    { "source": "/waco.html", "destination": "/waco.html" },
-    { "source": "/odessa", "destination": "/odessa.html" },
-    { "source": "/odessa.html", "destination": "/odessa.html" },
-    { "source": "/pasadena", "destination": "/pasadena.html" },
-    { "source": "/pasadena.html", "destination": "/pasadena.html" },
-    { "source": "/round-rock", "destination": "/round-rock.html" },
-    { "source": "/round-rock.html", "destination": "/round-rock.html" },
-    { "source": "/pearland", "destination": "/pearland.html" },
-    { "source": "/pearland.html", "destination": "/pearland.html" },
-    { "source": "/el-paso", "destination": "/el-paso.html" },
-    { "source": "/el-paso.html", "destination": "/el-paso.html" },
-    { "source": "/fort-worth", "destination": "/fort-worth.html" },
-    { "source": "/fort-worth.html", "destination": "/fort-worth.html" },
-    { "source": "/midland", "destination": "/midland.html" },
-    { "source": "/midland.html", "destination": "/midland.html" },
-    { "source": "/mcallen", "destination": "/mcallen.html" },
-    { "source": "/mcallen.html", "destination": "/mcallen.html" },
-    { "source": "/abilene", "destination": "/abilene.html" },
-    { "source": "/abilene.html", "destination": "/abilene.html" },
-    { "source": "/irving", "destination": "/irving.html" },
-    { "source": "/irving.html", "destination": "/irving.html" },
-    { "source": "/mckinney", "destination": "/mckinney.html" },
-    { "source": "/mckinney.html", "destination": "/mckinney.html" },
-    { "source": "/frisco", "destination": "/frisco.html" },
-    { "source": "/frisco.html", "destination": "/frisco.html" },
-    { "source": "/sugar-land", "destination": "/sugar-land.html" },
-    { "source": "/sugar-land.html", "destination": "/sugar-land.html" },
-    { "source": "/the-woodlands", "destination": "/the-woodlands.html" },
-    { "source": "/the-woodlands.html", "destination": "/the-woodlands.html" },
-    { "source": "/denton", "destination": "/denton.html" },
-    { "source": "/denton.html", "destination": "/denton.html" }
+    {
+      "source": "/start",
+      "destination": "/start.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/logo.svg",
+      "destination": "/logo.svg"
+    },
+    {
+      "source": "/og-image.png",
+      "destination": "/og-image.png"
+    },
+    {
+      "source": "/og-image.svg",
+      "destination": "/og-image.svg"
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "destination": "/apple-touch-icon.png"
+    },
+    {
+      "source": "/partners",
+      "destination": "/partners.html"
+    },
+    {
+      "source": "/partners.html",
+      "destination": "/partners.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/thank-you",
+      "destination": "/thank-you.html"
+    },
+    {
+      "source": "/thank-you.html",
+      "destination": "/thank-you.html"
+    },
+    {
+      "source": "/houston",
+      "destination": "/houston.html"
+    },
+    {
+      "source": "/houston.html",
+      "destination": "/houston.html"
+    },
+    {
+      "source": "/dallas",
+      "destination": "/dallas.html"
+    },
+    {
+      "source": "/dallas.html",
+      "destination": "/dallas.html"
+    },
+    {
+      "source": "/san-antonio",
+      "destination": "/san-antonio.html"
+    },
+    {
+      "source": "/san-antonio.html",
+      "destination": "/san-antonio.html"
+    },
+    {
+      "source": "/austin",
+      "destination": "/austin.html"
+    },
+    {
+      "source": "/austin.html",
+      "destination": "/austin.html"
+    },
+    {
+      "source": "/es",
+      "destination": "/es.html"
+    },
+    {
+      "source": "/es.html",
+      "destination": "/es.html"
+    },
+    {
+      "source": "/corpus-christi",
+      "destination": "/corpus-christi.html"
+    },
+    {
+      "source": "/corpus-christi.html",
+      "destination": "/corpus-christi.html"
+    },
+    {
+      "source": "/beaumont",
+      "destination": "/beaumont.html"
+    },
+    {
+      "source": "/beaumont.html",
+      "destination": "/beaumont.html"
+    },
+    {
+      "source": "/lubbock",
+      "destination": "/lubbock.html"
+    },
+    {
+      "source": "/lubbock.html",
+      "destination": "/lubbock.html"
+    },
+    {
+      "source": "/amarillo",
+      "destination": "/amarillo.html"
+    },
+    {
+      "source": "/amarillo.html",
+      "destination": "/amarillo.html"
+    },
+    {
+      "source": "/arlington",
+      "destination": "/arlington.html"
+    },
+    {
+      "source": "/arlington.html",
+      "destination": "/arlington.html"
+    },
+    {
+      "source": "/plano",
+      "destination": "/plano.html"
+    },
+    {
+      "source": "/plano.html",
+      "destination": "/plano.html"
+    },
+    {
+      "source": "/garland",
+      "destination": "/garland.html"
+    },
+    {
+      "source": "/garland.html",
+      "destination": "/garland.html"
+    },
+    {
+      "source": "/grand-prairie",
+      "destination": "/grand-prairie.html"
+    },
+    {
+      "source": "/grand-prairie.html",
+      "destination": "/grand-prairie.html"
+    },
+    {
+      "source": "/laredo",
+      "destination": "/laredo.html"
+    },
+    {
+      "source": "/laredo.html",
+      "destination": "/laredo.html"
+    },
+    {
+      "source": "/killeen",
+      "destination": "/killeen.html"
+    },
+    {
+      "source": "/killeen.html",
+      "destination": "/killeen.html"
+    },
+    {
+      "source": "/waco",
+      "destination": "/waco.html"
+    },
+    {
+      "source": "/waco.html",
+      "destination": "/waco.html"
+    },
+    {
+      "source": "/odessa",
+      "destination": "/odessa.html"
+    },
+    {
+      "source": "/odessa.html",
+      "destination": "/odessa.html"
+    },
+    {
+      "source": "/pasadena",
+      "destination": "/pasadena.html"
+    },
+    {
+      "source": "/pasadena.html",
+      "destination": "/pasadena.html"
+    },
+    {
+      "source": "/round-rock",
+      "destination": "/round-rock.html"
+    },
+    {
+      "source": "/round-rock.html",
+      "destination": "/round-rock.html"
+    },
+    {
+      "source": "/pearland",
+      "destination": "/pearland.html"
+    },
+    {
+      "source": "/pearland.html",
+      "destination": "/pearland.html"
+    },
+    {
+      "source": "/el-paso",
+      "destination": "/el-paso.html"
+    },
+    {
+      "source": "/el-paso.html",
+      "destination": "/el-paso.html"
+    },
+    {
+      "source": "/fort-worth",
+      "destination": "/fort-worth.html"
+    },
+    {
+      "source": "/fort-worth.html",
+      "destination": "/fort-worth.html"
+    },
+    {
+      "source": "/midland",
+      "destination": "/midland.html"
+    },
+    {
+      "source": "/midland.html",
+      "destination": "/midland.html"
+    },
+    {
+      "source": "/mcallen",
+      "destination": "/mcallen.html"
+    },
+    {
+      "source": "/mcallen.html",
+      "destination": "/mcallen.html"
+    },
+    {
+      "source": "/abilene",
+      "destination": "/abilene.html"
+    },
+    {
+      "source": "/abilene.html",
+      "destination": "/abilene.html"
+    },
+    {
+      "source": "/irving",
+      "destination": "/irving.html"
+    },
+    {
+      "source": "/irving.html",
+      "destination": "/irving.html"
+    },
+    {
+      "source": "/mckinney",
+      "destination": "/mckinney.html"
+    },
+    {
+      "source": "/mckinney.html",
+      "destination": "/mckinney.html"
+    },
+    {
+      "source": "/frisco",
+      "destination": "/frisco.html"
+    },
+    {
+      "source": "/frisco.html",
+      "destination": "/frisco.html"
+    },
+    {
+      "source": "/sugar-land",
+      "destination": "/sugar-land.html"
+    },
+    {
+      "source": "/sugar-land.html",
+      "destination": "/sugar-land.html"
+    },
+    {
+      "source": "/the-woodlands",
+      "destination": "/the-woodlands.html"
+    },
+    {
+      "source": "/the-woodlands.html",
+      "destination": "/the-woodlands.html"
+    },
+    {
+      "source": "/denton",
+      "destination": "/denton.html"
+    },
+    {
+      "source": "/denton.html",
+      "destination": "/denton.html"
+    }
   ]
 }

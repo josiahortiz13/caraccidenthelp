@@ -1,0 +1,10 @@
+# Internal docs and tests: keep them in the repo, never serve them on the website.
+PROJECT_INVENTORY.md
+LEGAL_REVIEW.md
+TWILIO_SETUP.md
+CRM_ADAPTER.md
+README.md
+lead-engine-agent.md
+test/
+*.py
+.env.example

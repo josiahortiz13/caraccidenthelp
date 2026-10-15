@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>CrashHelp TX · Lead Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@700;900&family=Overpass+Mono:wght@500;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Dispatch-desk layout: KPI strip → lead queue (oldest uncontacted first) → slide-over lead file. */
+:root{
+  --bg:#0e0d0e; --panel:#171516; --raise:#201d1e; --line:#2d2829; --text:#f1ece6; --dim:#a39a97;
+  --red:#e3262f; --amber:#ffb81c; --orange:#ff7a1a; --green:#3ccf7a; --blue:#5aa9ff;
+  --sign:"Overpass","Arial Narrow",Arial,sans-serif; --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"Overpass Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 var(--body);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left))}
+.hidden{display:none!important}
+
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:24px}
+#login form{width:min(380px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px;display:grid;gap:14px}
+.logo{font:900 22px var(--sign);letter-spacing:-.01em}.logo b{color:var(--red)}
+label{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);display:grid;gap:6px}
+input,select,textarea{background:var(--bg);border:1.5px solid var(--line);border-radius:9px;padding:11px 12px;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--red);outline:none}
+.btn{border:0;border-radius:9px;padding:10px 14px;font:900 13px var(--sign);letter-spacing:.05em;text-transform:uppercase;cursor:pointer;background:var(--raise);border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px;justify-content:center;white-space:nowrap}
+.btn:hover{border-color:var(--dim)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#06210f}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.err{color:#ff8a8f;font-size:14px;min-height:1.2em}
+
+/* top bar */
+header{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+header .wrap{display:flex;align-items:center;gap:16px;padding-block:12px;flex-wrap:wrap}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button{background:none;border:0;padding:8px 12px;border-radius:8px;font:700 13px var(--sign);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+nav button[aria-selected="true"]{background:var(--raise);color:var(--text)}
+.mode{font:700 11px var(--mono);letter-spacing:.08em;padding:4px 8px;border-radius:5px;background:var(--amber);color:#1a1300}
+.mode.live{background:var(--green);color:#06210f}
+.who{font-size:13px;color:var(--dim)}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-block:18px}
+@media(max-width:980px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);padding:12px 14px}
+.kpi .n{font:900 30px/1 var(--sign);font-variant-numeric:tabular-nums}
+.kpi .l{font:700 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:6px}
+.kpi.alert .n{color:var(--red)}
+.kpi.resp .n{font-size:24px}
+.kpi.resp.over .n{color:var(--orange)} .kpi.resp.ok .n{color:var(--green)}
+
+/* queue */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar input{max-width:280px}.toolbar select{max-width:220px}
+.legend{display:flex;gap:12px;font:500 12px var(--mono);color:var(--dim);margin-left:auto;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.queue{display:grid;gap:10px;padding-bottom:40px}
+.card{display:grid;grid-template-columns:6px minmax(0,1fr) auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card .stripe{background:var(--line)}
+.card.a0 .stripe{background:var(--green)} .card.a1 .stripe{background:var(--amber)} .card.a2 .stripe{background:var(--orange)} .card.a3 .stripe{background:var(--red);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.card.a3{border-color:color-mix(in srgb,var(--red) 55%,var(--line))}
+.card .main{padding:14px 16px;min-width:0;display:grid;gap:6px;cursor:pointer}
+.card h3{margin:0;font:900 19px var(--sign);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:700 11px var(--mono);letter-spacing:.04em;padding:3px 7px;border-radius:5px;background:var(--raise);border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.chip.hi{color:#fff;background:var(--red);border-color:var(--red)}
+.chip.st{color:var(--text)}
+.chip.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+.meta{color:var(--dim);font-size:13.5px;display:flex;gap:14px;flex-wrap:wrap}
+.meta b{color:var(--text);font-weight:600}
+.age{font:700 13px var(--mono);font-variant-numeric:tabular-nums;padding:14px 16px 0;text-align:right}
+.card.a3 .age{color:var(--red)} .card.a2 .age{color:var(--orange)} .card.a1 .age{color:var(--amber)} .card.a0 .age{color:var(--green)}
+.actions{grid-column:2/4;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:0 16px 14px}
+.actions select{width:auto;max-width:100%;padding:9px 10px;font-size:13px}
+.empty{padding:48px 20px;text-align:center;color:var(--dim);border:1px dashed var(--line);border-radius:12px}
+
+/* drawer */
+#drawer{position:fixed;inset:0;z-index:40;display:flex;justify-content:flex-end;background:rgba(0,0,0,.55)}
+#drawer .sheet{width:min(560px,100%);height:100%;background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:20px max(16px,env(safe-area-inset-right)) 40px 20px;display:grid;gap:18px;align-content:start}
+.sheet h2{margin:0;font:900 26px var(--sign)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.kv{font-size:14px}.kv span{display:block;font:700 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.sec{font:900 13px var(--sign);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin:6px 0 -6px}
+.tl{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+.tl li{position:relative;padding:0 0 12px 16px;font-size:13.5px}
+.tl li::before{content:"";position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--line)}
+.tl li.good::before{background:var(--green)} .tl li.bad::before{background:var(--red)} .tl li.note::before{background:var(--blue)}
+.tl time{font:500 11.5px var(--mono);color:var(--dim);display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row>*{flex:1 1 140px}
+
+/* tables & status */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tablebox{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:24px}
+.status-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px}
+.st-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.st-card .k{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.st-card .v{font:900 20px var(--sign);margin-top:4px}
+.st-card .d{font-size:12.5px;color:var(--dim);margin-top:4px;word-break:break-word}
+.v.ok{color:var(--green)} .v.bad{color:var(--red)} .v.na{color:var(--amber)}
+.settings{display:grid;gap:18px;max-width:760px;padding-bottom:60px}
+.settings fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;background:var(--panel)}
+.settings legend{font:900 13px var(--sign);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);padding:0 6px}
+.toggle{display:flex;align-items:center;gap:10px;font:500 15px var(--body);letter-spacing:0;text-transform:none;color:var(--text)}
+.toggle input{width:20px;height:20px;accent-color:var(--red)}
+.esc-row{display:grid;grid-template-columns:90px 1fr 1fr 1fr auto;gap:8px;align-items:center}
+@media(max-width:560px){.esc-row{grid-template-columns:1fr 1fr}}
+#toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:10px;font-weight:600;z-index:60;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form id="loginForm">
+    <div class="logo">CRASH<b>HELP</b>TX <span style="color:var(--dim);font-weight:700">· Lead Desk</span></div>
+    <label>Name <input id="lname" autocomplete="username" required></label>
+    <label>Password <input id="lpass" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="lerr"></div>
+    <button class="btn red" type="submit">Sign in</button>
+  </form>
+</section>
+
+<section id="app" class="hidden">
+  <header><div class="wrap">
+    <div class="logo">CRASH<b>HELP</b>TX</div>
+    <span class="mode" id="modeTag">TEST MODE</span>
+    <nav role="tablist">
+      <button role="tab" data-tab="leads" aria-selected="true">Leads</button>
+      <button role="tab" data-tab="sources">Sources</button>
+      <button role="tab" data-tab="status">Twilio &amp; Systems</button>
+      <button role="tab" data-tab="settings">Settings</button>
+    </nav>
+    <span class="who" id="who"></span>
+    <button class="btn" id="soundBtn" title="Play a sound when a new lead arrives">🔕 Sound</button>
+    <button class="btn" id="logout">Sign out</button>
+  </div></header>
+
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+
+    <div data-panel="leads">
+      <div class="toolbar">
+        <input id="search" placeholder="Search name, phone, email, lead ID" aria-label="Search leads">
+        <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option></select>
+        <div class="legend"><span><i style="background:var(--green)"></i>0–5 min</span><span><i style="background:var(--amber)"></i>5–15</span><span><i style="background:var(--orange)"></i>15–30</span><span><i style="background:var(--red)"></i>30+ uncontacted</span></div>
+      </div>
+      <div class="queue" id="queue"></div>
+    </div>
+
+    <div data-panel="sources" class="hidden">
+      <div class="tablebox"><table><thead><tr><th>Source</th><th>Campaign</th><th class="num">Leads</th><th class="num">Contacted</th><th class="num">Qualified+</th></tr></thead><tbody id="srcBody"></tbody></table></div>
+      <div class="tablebox"><table><tbody id="actBody"></tbody></table></div>
+    </div>
+
+    <div data-panel="status" class="hidden">
+      <div class="status-grid" id="statusGrid"></div>
+      <div class="row" style="margin-bottom:24px">
+        <button class="btn red" id="testSms">Send test text to owner</button>
+        <button class="btn" id="testCall">Test text + call to owner</button>
+        <button class="btn" id="runTick">Run escalation check now</button>
+      </div>
+    </div>
+
+    <div data-panel="settings" class="hidden"><form class="settings" id="settingsForm"></form></div>
+  </div>
+</section>
+
+<div id="drawer" class="hidden" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
+<div id="toast" class="hidden" role="status"></div>
+
+<script>
+(() => {
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const OPEN = ['NEW', 'PENDING CONSENT', 'CONTACT ATTEMPTED'];
+let me = null, leads = [], statuses = [], seen = new Set(), firstLoad = true, sound = false, serverOffset = 0, openId = null;
+
+async function api(action, { method = 'GET', body, params = {} } = {}) {
+  const qs = new URLSearchParams({ a: action, ...params }).toString();
+  const res = await fetch('/api/admin?' + qs, {
+    method, credentials: 'same-origin',
+    headers: method === 'POST' ? { 'Content-Type': 'application/json', 'X-CrashHelp': '1' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && action !== 'login') { showLogin(); throw new Error('Signed out'); }
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add('hidden'), 3800); }
+function showLogin() { $('#app').classList.add('hidden'); $('#login').classList.remove('hidden'); }
+
+function fmtAge(sec) {
+  if (sec < 60) return sec + 's';
+  const m = Math.floor(sec / 60); if (m < 60) return m + 'm';
+  const h = Math.floor(m / 60); if (h < 48) return h + 'h ' + (m % 60) + 'm';
+  return Math.floor(h / 24) + 'd';
+}
+function fmtDur(sec) { if (sec == null) return '—'; if (sec < 60) return sec + 's'; const m = Math.floor(sec / 60); return m < 60 ? `${m}m ${sec % 60}s` : `${Math.floor(m / 60)}h ${m % 60}m`; }
+function liveAge(l) { return Math.max(0, Math.floor((Date.now() - serverOffset - new Date(l.created_at).getTime()) / 1000)); }
+function ageClass(l) {
+  if (!OPEN.includes(l.lead_status) || l.first_contact_at) return '';
+  const m = liveAge(l) / 60; return m < 5 ? 'a0' : m < 15 ? 'a1' : m < 30 ? 'a2' : 'a3';
+}
+function when(t) { return t ? new Date(t).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }) : '—'; }
+function pretty(v) { return v ? String(v).replace(/_/g, ' ') : '—'; }
+
+// ---------- Leads ----------
+function leadCard(l) {
+  const name = [l.first_name, l.last_name].filter(Boolean).join(' ') || 'Unknown caller';
+  const open = OPEN.includes(l.lead_status) && !l.first_contact_at;
+  return `<article class="card ${ageClass(l)}" data-id="${esc(l.lead_id)}">
+    <div class="stripe"></div>
+    <div class="main" data-open="${esc(l.lead_id)}">
+      <h3>${esc(name)} ${l.lead_priority === 'HIGH PRIORITY' ? '<span class="chip hi">HIGH PRIORITY</span>' : l.lead_priority === 'LOW INFORMATION' ? '<span class="chip">LOW INFO</span>' : ''}</h3>
+      <div class="chips"><span class="chip st">${esc(l.lead_status)}</span>${l.preferred_contact ? `<span class="chip">PREFERS ${esc(l.preferred_contact.toUpperCase())}</span>` : ''}${!l.contact_consent ? '<span class="chip warn">NO CONSENT YET</span>' : ''}${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}${l.repeat_count ? `<span class="chip">+${l.repeat_count} REPEAT</span>` : ''}${l.assigned_to ? `<span class="chip">→ ${esc(l.assigned_to)}</span>` : ''}</div>
+      <div class="meta"><span><b>${esc(l.phone || '—')}</b></span><span>${esc(l.crash_city || '—')}${l.crash_county ? ', ' + esc(l.crash_county) : ''}</span><span>Injury: <b>${esc(pretty(l.injury_status))}</b></span><span>Source: ${esc(l.utm_source || l.source || '—')}</span><span>${esc(l.lead_id)}</span></div>
+    </div>
+    <div class="age" data-age="${esc(l.lead_id)}">${open ? fmtAge(liveAge(l)) : 'contacted'}</div>
+    <div class="actions">
+      <button class="btn red" data-act="call" ${l.phone ? '' : 'disabled'}>📞 Call</button>
+      <button class="btn" data-act="text" ${l.phone && l.contact_consent && !l.sms_opt_out ? '' : 'disabled'}>💬 Text</button>
+      <button class="btn" data-act="email" ${l.email ? '' : 'disabled'}>✉️ Email</button>
+      ${open ? '<button class="btn green" data-act="contacted">✓ Mark contacted</button>' : ''}
+      <button class="btn" data-act="note">+ Note</button>
+      <select data-act="status" aria-label="Change status">${statuses.map((s) => `<option ${s === l.lead_status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <button class="btn" data-act="assign">Assign</button>
+    </div>
+  </article>`;
+}
+
+function renderQueue() {
+  const q = $('#queue');
+  if (!leads.length) { q.innerHTML = '<div class="empty">No leads yet. New form leads, texts and calls show up here within seconds.</div>'; return; }
+  q.innerHTML = leads.map(leadCard).join('');
+}
+
+function tickAges() {
+  for (const l of leads) {
+    const el = document.querySelector(`[data-age="${CSS.escape(l.lead_id)}"]`);
+    if (!el) continue;
+    const open = OPEN.includes(l.lead_status) && !l.first_contact_at;
+    if (open) el.textContent = fmtAge(liveAge(l));
+    const card = el.closest('.card'); card.classList.remove('a0', 'a1', 'a2', 'a3'); const c = ageClass(l); if (c) card.classList.add(c);
+  }
+  const unc = leads.filter((l) => OPEN.includes(l.lead_status) && !l.first_contact_at).length;
+  document.title = (unc ? `(${unc}) ` : '') + 'CrashHelp TX · Lead Desk';
+}
+
+function beep() {
+  if (!sound) return;
+  try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); [0, .18, .36].forEach((t) => { const o = ctx.createOscillator(); const g = ctx.createGain(); o.frequency.value = 880; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(.2, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + t + .15); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + .16); }); } catch {}
+}
+
+async function loadLeads() {
+  const params = {}; const s = $('#search').value.trim(); const f = $('#statusFilter').value;
+  if (s) params.search = s; if (f) params.status = f;
+  const d = await api('leads', { params });
+  serverOffset = Date.now() - new Date(d.now).getTime();
+  if (!statuses.length) { statuses = d.statuses; $('#statusFilter').innerHTML += statuses.map((x) => `<option>${x}</option>`).join(''); }
+  const fresh = d.leads.filter((l) => !seen.has(l.lead_id));
+  d.leads.forEach((l) => seen.add(l.lead_id));
+  if (!firstLoad && fresh.length) { beep(); toast(`🚨 ${fresh.length} new lead${fresh.length > 1 ? 's' : ''}`); }
+  firstLoad = false;
+  leads = d.leads; renderQueue(); tickAges();
+}
+
+async function loadMetrics() {
+  const m = await api('metrics');
+  const c = m.counts, t = m.times;
+  const avg = t.avg_attempt_sec;
+  const over = avg != null && avg > m.target_min * 60;
+  $('#kpis').innerHTML = [
+    ['New today', c.new_today], ['Uncontacted', c.uncontacted, c.uncontacted ? 'alert' : ''], ['Contacted', c.contacted], ['Qualified', c.qualified],
+    ['Appointments', c.appointments], ['Referred', c.referred], ['No response', c.no_response],
+  ].map(([l, n, cls]) => `<div class="kpi ${cls || ''}"><div class="n">${n ?? 0}</div><div class="l">${l}</div></div>`).join('') +
+  `<div class="kpi resp ${avg == null ? '' : over ? 'over' : 'ok'}" title="Average time from submission to first contact attempt, last 30 days. Target ${m.target_min} min."><div class="n">${fmtDur(avg)}</div><div class="l">Avg response · goal ${m.target_min}m${t.over_target ? ` · ${t.over_target} over` : ''}</div></div>`;
+  $('#srcBody').innerHTML = m.sources.length ? m.sources.map((s) => `<tr><td>${esc(s.source)}</td><td>${esc(s.campaign)}</td><td class="num">${s.leads}</td><td class="num">${s.contacted}</td><td class="num">${s.qualified}</td></tr>`).join('') : '<tr><td colspan="5">No leads in the last 30 days.</td></tr>';
+  const a = m.activity;
+  $('#actBody').innerHTML = [['Texts sent (7 days)', a.texts_sent], ['Calls made (7 days)', a.calls_made], ['Twilio SMS failures (7 days)', a.twilio_sms_failures], ['Twilio call failures (7 days)', a.twilio_call_failures], ['CRM syncs waiting to retry', a.crm_pending], ['CRM syncs that gave up', a.crm_gave_up],
+    ['Avg time to first alert', fmtDur(t.avg_alert_sec)], ['Avg time to contact', fmtDur(t.avg_contact_sec)], ['Avg time to appointment', fmtDur(t.avg_appointment_sec)]]
+    .map(([k, v]) => `<tr><td>${k}</td><td class="num">${v ?? 0}</td></tr>`).join('');
+}
+
+async function refresh() { try { await Promise.all([loadLeads(), loadMetrics()]); } catch (e) { if (e.message !== 'Signed out') console.warn(e); } }
+
+// ---------- Lead file (drawer) ----------
+const GOOD = ['sms_sent', 'email_sent', 'internal_alert_sent', 'call_connected', 'crm_synced', 'owner_alert_answered', 'inbound_call_answered', 'consent_received', 'sms_opt_in'];
+const BAD = ['sms_failed', 'sms_blocked', 'call_failed', 'call_blocked', 'email_failed', 'crm_failed', 'internal_alert_failed', 'escalated', 'sms_undelivered', 'inbound_call_missed', 'sms_opt_out', 'bridge_blocked', 'call_no_answer', 'call_busy'];
+function eventText(e) {
+  const d = e.detail || {};
+  const map = {
+    lead_created: `Form submitted (${d.source || 'web'})`, sms_sent: `Text sent · ${pretty(d.purpose)}`, sms_blocked: `Text not sent · ${pretty(d.purpose)} · ${pretty(d.reason)}`,
+    sms_failed: `Text failed · ${pretty(d.purpose)} · ${d.error || ''}`, email_sent: `Email sent · ${pretty(d.purpose)}`, email_failed: `Email failed · ${d.error || ''}`,
+    internal_alert_sent: `Team alerted (${d.sms} text, ${d.email} email${d.voice ? ', call' : ''})`, internal_alert_failed: 'No alert channel delivered',
+    call_started: `Call placed · ${pretty(d.purpose)}`, call_failed: `Call failed · ${d.error || ''}`, call_blocked: `Call not placed · ${pretty(d.reason)}`,
+    owner_alert_answered: 'Owner answered the alert call', owner_alert_voicemail: 'Alert call went to voicemail', call_connected: `Call connected · ${fmtDur(d.duration)}`,
+    call_not_connected: `Lead didn't answer (${d.status || ''})`, bridge_blocked: `Bridge blocked · ${pretty(d.reason)}`, bridge_dialing: 'Dialing lead',
+    crm_synced: `CRM updated · ${pretty(d.reason)}`, crm_failed: `CRM sync failed, will retry · ${d.error || ''}`, escalated: `Escalated · ${d.minutes} min · ${(d.notified || []).join(' + ')}`,
+    status_changed: `Status ${d.from} → ${d.to}`, note: d.text, assigned: `Assigned to ${d.to || 'nobody'}`, contact_attempt: `Contact attempt · ${d.channel}`,
+    repeat_submission: 'Submitted the form again', sms_opt_out: `Opted out of texts (${d.keyword})`, sms_received: `Text received: "${d.preview}"`,
+    consumer_confirmation_skipped: `Confirmation not sent · ${pretty(d.reason)}`, backup_call_scheduled: `Backup call scheduled · ${d.delay_min} min`,
+    inbound_call_missed: 'Missed inbound call', inbound_call_answered: `Inbound call answered · ${fmtDur(d.duration)}`, consent_received: 'Consent received by text',
+    priority_changed: `Priority → ${d.to}`,
+  };
+  return map[e.type] || pretty(e.type);
+}
+
+async function openLead(id) {
+  openId = id;
+  const d = await api('lead', { params: { id } });
+  const l = d.lead;
+  const name = [l.first_name, l.last_name].filter(Boolean).join(' ') || 'Unknown caller';
+  const kv = [['Phone', l.phone], ['Email', l.email], ['Crash date', l.crash_date ? String(l.crash_date).slice(0, 10) : ''], ['City / county', [l.crash_city, l.crash_county].filter(Boolean).join(', ')],
+    ['Person', pretty(l.person_type)], ['Injured', pretty(l.injury_status)], ['Medical care', pretty(l.medical_status)], ['Vehicle damage', pretty(l.vehicle_damage)],
+    ['Other vehicle', pretty(l.other_vehicle)], ['Insurance info', pretty(l.insurance_available)], ['Prefers', pretty(l.preferred_contact)], ['Consent', l.contact_consent ? 'Yes' : 'No'],
+    ['Source', l.utm_source || l.source], ['Campaign', l.utm_campaign], ['Landing page', l.landing_page], ['Lead ID', l.lead_id],
+    ['Time to alert', fmtDur(l.first_alert_at && (new Date(l.first_alert_at) - new Date(l.created_at)) / 1000 | 0)],
+    ['Time to first attempt', fmtDur(l.first_response_at && (new Date(l.first_response_at) - new Date(l.created_at)) / 1000 | 0)],
+    ['Time to contact', fmtDur(l.first_contact_at && (new Date(l.first_contact_at) - new Date(l.created_at)) / 1000 | 0)]];
+  $('#sheet').innerHTML = `
+    <div class="row" style="align-items:center"><h2 style="flex:1 1 auto">${esc(name)}</h2><button class="btn" id="closeDrawer">Close</button></div>
+    <div class="chips"><span class="chip st">${esc(l.lead_status)}</span><span class="chip ${l.lead_priority === 'HIGH PRIORITY' ? 'hi' : ''}">${esc(l.lead_priority)}</span>${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}</div>
+    <div class="row" data-id="${esc(l.lead_id)}"><button class="btn red" data-act="call" ${l.phone ? '' : 'disabled'}>📞 Call</button><button class="btn" data-act="text" ${l.phone && l.contact_consent && !l.sms_opt_out ? '' : 'disabled'}>💬 Text</button><button class="btn" data-act="email" ${l.email ? '' : 'disabled'}>✉️ Email</button><button class="btn green" data-act="contacted">✓ Contacted</button></div>
+    <div class="grid2">${kv.map(([k, v]) => `<div class="kv"><span>${k}</span>${esc(v || '—')}</div>`).join('')}</div>
+    ${l.description ? `<div class="kv"><span>What happened</span>${esc(l.description)}</div>` : ''}
+    <div class="sec">Add note</div>
+    <form class="row" id="noteForm"><textarea id="noteText" rows="2" placeholder="What happened on the call?"></textarea><button class="btn" type="submit">Save note</button></form>
+    <div class="sec">Timeline</div>
+    <ul class="tl">${d.timeline.map((e) => `<li class="${GOOD.includes(e.type) ? 'good' : BAD.includes(e.type) ? 'bad' : e.type === 'note' ? 'note' : ''}"><time>${when(e.at)} · ${esc(e.actor)}</time>${esc(eventText(e))}</li>`).join('')}</ul>
+    ${d.messages.length ? `<div class="sec">Texts</div><ul class="tl">${d.messages.map((m) => `<li class="${m.status === 'failed' || m.status === 'blocked' || m.status === 'undelivered' ? 'bad' : ''}"><time>${when(m.created_at)} · ${m.direction} · ${esc(pretty(m.purpose))} · ${esc(m.status)}${m.error ? ' · ' + esc(m.error) : ''}</time>${esc(m.kind === 'internal' ? '(team alert)' : m.body)}</li>`).join('')}</ul>` : ''}
+    ${d.calls.length ? `<div class="sec">Calls</div><ul class="tl">${d.calls.map((c) => `<li class="${c.connected ? 'good' : ''}"><time>${when(c.created_at)} · ${c.direction} · ${esc(pretty(c.purpose))}</time>${esc(c.status || '')}${c.duration ? ' · ' + fmtDur(c.duration) : ''}${c.answered_by ? ' · ' + esc(c.answered_by) : ''}</li>`).join('')}</ul>` : ''}`;
+  $('#drawer').classList.remove('hidden');
+  location.hash = id;
+  $('#closeDrawer').onclick = closeDrawer;
+  $('#noteForm').onsubmit = async (ev) => { ev.preventDefault(); const t = $('#noteText').value.trim(); if (!t) return; await act(id, 'note', t); };
+}
+function closeDrawer() { $('#drawer').classList.add('hidden'); openId = null; history.replaceState(null, '', location.pathname); }
+
+async function act(id, what, value) {
+  try {
+    const lead = leads.find((l) => l.lead_id === id) || {};
+    if (what === 'call') { const r = await api('call', { method: 'POST', body: { lead_id: id } }); toast(r.message); }
+    else if (what === 'text') {
+      const body = prompt(`Text to ${lead.first_name || 'lead'}:`, `Hi ${lead.first_name || ''}, this is CrashHelp TX following up on your request. Is now a good time to talk?`);
+      if (!body) return; await api('text', { method: 'POST', body: { lead_id: id, body } }); toast('Text sent');
+    } else if (what === 'email') {
+      await api('email-logged', { method: 'POST', body: { lead_id: id } });
+      location.href = `mailto:${encodeURIComponent(lead.email || '')}?subject=${encodeURIComponent('Your CrashHelp TX request')}`;
+    } else if (what === 'contacted') { await api('mark-contacted', { method: 'POST', body: { lead_id: id } }); toast('Marked contacted'); }
+    else if (what === 'note') { await api('note', { method: 'POST', body: { lead_id: id, note: value || prompt('Note:') || '' } }); toast('Note saved'); }
+    else if (what === 'status') { await api('status-change', { method: 'POST', body: { lead_id: id, status: value } }); toast('Status → ' + value); }
+    else if (what === 'assign') { const to = prompt('Assign to (name):', lead.assigned_to || me.name); if (to === null) return; await api('assign', { method: 'POST', body: { lead_id: id, assigned_to: to } }); toast('Assigned'); }
+    await refresh(); if (openId === id) await openLead(id);
+  } catch (e) { toast(e.message); }
+}
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]'); if (b && b.tagName === 'BUTTON') { const id = b.closest('[data-id]').dataset.id; act(id, b.dataset.act); return; }
+  const o = e.target.closest('[data-open]'); if (o) openLead(o.dataset.open);
+  if (e.target.id === 'drawer') closeDrawer();
+});
+document.addEventListener('change', (e) => { const s = e.target.closest('select[data-act="status"]'); if (s) act(s.closest('[data-id]').dataset.id, 'status', s.value); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openId) closeDrawer(); if (e.key === 'Enter' && e.target.dataset.open) openLead(e.target.dataset.open); });
+
+// ---------- Status ----------
+async function loadStatus() {
+  const s = await api('status');
+  $('#modeTag').textContent = s.test_mode ? 'TEST MODE' : 'LIVE'; $('#modeTag').classList.toggle('live', !s.test_mode);
+  const cls = (st) => /WORKING|CONNECTED/.test(st) ? 'ok' : /FAILED/.test(st) ? 'bad' : 'na';
+  const card = (k, st, d = '') => `<div class="st-card"><div class="k">${k}</div><div class="v ${cls(st)}">${esc(st)}</div>${d ? `<div class="d">${d}</div>` : ''}</div>`;
+  const lt = s.last_test;
+  $('#statusGrid').innerHTML =
+    card('Twilio', s.twilio, `Number ${esc(s.phone_number)}`) +
+    card('Mode', s.test_mode ? 'TEST MODE' : 'LIVE', s.test_mode ? `Only these get texts/calls: ${esc(s.allowed_test_numbers.join(', ') || 'none set')}` : 'Real leads are contacted') +
+    card('SMS', s.sms.state, esc(s.sms.error || (s.sms.at ? 'Last update ' + when(s.sms.at) : ''))) +
+    card('Voice', s.voice.state, esc(s.voice.error || (s.voice.at ? 'Last update ' + when(s.voice.at) : ''))) +
+    card('Webhooks', s.webhook.state, esc(s.webhook.error || (s.webhook.at ? 'Last hit ' + when(s.webhook.at) : 'Set SMS + Voice URLs in Twilio'))) +
+    card('Email', s.email.state, esc(s.email.error || '')) +
+    card('CRM', s.crm.state, `Mode: ${esc(s.crm.mode)}${s.crm.error ? ' · ' + esc(s.crm.error) : ''}`) +
+    card('Escalation timer', s.cron.state, s.cron.at ? 'Last run ' + when(s.cron.at) : 'Not running yet. Set up the 1-minute pinger.') +
+    card('Owner / backup', s.owner_phone, `Backup ${esc(s.backup_phone)}`) +
+    card('Last test', lt ? (lt.sms ? 'WORKING' : 'FAILED') : 'NO DATA YET', lt ? `${when(lt.at)} by ${esc(lt.by)} · SMS ${lt.sms ? '✓' : '✗ ' + esc(lt.sms_error || '')}${lt.voice !== null ? ' · Call ' + (lt.voice ? '✓' : '✗ ' + esc(lt.voice_error || '')) : ''}` : '') +
+    (s.last_twilio_failure ? card('Last Twilio failure', 'FAILED', `${when(s.last_twilio_failure.at)} · ${esc(s.last_twilio_failure.what)} · ${esc(s.last_twilio_failure.error)}`) : '');
+}
+$('#testSms').onclick = async () => { try { const r = await api('test-alerts', { method: 'POST', body: {} }); toast(r.result.sms?.ok ? 'Test text sent' : 'Test text failed: ' + (r.result.sms?.reason || r.result.sms?.error || 'no owner phone')); loadStatus(); } catch (e) { toast(e.message); } };
+$('#testCall').onclick = async () => { try { const r = await api('test-alerts', { method: 'POST', body: { voice: true } }); toast(r.result.voice?.ok ? 'Calling your phone…' : 'Test call failed: ' + (r.result.voice?.reason || r.result.voice?.error || 'no owner phone')); loadStatus(); } catch (e) { toast(e.message); } };
+$('#runTick').onclick = async () => { try { const r = await api('run-tick', { method: 'POST', body: {} }); toast(`Escalations sent: ${r.escalation?.escalated ?? 0}`); refresh(); } catch (e) { toast(e.message); } };
+
+// ---------- Settings ----------
+async function loadSettings() {
+  const { settings: s, can_edit } = await api('settings');
+  const dis = can_edit ? '' : 'disabled';
+  const tog = (k, label) => `<label class="toggle"><input type="checkbox" name="${k}" ${s[k] ? 'checked' : ''} ${dis}> ${label}</label>`;
+  const esc_rows = (s.escalation || []).map((r, i) => `<div class="esc-row" data-i="${i}"><input type="number" min="1" max="1440" name="em" value="${r.minutes}" ${dis} aria-label="Minutes"><label class="toggle"><input type="checkbox" name="eo" ${r.notify.includes('owner') ? 'checked' : ''} ${dis}> Owner</label><label class="toggle"><input type="checkbox" name="eb" ${r.notify.includes('backup') ? 'checked' : ''} ${dis}> Backup</label><label class="toggle"><input type="checkbox" name="ev" ${r.voice ? 'checked' : ''} ${dis}> Call owner</label><button class="btn" type="button" data-rm="${i}" ${dis}>Remove</button></div>`).join('');
+  const agents = Object.entries(s.agent_phones || {}).map(([n, p]) => `${n}=${p}`).join('\n');
+  $('#settingsForm').innerHTML = `
+    ${can_edit ? '' : '<p style="color:var(--amber)">Only the owner can change settings.</p>'}
+    <fieldset><legend>New lead alerts</legend>
+      ${tog('sms_alert', 'Text me (and backup) on every new lead')}
+      ${tog('voice_alert', 'Call me when a lead comes in')}
+      <label>Call me for <select name="voice_alert_for" ${dis}><option value="call_requests" ${s.voice_alert_for === 'call_requests' ? 'selected' : ''}>Leads who asked for a call</option><option value="all_leads" ${s.voice_alert_for === 'all_leads' ? 'selected' : ''}>Every lead</option></select></label>
+      ${tog('email_alert', 'Email me on every new lead')}
+      ${tog('consumer_confirmation_sms', 'Text the lead a confirmation (only if they consented)')}
+      ${tog('consumer_confirmation_email', 'Email the lead a confirmation')}
+    </fieldset>
+    <fieldset><legend>Who gets alerted</legend>
+      <div class="row"><label>Primary phone <input name="primary_phone" value="${esc(s.primary_phone)}" ${dis}></label><label>Backup phone <input name="backup_phone" value="${esc(s.backup_phone)}" ${dis}></label></div>
+      <div class="row"><label>Primary email <input name="primary_email" value="${esc(s.primary_email)}" ${dis}></label><label>Backup email <input name="backup_email" value="${esc(s.backup_email)}" ${dis}></label></div>
+      <label>Call backup if owner misses the alert after (minutes) <input type="number" min="0" max="30" name="backup_call_delay_min" value="${s.backup_call_delay_min}" ${dis}></label>
+      <label>Agent phones for one-tap calling (one per line, Name=phone) <textarea name="agent_phones" rows="3" ${dis} placeholder="Josiah=+18325550101">${esc(agents)}</textarea></label>
+    </fieldset>
+    <fieldset><legend>Escalation (team only — leads are never re-texted)</legend>
+      <div id="escRows" style="display:grid;gap:8px">${esc_rows}</div>
+      <button class="btn" type="button" id="addEsc" ${dis}>+ Add step</button>
+      <label>Response-time goal (minutes) <input type="number" min="1" max="120" name="response_target_min" value="${s.response_target_min}" ${dis}></label>
+    </fieldset>
+    ${can_edit ? '<button class="btn red" type="submit">Save settings</button>' : ''}`;
+  const f = $('#settingsForm');
+  f.onclick = (e) => {
+    if (e.target.dataset.rm !== undefined) { e.target.closest('.esc-row').remove(); }
+    if (e.target.id === 'addEsc') { const div = document.createElement('div'); div.className = 'esc-row'; div.innerHTML = '<input type="number" min="1" max="1440" name="em" value="60" aria-label="Minutes"><label class="toggle"><input type="checkbox" name="eo" checked> Owner</label><label class="toggle"><input type="checkbox" name="eb" checked> Backup</label><label class="toggle"><input type="checkbox" name="ev"> Call owner</label><button class="btn" type="button" data-rm="x">Remove</button>'; $('#escRows').appendChild(div); }
+  };
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const v = (n) => f.elements[n];
+    const settings = {};
+    ['sms_alert', 'voice_alert', 'email_alert', 'consumer_confirmation_sms', 'consumer_confirmation_email'].forEach((k) => settings[k] = v(k).checked);
+    ['voice_alert_for', 'primary_phone', 'backup_phone', 'primary_email', 'backup_email', 'backup_call_delay_min', 'response_target_min'].forEach((k) => settings[k] = v(k).value);
+    settings.escalation = [...f.querySelectorAll('.esc-row')].map((r) => ({ minutes: +r.querySelector('[name=em]').value, notify: [r.querySelector('[name=eo]').checked && 'owner', r.querySelector('[name=eb]').checked && 'backup'].filter(Boolean), voice: r.querySelector('[name=ev]').checked }));
+    settings.agent_phones = Object.fromEntries(v('agent_phones').value.split('\n').map((x) => x.split('=').map((y) => y.trim())).filter((x) => x[0] && x[1]));
+    try { await api('save-settings', { method: 'POST', body: { settings } }); toast('Settings saved'); loadSettings(); } catch (err) { toast(err.message); }
+  };
+}
+
+// ---------- Boot ----------
+document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach((x) => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== b.dataset.tab));
+  if (b.dataset.tab === 'status') loadStatus(); if (b.dataset.tab === 'settings') loadSettings();
+});
+$('#search').oninput = () => { clearTimeout(window._s); window._s = setTimeout(loadLeads, 250); };
+$('#statusFilter').onchange = loadLeads;
+$('#soundBtn').onclick = () => { sound = !sound; $('#soundBtn').textContent = sound ? '🔔 Sound' : '🔕 Sound'; if (sound) beep(); };
+$('#logout').onclick = async () => { await api('logout', { method: 'POST' }).catch(() => {}); showLogin(); };
+$('#loginForm').onsubmit = async (e) => {
+  e.preventDefault(); $('#lerr').textContent = '';
+  try { const r = await api('login', { method: 'POST', body: { name: $('#lname').value, password: $('#lpass').value } }); me = r.user; boot(); }
+  catch (err) { $('#lerr').textContent = err.message; }
+};
+
+async function boot() {
+  $('#login').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#who').textContent = `${me.name} · ${me.role}`;
+  await refresh(); loadStatus().catch(() => {});
+  const id = decodeURIComponent(location.hash.slice(1)); if (id) openLead(id).catch(() => {});
+  setInterval(refresh, 10000); setInterval(tickAges, 1000);
+}
+
+api('me').then((r) => { me = r.user; boot(); }).catch(() => showLogin());
+})();
+</script>
+</body>
+</html>
