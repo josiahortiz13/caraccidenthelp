@@ -67,6 +67,10 @@
   ],
   "rewrites": [
     {
+      "source": "/attribution.js",
+      "destination": "/attribution.js"
+    },
+    {
       "source": "/start",
       "destination": "/start.html"
     },

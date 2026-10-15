@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     // Last-resort path: database is down. Never lose the lead — push the raw submission to the owner.
     console.error('LEAD INTAKE FAILED', err);
     const summary = fill('🚨 CRASHHELP LEAD (DATABASE DOWN — NOT SAVED)\n{{first_name}} {{last_name}}\n{{phone}} {{email}}\nCity: {{crash_city}}\nCrash: {{crash_date}}\nPrefers: {{preferred_contact}}\nSource: {{utm_source}}', data);
-    const owner = process.env.OWNER_ALERT_PHONE;
+    const owner = process.env.OWNER_ALERT_PHONE || process.env.OWNER_PHONE;
     await Promise.allSettled([
       owner ? tw.sendSms({ to: owner, body: summary, kind: 'internal', purpose: 'fallback_alert' }) : null,
       email.send({ to: process.env.OWNER_ALERT_EMAIL || process.env.GMAIL_USER || 'crashhelptx@gmail.com', subject: '🚨 CrashHelp lead — database down, saved here only', text: summary, purpose: 'fallback_alert' }),

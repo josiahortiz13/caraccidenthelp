@@ -13,7 +13,7 @@ const db = require('../lib/db');
 const store = require('../lib/store');
 const tw = require('../lib/twilio');
 const leads = require('../lib/leads');
-const { sendXml, xmlEscape, normalizePhone, baseUrl, fill } = require('../lib/util');
+const { sendXml, xmlEscape, normalizePhone, baseUrl, twilioUrl, fill } = require('../lib/util');
 
 const STOP_WORDS = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'REVOKE', 'OPTOUT'];
 const START_WORDS = ['START', 'UNSTOP', 'YES'];
@@ -23,7 +23,7 @@ const VOICE = 'Polly.Joanna';
 const twiml = (inner) => `<?xml version="1.0" encoding="UTF-8"?><Response>${inner}</Response>`;
 const say = (t) => `<Say voice="${VOICE}">${xmlEscape(t)}</Say>`;
 const empty = () => twiml('');
-const url = (q) => xmlEscape(`${baseUrl()}/api/twilio?${q}`);
+const url = (q) => xmlEscape(twilioUrl(q));
 
 function landingUrl() {
   return process.env.LANDING_PAGE_URL || `${baseUrl()}/start`;
@@ -72,6 +72,7 @@ async function handleSms(req, res) {
     await db.query(`UPDATE leads SET sms_opt_out = true, sms_opt_out_at = now(), updated_at = now() WHERE phone = $1`, [from]);
     await db.query('DELETE FROM sms_sessions WHERE phone = $1', [from]);
     await store.event(lead?.lead_id || null, 'sms_opt_out', { keyword: word, phone_last4: from.slice(-4) });
+    if (lead) await require('../lib/crm').sync(lead.lead_id, 'opted_out');
     return sendXml(res, empty());
   }
 
@@ -359,7 +360,7 @@ module.exports = async (req, res) => {
     await store.setStatus('webhook', { state: 'FAILED', error: `${req.query.r}: ${e.message}` });
     // Inbound calls must still reach a human even if our code breaks.
     if (req.query.r === 'voice') {
-      const owner = normalizePhone(process.env.OWNER_ALERT_PHONE);
+      const owner = normalizePhone(process.env.OWNER_ALERT_PHONE || process.env.OWNER_PHONE);
       return sendXml(res, twiml(owner ? `<Dial timeout="20">${xmlEscape(owner)}</Dial>` : say('Thanks for calling CrashHelp TX. Please text us at this number.')));
     }
     return sendXml(res, empty());

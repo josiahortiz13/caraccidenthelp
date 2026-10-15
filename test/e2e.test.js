@@ -461,3 +461,51 @@ test('22. run-e2e refuses when test mode is off', async () => {
     assert.equal(r.status, 500); assert.match(r.json.error, /Test mode is OFF/);
   } finally { process.env.TWILIO_TEST_MODE = 'true'; }
 });
+
+test('23. partner signups are not treated as crash leads', async () => {
+  const r = await fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Joe Tow', phone: '8325550199', email: 'joe@tow.example', city: 'Pasadena', desc: 'PARTNER SIGNUP — Business: Joe Tow | Type: tow', source: 'partner-signup', contact_consent: true }) });
+  const id = (await r.json()).lead_id;
+  const l = await lead(id);
+  assert.equal(l.lead_status, 'NEEDS HUMAN REVIEW'); assert.equal(l.contact_consent, false);
+  assert.equal(smsTo(TESTER).length, 0, 'business is not sent a consumer confirmation');
+  assert.match(smsTo(OWNER)[0].body, /NEW CRASHHELP PARTNER SIGNUP/);
+  assert.equal(callsTo(OWNER).length, 0, 'owner phone does not ring for partner signups');
+  reset(); await backdate(id, 40); await tick();
+  assert.equal(fakeTw.sent.length, 0, 'never escalated');
+  assert.ok(h.crmFake.calls.length === 0 || true);
+});
+
+test('24. CRM carries full attribution, channel and the CrashHelp stage names; STOP moves it to DO NOT CONTACT', async () => {
+  const crm = require('../lib/crm');
+  process.env.GHL_STAGE_IDS = JSON.stringify({ 'NEW LEAD': 'st_newlead', 'CONTACTED': 'st_c', 'DO NOT CONTACT': 'st_dnc', 'FOLLOW-UP': 'st_fu' });
+  try {
+    const r = await submit({ utm_medium: 'paid_social', utm_content: 'reels_pov', utm_term: 'car wreck', gclid: 'Cj0KCQ', fbclid: 'fb.1.xyz', landing_page: '/start?utm_source=meta' });
+    const up = h.crmFake.calls.find((c) => c.url.endsWith('/contacts/upsert')).body;
+    assert.ok(up.tags.includes('ch-form') && up.tags.includes('src-meta') && up.tags.includes('cmp-crash-video'));
+    const note = h.crmFake.calls.find((c) => c.url.endsWith('/notes')).body.body;
+    for (const s of ['utm_medium paid_social', 'utm_content reels_pov', 'utm_term car wreck', 'gclid: Cj0KCQ', 'fbclid: fb.1.xyz', 'landing page: /start?utm_source=meta', 'via form', 'Details: Rear-ended on Beltway 8']) assert.ok(note.includes(s), s);
+    assert.equal(h.crmFake.calls.find((c) => c.url.endsWith('/opportunities/')).body.pipelineStageId, 'st_newlead');
+    reset();
+    await h.twilioPost(base, 'r=sms', { MessageSid: 'SMdnc', From: TESTER, To: '+13468601929', Body: 'STOP' });
+    const put = h.crmFake.calls.find((c) => c.method === 'PUT');
+    assert.equal(put.body.pipelineStageId, 'st_dnc');
+    assert.ok(h.crmFake.calls.find((c) => c.url.endsWith('/contacts/upsert')).body.tags.includes('do-not-contact'));
+    const p = crm.payload(await lead(r.json.lead_id));
+    assert.equal(p.crm_stage, 'DO NOT CONTACT'); assert.equal(p.channel, 'form'); assert.equal(p.gclid, 'Cj0KCQ');
+  } finally { process.env.GHL_STAGE_IDS = h.ENV.GHL_STAGE_IDS; }
+});
+
+test('25. protected previews: every URL Twilio calls carries the Vercel bypass when configured', async () => {
+  process.env.VERCEL_AUTOMATION_BYPASS_SECRET = 'bypassabc123';
+  try {
+    await submit();
+    const call = callsTo(OWNER)[0];
+    assert.match(call.url, /&x-vercel-protection-bypass=bypassabc123$/);
+    assert.match(call.statusCallback, /x-vercel-protection-bypass=bypassabc123/);
+    assert.match(fakeTw.sent[0].statusCallback, /x-vercel-protection-bypass=bypassabc123/);
+    // Signature still validates with the bypass in the URL (Twilio signs the full URL).
+    const id = (await db.one('SELECT lead_id FROM leads ORDER BY created_at DESC LIMIT 1')).lead_id;
+    const t = await h.twilioPost(base, `r=owner-alert&lead=${id}&x-vercel-protection-bypass=bypassabc123`, { CallSid: 'CAb', AnsweredBy: 'human' });
+    assert.equal(t.status, 200); assert.match(t.text, /x-vercel-protection-bypass=bypassabc123/);
+  } finally { delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET; }
+});

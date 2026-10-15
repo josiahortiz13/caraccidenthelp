@@ -573,6 +573,8 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   .stats-inner{grid-template-columns:repeat(2,1fr)}
 }
 </style>
+<style>html,body{overflow-x:clip}.urgency-ticker{overflow:hidden;max-width:100%}</style>
+<script src="/attribution.js"></script>
 </head>
 <body>
 
@@ -1040,11 +1042,6 @@ function handleSubmit(e){
   '📞 Get My FREE Case Review Now →'
   );
   e.target.querySelectorAll('input').forEach(function(i){ i.value=''; });
-},
-  document.getElementById('form-success'),
-  e.target.querySelector('.submit-btn'),
-  '🚀 Get My Free Case Review →'
-  );
 }
 
 /* ── EXIT-INTENT POPUP ── */

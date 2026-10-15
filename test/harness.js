@@ -51,7 +51,15 @@ function start(port = 0) {
       if (u.pathname === '/admin') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'admin.html'))); }
       if (u.pathname === '/start') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'start.html'))); }
       const h = handlers[u.pathname];
-      if (!h) { res.statusCode = 404; return res.end('not found'); }
+      if (!h) {
+        // Static files (homepage, city pages, attribution.js) the way Vercel serves them.
+        const f = path.join(root, u.pathname === '/' ? 'index.html' : u.pathname.replace(/^\//, ''));
+        if (f.startsWith(root) && fs.existsSync(f) && fs.statSync(f).isFile()) {
+          res.setHeader('Content-Type', f.endsWith('.js') ? 'text/javascript' : f.endsWith('.html') ? 'text/html' : 'application/octet-stream');
+          return res.end(fs.readFileSync(f));
+        }
+        res.statusCode = 404; return res.end('not found');
+      }
       req.query = Object.fromEntries(u.searchParams);
       try { req.body = parseBody(req, raw); } catch { res.statusCode = 400; return res.end('bad body'); }
       try { await h(req, res); } catch (e) { console.error(e); res.statusCode = 500; res.end(e.message); }
