@@ -509,3 +509,17 @@ test('25. protected previews: every URL Twilio calls carries the Vercel bypass w
     assert.equal(t.status, 200); assert.match(t.text, /x-vercel-protection-bypass=bypassabc123/);
   } finally { delete process.env.VERCEL_AUTOMATION_BYPASS_SECRET; }
 });
+
+test('26. HighLevel needs only token + location: pipeline and stage IDs are found by name', async () => {
+  const saved = { p: process.env.GHL_PIPELINE_ID, s: process.env.GHL_STAGE_IDS };
+  delete process.env.GHL_PIPELINE_ID; delete process.env.GHL_STAGE_IDS;
+  try {
+    await submit();
+    const calls = h.crmFake.calls.map((c) => `${c.method} ${c.url.replace('https://services.leadconnectorhq.com', '')}`);
+    assert.ok(calls.includes('GET /opportunities/pipelines?locationId=loc123'));
+    const opp = h.crmFake.calls.find((c) => c.url.endsWith('/opportunities/')).body;
+    assert.equal(opp.pipelineId, 'pipe_auto'); assert.equal(opp.pipelineStageId, 'auto_st_0');
+    const env = await admin('env-check');
+    assert.equal(env.json.checks.find((c) => c.name === 'CRM / HighLevel').state, 'CONFIGURED');
+  } finally { process.env.GHL_PIPELINE_ID = saved.p; process.env.GHL_STAGE_IDS = saved.s; }
+});
