@@ -39,3 +39,15 @@ Unless every number and review is real and attributable, remove them. Fake revie
 - Escalation only messages the team, never the consumer.
 - Test mode blocks every text and call to numbers outside `ALLOWED_TEST_NUMBERS`.
 - Lead statuses never label a "good case" or "bad case". Priorities are HIGH PRIORITY / NORMAL PRIORITY / LOW INFORMATION.
+
+## Flags for the firm's lawyer (added 2026-10-15)
+These are questions for counsel, not legal conclusions.
+1. **Partner payouts (`partners.html`, offline since 2026-10-15).** The page offered tow drivers, body shops, clinics and individuals $100 per qualified lead and $200 per signed case. Review against Tex. Penal Code §38.12 and the Texas Disciplinary Rules before any version goes back up.
+2. **Referral-service status.** The site describes CrashHelp TX as a "referral service" that connects people with "licensed Texas attorneys." Confirm how it is structured and paid under Tex. Occ. Code ch. 952 and the Disciplinary Rules on lawyer referral services and paying for referrals.
+3. **Attorney relationship claims.** "Texas Attorney Referrals" and "connect you with a licensed Texas attorney" assume a real arrangement with at least one licensed attorney. Confirm it exists and how it should be described.
+4. **Fee wording.** "No upfront fees" and the contingency explanation on every page. Confirm the wording, and whether costs and expenses need a disclosure.
+5. **Legal facts on the page.** The 2-year filing deadline, the "less than 51% at fault" FAQ answer, and the uninsured-motorist answer. Confirm these are accurate and phrased properly.
+6. **Advertising review.** If any page or ad counts as advertising for a lawyer or firm, confirm whether it needs filing or review under the Texas Bar advertising rules before paid ads run.
+7. **Consent and privacy.** The SMS/call consent checkbox on `/start`, the privacy policy SMS section, and the terms. Confirm they meet TCPA and Texas requirements for this use.
+8. **Old "Crash Alert" GitHub workflow on `main`.** It was built to alert on crashes found in public records. Outreach to people who did not contact us is out of scope; the owner is disabling it. Counsel should confirm no public-record outreach is ever used.
+9. **Exit-intent popup.** The "No thanks, I don't want help" button wording. Confirm the firm is comfortable with that tone.
