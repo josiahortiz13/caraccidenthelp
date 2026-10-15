@@ -580,3 +580,8 @@ test('30. browser retry queue: attribution.js keeps a failed lead and resends it
   assert.equal(posts.at(-1).client_retry, true);
   assert.equal(store.chx_pending_leads, undefined, 'queue cleared after successful resend');
 });
+
+test('31. health ?db=1 reports connection and all 11 tables', async () => {
+  const r = await (await fetch(base + '/api/health?db=1')).json();
+  assert.equal(r.db.state, 'CONNECTED'); assert.equal(r.db.tables, 11); assert.deepEqual(r.db.missing, []);
+});
