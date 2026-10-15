@@ -278,11 +278,13 @@ module.exports = async (req, res) => {
       case 'run-e2e': {
         if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
         if (a === 'env-check') return sendJson(res, 200, { checks: await staging.envCheck(req) });
-        if (a === 'twilio-check') return sendJson(res, 200, await staging.twilioCheck());
+        // Never echo the Vercel bypass secret back to the browser, even to owners.
+        const mask = (o) => { const b = process.env.VERCEL_AUTOMATION_BYPASS_SECRET; return b ? JSON.parse(JSON.stringify(o).split(b).join('•••')) : o; };
+        if (a === 'twilio-check') return sendJson(res, 200, mask(await staging.twilioCheck()));
         if (a === 'test-numbers') return sendJson(res, 200, { numbers: staging.allowedForPicker(), test_mode: tw.testMode() });
         if (a === 'point-number') {
           if (body.confirm !== 'POINT NUMBER HERE') return sendJson(res, 400, { error: 'Type POINT NUMBER HERE to confirm.' });
-          return sendJson(res, 200, await staging.pointNumberHere(user.name));
+          return sendJson(res, 200, mask(await staging.pointNumberHere(user.name)));
         }
         const result = await staging.runE2E({ leadPhoneIndex: body.phone_index, kind: body.kind === 'escalation' ? 'escalation' : 'chain' }, user.name);
         await store.audit(user.name, 'e2e_test_run', result.lead_id, { kind: result.kind });
