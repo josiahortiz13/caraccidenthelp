@@ -40,8 +40,8 @@
   <text x="80" y="330" font-family="Arial Black, Impact, sans-serif" font-size="72" font-weight="900" fill="#e03030">TEXAS CRASH?</text>
 
   <!-- Sub text -->
-  <text x="80" y="395" font-family="Arial, sans-serif" font-size="28" fill="#aaaaaa">You may be owed thousands. Free case review.</text>
-  <text x="80" y="435" font-family="Arial, sans-serif" font-size="28" fill="#aaaaaa">No fees unless you win. Available 24/7.</text>
+  <text x="80" y="395" font-family="Arial, sans-serif" font-size="28" fill="#aaaaaa">Free case review. Talk to someone today.</text>
+  <text x="80" y="435" font-family="Arial, sans-serif" font-size="28" fill="#aaaaaa">No upfront fees. Available 24/7.</text>
 
   <!-- CTA box -->
   <rect x="80" y="480" width="380" height="70" rx="12" fill="#e03030"/>
@@ -51,12 +51,12 @@
   <text x="80" y="600" font-family="Arial, sans-serif" font-size="22" fill="#555">crashhelptx.com</text>
 
   <!-- Stats right side -->
-  <text x="900" y="220" font-family="Arial Black, sans-serif" font-size="80" font-weight="900" fill="#e03030" text-anchor="middle">$2.1M+</text>
-  <text x="900" y="260" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Recovered for Clients</text>
+  <text x="900" y="220" font-family="Arial Black, sans-serif" font-size="80" font-weight="900" fill="#e03030" text-anchor="middle">24/7</text>
+  <text x="900" y="260" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Free Case Review</text>
   <rect x="780" y="285" width="240" height="1" fill="#1c1c1c"/>
-  <text x="900" y="340" font-family="Arial Black, sans-serif" font-size="60" font-weight="900" fill="#ffffff" text-anchor="middle">500+</text>
-  <text x="900" y="375" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Cases Won</text>
+  <text x="900" y="340" font-family="Arial Black, sans-serif" font-size="60" font-weight="900" fill="#ffffff" text-anchor="middle">ES</text>
+  <text x="900" y="375" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Se Habla Español</text>
   <rect x="780" y="400" width="240" height="1" fill="#1c1c1c"/>
   <text x="900" y="460" font-family="Arial Black, sans-serif" font-size="60" font-weight="900" fill="#ffffff" text-anchor="middle">$0</text>
-  <text x="900" y="495" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Upfront — No Win No Fee</text>
+  <text x="900" y="495" font-family="Arial, sans-serif" font-size="20" fill="#666" text-anchor="middle">Upfront to Talk</text>
 </svg>

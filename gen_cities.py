@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+raise SystemExit("RETIRED: this script regenerates old page copy with unverified settlement/review claims. Edit the HTML pages directly.")
 """Generate all missing Texas city landing pages from Houston template."""
 import re, os
 

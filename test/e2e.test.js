@@ -523,3 +523,60 @@ test('26. HighLevel needs only token + location: pipeline and stage IDs are foun
     assert.equal(env.json.checks.find((c) => c.name === 'CRM / HighLevel').state, 'CONFIGURED');
   } finally { process.env.GHL_PIPELINE_ID = saved.p; process.env.GHL_STAGE_IDS = saved.s; }
 });
+
+test('27. database outage: lead is NOT lost — full submission texted + emailed to owner and written to the log', async () => {
+  const logs = []; const origErr = console.error; console.error = (...a) => { logs.push(a.join(' ')); };
+  global.__crashhelpDbFail = true;
+  try {
+    const r = await submit({ first_name: 'Dbdown', phone: '(832) 555-0123', email: 'dbdown@example.com' });
+    assert.equal(r.status, 200); assert.equal(r.json.saved, false);
+    assert.ok(smsTo(OWNER).some((m) => /DATABASE DOWN/.test(m.body) && /Dbdown/.test(m.body) && /8325550123/.test(m.body)), 'owner SMS carries the lead');
+    assert.ok(fakeMail.sent.some((m) => /database down/i.test(m.subject) && /Dbdown/.test(m.text)), 'owner email carries the lead');
+    assert.ok(logs.some((l) => l.startsWith('CRASHHELP_LEAD_FALLBACK ') && l.includes('dbdown@example.com')), 'full lead in runtime log');
+  } finally { global.__crashhelpDbFail = false; console.error = origErr; }
+});
+
+test('28. database + Twilio + email all down: server answers 503 so the browser keeps the lead and retries', async () => {
+  const origErr = console.error; console.error = () => {};
+  global.__crashhelpDbFail = true; fakeTw.fail = true; fakeMail.fail = true;
+  try {
+    const r = await submit();
+    assert.equal(r.status, 503); assert.equal(r.json.retry, true);
+  } finally { global.__crashhelpDbFail = false; console.error = origErr; }
+  // When the browser resends after recovery, the lead is saved normally.
+  reset();
+  const again = await submit({ client_retry: true });
+  assert.equal(again.status, 200); assert.ok(await lead(again.json.lead_id));
+});
+
+test('29. a failure AFTER the save never triggers a false "not saved" alert', async () => {
+  const origErr = console.error; console.error = () => {};
+  global.__crashhelpDbFail = (sql) => !/INSERT INTO leads|INSERT INTO events|FROM leads|FROM opt_outs|FROM settings|rate_limits/.test(sql);
+  try {
+    const r = await submit({ phone: '(832) 555-0124', email: 'post@example.com' });
+    assert.equal(r.status, 200); assert.ok(r.json.lead_id, 'lead id returned');
+    assert.ok(!fakeMail.sent.some((m) => /database down/i.test(m.subject)), 'no false DATABASE DOWN email');
+  } finally { global.__crashhelpDbFail = false; console.error = origErr; }
+  const id = (await db.one("SELECT lead_id FROM leads WHERE email = 'post@example.com'")).lead_id;
+  assert.ok(id, 'lead is in the database');
+});
+
+test('30. browser retry queue: attribution.js keeps a failed lead and resends it once the server recovers', async () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'attribution.js'), 'utf8');
+  const store = {}; const posts = []; let serverUp = false;
+  const win = {
+    location: { search: '?utm_source=google&gclid=g1', pathname: '/houston' }, document: { referrer: '', head: { appendChild() {} }, createElement: () => ({}), addEventListener() {} },
+    sessionStorage: { getItem: () => null, setItem() {} },
+    localStorage: { getItem: (k) => store[k] || null, setItem: (k, v) => { store[k] = v; }, removeItem: (k) => { delete store[k]; } },
+    addEventListener() {}, setTimeout: () => {},
+    fetch: (url, opts) => { posts.push(JSON.parse(opts.body)); return serverUp ? Promise.resolve({ ok: true, status: 200, clone: () => ({ json: async () => ({ lead_id: 'CH-1' }) }) }) : Promise.reject(new Error('offline')); },
+  };
+  win.window = win;
+  new Function('window', 'document', 'location', 'sessionStorage', 'localStorage', 'setTimeout', 'URLSearchParams', 'fetch', src)(win, win.document, win.location, win.sessionStorage, win.localStorage, win.setTimeout, URLSearchParams, win.fetch);
+  await win.fetch('/api/lead', { method: 'POST', body: JSON.stringify({ first_name: 'Q', phone: '8325550199' }) }).catch(() => {});
+  const q = JSON.parse(store.chx_pending_leads);
+  assert.equal(q.length, 1); assert.equal(q[0].body.gclid, 'g1'); assert.equal(q[0].body.utm_source, 'google');
+  serverUp = true; win.CHX_FLUSH_LEADS(); await new Promise((r) => setImmediate(r));
+  assert.equal(posts.at(-1).client_retry, true);
+  assert.equal(store.chx_pending_leads, undefined, 'queue cleared after successful resend');
+});

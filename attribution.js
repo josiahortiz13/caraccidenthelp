@@ -1,7 +1,8 @@
 /* CrashHelp TX attribution. Loaded on every public page.
  * 1) Saves first-touch UTMs, gclid, fbclid, landing page and referrer for the visit.
  * 2) Adds them to every POST /api/lead from any page (no per-form changes needed).
- * 3) Fires call-click and form conversions to GA4, Meta Pixel and (once IDs are set) Google Ads.
+ * 3) Keeps any lead the server could not accept and resends it later.
+ * 4) Fires call-click and form conversions to GA4, Meta Pixel and (once IDs are set) Google Ads.
  */
 (function () {
   // Google Ads: fill these in from Google Ads → Goals → Conversions → (action) → Tag setup. Leave blank to skip.
@@ -41,7 +42,8 @@
           var body = JSON.parse(opts.body);
           KEYS.concat(['landing_page', 'referrer']).forEach(function (k) { if (!body[k] && attr[k]) body[k] = attr[k]; });
           opts = Object.assign({}, opts, { body: JSON.stringify(body) });
-          return origFetch.call(this, url, opts).then(function (res) {
+          return origFetch.call(window, url, opts).then(function (res) {
+            if (res.status >= 500) queueLead(body);
             if (res.ok) {
               res.clone().json().then(function (r) {
                 adsConversion(GOOGLE_ADS.formLabel, r && r.lead_id);
@@ -49,12 +51,39 @@
               }).catch(function () {});
             }
             return res;
-          });
+          }, function (err) { queueLead(body); throw err; });
         }
       } catch (e) {}
       return origFetch.apply(this, arguments);
     };
   }
+
+  // Never lose a lead to a bad connection or a server outage: keep it in this browser and resend
+  // on the next page load or when the connection comes back. The server de-duplicates by phone/email.
+  var QKEY = 'chx_pending_leads';
+  function readQ() { try { return JSON.parse(localStorage.getItem(QKEY) || '[]'); } catch (e) { return []; } }
+  function writeQ(q) { try { q.length ? localStorage.setItem(QKEY, JSON.stringify(q.slice(-5))) : localStorage.removeItem(QKEY); } catch (e) {} }
+  function queueLead(body) {
+    if (body.client_retry) return;
+    var q = readQ(); q.push({ body: body, at: Date.now() }); writeQ(q);
+  }
+  var flushing = false;
+  function flushQueue() {
+    if (flushing || !origFetch) return;
+    var q = readQ().filter(function (x) { return Date.now() - x.at < 7 * 864e5; });
+    if (!q.length) return writeQ([]);
+    flushing = true;
+    var item = q[0];
+    var body = Object.assign({}, item.body, { client_retry: true });
+    origFetch.call(window, '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (res) {
+        flushing = false;
+        if (res.ok || (res.status >= 400 && res.status < 500 && res.status !== 429)) { writeQ(readQ().slice(1)); flushQueue(); }
+      }, function () { flushing = false; });
+  }
+  window.CHX_FLUSH_LEADS = flushQueue;
+  setTimeout(flushQueue, 1500);
+  window.addEventListener('online', flushQueue);
 
   // Click-to-call conversions.
   document.addEventListener('click', function (e) {
