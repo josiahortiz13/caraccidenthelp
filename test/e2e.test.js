@@ -585,3 +585,14 @@ test('31. health ?db=1 reports connection and all 11 tables', async () => {
   const r = await (await fetch(base + '/api/health?db=1')).json();
   assert.equal(r.db.state, 'CONNECTED'); assert.equal(r.db.tables, 11); assert.deepEqual(r.db.missing, []);
 });
+
+test('32. QA Bot login works on Preview and is refused in Production', async () => {
+  process.env.QA_ADMIN_PASSWORD = 'q'.repeat(30);
+  try {
+    const ok = await admin('login', { cookie: null, method: 'POST', body: { name: 'QA Bot', password: 'q'.repeat(30) } });
+    assert.equal(ok.status, 200);
+    process.env.VERCEL_ENV = 'production';
+    const no = await admin('login', { cookie: null, method: 'POST', body: { name: 'QA Bot', password: 'q'.repeat(30) } });
+    assert.notEqual(no.status, 200);
+  } finally { delete process.env.QA_ADMIN_PASSWORD; delete process.env.VERCEL_ENV; }
+});
