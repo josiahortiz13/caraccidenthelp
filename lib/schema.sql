@@ -55,6 +55,9 @@ CREATE TABLE IF NOT EXISTS leads (
   notes                   TEXT
 );
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS callback_requested BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_at TIMESTAMPTZ;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_note TEXT;
 CREATE INDEX IF NOT EXISTS leads_phone_idx   ON leads (phone);
 CREATE INDEX IF NOT EXISTS leads_email_idx   ON leads (lower(email));
 CREATE INDEX IF NOT EXISTS leads_status_idx  ON leads (lead_status);

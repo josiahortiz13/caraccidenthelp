@@ -50,7 +50,7 @@ nav button[aria-selected="true"]{background:var(--raise);color:var(--text)}
 /* KPI strip */
 .kpis{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-block:18px}
 @media(max-width:980px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:520px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 .kpi{background:var(--panel);padding:12px 14px}
 .kpi .n{font:900 30px/1 var(--sign);font-variant-numeric:tabular-nums}
 .kpi .l{font:700 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:6px}
@@ -76,6 +76,14 @@ nav button[aria-selected="true"]{background:var(--raise);color:var(--text)}
 .chip.hi{color:#fff;background:var(--red);border-color:var(--red)}
 .chip.st{color:var(--text)}
 .chip.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+.chip.urgent{color:#fff;background:var(--red);border-color:var(--red);font-weight:900}
+.chip.cb{color:#1a1300;background:var(--amber);border-color:var(--amber)}
+.chip.ok{color:var(--green);border-color:color-mix(in srgb,var(--green) 45%,var(--line))}
+.views{display:flex;gap:6px;flex-wrap:wrap}
+.views button{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:7px 12px;font:700 12px var(--sign);letter-spacing:.05em;text-transform:uppercase;color:var(--dim);cursor:pointer}
+.views button[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.views b{font-variant-numeric:tabular-nums;margin-left:4px}
+.kpi[data-view]{cursor:pointer}.kpi[data-view]:hover{background:var(--raise)}
 .meta{color:var(--dim);font-size:13.5px;display:flex;gap:14px;flex-wrap:wrap}
 .meta b{color:var(--text);font-weight:600}
 .age{font:700 13px var(--mono);font-variant-numeric:tabular-nums;padding:14px 16px 0;text-align:right}
@@ -121,6 +129,21 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:560px){.esc-row{grid-template-columns:1fr 1fr}}
 #toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:10px;font-weight:600;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+/* phone: compact header and counters so the queue is on the first screen */
+@media(max-width:520px){
+  .kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-block:10px}
+  .kpi{padding:8px 8px}.kpi .n{font-size:20px}.kpi.resp .n{font-size:15px}.kpi .l{font-size:8.5px;letter-spacing:.04em;margin-top:4px;line-height:1.2}
+  header .wrap{gap:8px;padding-block:8px}
+  header nav{order:3;width:100%;margin-left:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  header nav button{padding:6px 10px;font-size:12px;flex:none}
+  .who{display:none}
+  #soundBtn,#logout{padding:7px 9px;font-size:11px}
+  #soundBtn{margin-left:auto}
+  .views{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+  .views button{flex:none}
+  .legend{display:none}
+  .card h3{font-size:17px}
+}
 </style>
 </head>
 <body>
@@ -154,6 +177,13 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="kpis" id="kpis"></div>
 
     <div data-panel="leads">
+      <div class="views" id="views" role="group" aria-label="Lead views" style="margin-bottom:10px">
+        <button type="button" data-v="" aria-pressed="true">All leads</button>
+        <button type="button" data-v="urgent" aria-pressed="false">🔴 Urgent<b data-c="urgent_open"></b></button>
+        <button type="button" data-v="callbacks" aria-pressed="false">📞 Callbacks<b data-c="callbacks_waiting"></b></button>
+        <button type="button" data-v="missed" aria-pressed="false">📵 Missed calls<b data-c="missed_calls"></b></button>
+        <button type="button" data-v="followup" aria-pressed="false">⏰ Follow-ups<b data-c="followups_due"></b></button>
+      </div>
       <div class="toolbar">
         <input id="search" placeholder="Search name, phone, email, lead ID" aria-label="Search leads">
         <select id="statusFilter" aria-label="Filter by status"><option value="">All statuses</option><option value="TEST">🧪 TEST leads only</option></select>
@@ -240,14 +270,24 @@ function when(t) { return t ? new Date(t).toLocaleString('en-US', { timeZone: 'A
 function pretty(v) { return v ? String(v).replace(/_/g, ' ') : '—'; }
 
 // ---------- Leads ----------
+let view = '';
+function prioChip(l) {
+  return l.lead_priority === 'URGENT' ? '<span class="chip urgent">URGENT</span>' : l.lead_priority === 'HIGH PRIORITY' ? '<span class="chip hi">HIGH PRIORITY</span>' : l.lead_priority === 'LOW INFORMATION' ? '<span class="chip">LOW INFO</span>' : '';
+}
+function followChip(l) {
+  if (!l.follow_up_at) return '';
+  const due = new Date(l.follow_up_at) <= new Date(Date.now() - serverOffset);
+  return `<span class="chip ${due ? 'urgent' : 'warn'}" title="${esc(l.follow_up_note || '')}">⏰ ${due ? 'FOLLOW-UP DUE' : 'FOLLOW UP ' + esc(when(l.follow_up_at))}</span>`;
+}
 function leadCard(l) {
   const name = [l.first_name, l.last_name].filter(Boolean).join(' ') || 'Unknown caller';
   const open = OPEN.includes(l.lead_status) && !l.first_contact_at;
   return `<article class="card ${ageClass(l)}" data-id="${esc(l.lead_id)}">
     <div class="stripe"></div>
     <div class="main" data-open="${esc(l.lead_id)}">
-      <h3>${esc(name)} ${l.lead_priority === 'HIGH PRIORITY' ? '<span class="chip hi">HIGH PRIORITY</span>' : l.lead_priority === 'LOW INFORMATION' ? '<span class="chip">LOW INFO</span>' : ''}</h3>
+      <h3>${esc(name)} ${prioChip(l)}${l.callback_requested ? `<span class="chip cb">📞 CALLBACK ${l.first_contact_at ? 'DONE' : 'REQUESTED'}</span>` : ''}${followChip(l)}</h3>
       <div class="chips"><span class="chip st">${esc(l.lead_status)}</span>${l.preferred_contact ? `<span class="chip">PREFERS ${esc(l.preferred_contact.toUpperCase())}</span>` : ''}${!l.contact_consent ? '<span class="chip warn">NO CONSENT YET</span>' : ''}${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}${l.repeat_count ? `<span class="chip">+${l.repeat_count} REPEAT</span>` : ''}${l.assigned_to ? `<span class="chip">→ ${esc(l.assigned_to)}</span>` : ''}${l.is_test ? '<span class="chip warn">🧪 TEST</span>' : ''}</div>
+      ${l.callback_requested ? `<div class="meta">${l.first_contact_at ? `<span class="chip ok">✓ Called back in ${fmtDur(Math.round((new Date(l.first_contact_at) - new Date(l.created_at)) / 1000))}</span>` : `<span>Waiting for a callback · requested ${when(l.created_at)}</span>`}</div>` : ''}
       <div class="meta"><span><b>${esc(l.phone || '—')}</b></span><span>${esc(l.crash_city || '—')}${l.crash_county ? ', ' + esc(l.crash_county) : ''}</span><span>Injury: <b>${esc(pretty(l.injury_status))}</b></span><span>Source: ${esc(l.utm_source || l.source || '—')}</span><span>${esc(l.lead_id)}</span></div>
     </div>
     <div class="age" data-age="${esc(l.lead_id)}">${open ? fmtAge(liveAge(l)) : 'contacted'}</div>
@@ -257,6 +297,7 @@ function leadCard(l) {
       <button class="btn" data-act="email" ${l.email ? '' : 'disabled'}>✉️ Email</button>
       ${open ? '<button class="btn green" data-act="contacted">✓ Mark contacted</button>' : ''}
       <button class="btn" data-act="note">+ Note</button>
+      <button class="btn" data-act="followup">⏰ Follow-up</button>
       <select data-act="status" aria-label="Change status">${statuses.map((s) => `<option ${s === l.lead_status ? 'selected' : ''}>${s}</option>`).join('')}</select>
       <button class="btn" data-act="assign">Assign</button>
     </div>
@@ -265,7 +306,7 @@ function leadCard(l) {
 
 function renderQueue() {
   const q = $('#queue');
-  if (!leads.length) { q.innerHTML = '<div class="empty">No leads yet. New form leads, texts and calls show up here within seconds.</div>'; return; }
+  if (!leads.length) { q.innerHTML = `<div class="empty">${{ urgent: 'No urgent leads right now.', callbacks: 'No callback requests.', missed: 'No missed calls.', followup: 'No follow-ups scheduled.' }[view] || 'No leads yet. New form leads, texts and calls show up here within seconds.'}</div>`; return; }
   q.innerHTML = leads.map(leadCard).join('');
 }
 
@@ -288,7 +329,7 @@ function beep() {
 
 async function loadLeads() {
   const params = {}; const s = $('#search').value.trim(); const f = $('#statusFilter').value;
-  if (s) params.search = s; if (f) params.status = f;
+  if (s) params.search = s; if (f) params.status = f; if (view) params.view = view;
   const d = await api('leads', { params });
   serverOffset = Date.now() - new Date(d.now).getTime();
   if (!statuses.length) { statuses = d.statuses; $('#statusFilter').innerHTML += statuses.map((x) => `<option>${x}</option>`).join(''); }
@@ -305,13 +346,16 @@ async function loadMetrics() {
   const avg = t.avg_attempt_sec;
   const over = avg != null && avg > m.target_min * 60;
   $('#kpis').innerHTML = [
-    ['New today', c.new_today], ['Uncontacted', c.uncontacted, c.uncontacted ? 'alert' : ''], ['Contacted', c.contacted], ['Qualified', c.qualified],
-    ['Appointments', c.appointments], ['Referred', c.referred], ['No response', c.no_response],
-  ].map(([l, n, cls]) => `<div class="kpi ${cls || ''}"><div class="n">${n ?? 0}</div><div class="l">${l}</div></div>`).join('') +
+    ['New today', c.new_today], ['Urgent waiting', c.urgent_open, c.urgent_open ? 'alert' : '', 'urgent'], ['Callbacks waiting', c.callbacks_waiting, c.callbacks_waiting ? 'alert' : '', 'callbacks'],
+    ['Missed calls · 7d', c.missed_calls, c.missed_calls ? 'alert' : '', 'missed'], ['Follow-ups due', c.followups_due, c.followups_due ? 'alert' : '', 'followup'],
+    ['Uncontacted', c.uncontacted, c.uncontacted ? 'alert' : ''], ['Qualified', c.qualified],
+  ].map(([l, n, cls, v]) => `<div class="kpi ${cls || ''}" ${v ? `data-view="${v}" role="button" tabindex="0" title="Show ${l.toLowerCase()}"` : ''}><div class="n">${n ?? 0}</div><div class="l">${l}</div></div>`).join('') +
   `<div class="kpi resp ${avg == null ? '' : over ? 'over' : 'ok'}" title="Average time from submission to first contact attempt, last 30 days. Target ${m.target_min} min."><div class="n">${fmtDur(avg)}</div><div class="l">Avg response · goal ${m.target_min}m${t.over_target ? ` · ${t.over_target} over` : ''}</div></div>`;
   $('#srcBody').innerHTML = m.sources.length ? m.sources.map((s) => `<tr><td>${esc(s.source)}</td><td>${esc(s.campaign)}</td><td class="num">${s.leads}</td><td class="num">${s.contacted}</td><td class="num">${s.qualified}</td></tr>`).join('') : '<tr><td colspan="5">No leads in the last 30 days.</td></tr>';
+  document.querySelectorAll('#views [data-c]').forEach((b) => { const n = c[b.dataset.c]; b.textContent = n ? ' ' + n : ''; });
   const a = m.activity;
   $('#actBody').innerHTML = [['Texts sent (7 days)', a.texts_sent], ['Calls made (7 days)', a.calls_made], ['Twilio SMS failures (7 days)', a.twilio_sms_failures], ['Twilio call failures (7 days)', a.twilio_call_failures], ['CRM syncs waiting to retry', a.crm_pending], ['CRM syncs that gave up', a.crm_gave_up],
+    ['Callbacks completed (30 days)', c.callbacks_done], ['Avg callback time', fmtDur(t.avg_callback_sec)], ['Contacted (all time)', c.contacted], ['Appointments', c.appointments], ['Referred', c.referred], ['No response', c.no_response],
     ['Avg time to first alert', fmtDur(t.avg_alert_sec)], ['Avg time to contact', fmtDur(t.avg_contact_sec)], ['Avg time to appointment', fmtDur(t.avg_appointment_sec)]]
     .map(([k, v]) => `<tr><td>${k}</td><td class="num">${v ?? 0}</td></tr>`).join('');
 }
@@ -335,7 +379,7 @@ function eventText(e) {
     repeat_submission: 'Submitted the form again', sms_opt_out: `Opted out of texts (${d.keyword})`, sms_received: `Text received: "${d.preview}"`,
     consumer_confirmation_skipped: `Confirmation not sent · ${pretty(d.reason)}`, backup_call_scheduled: `Backup call scheduled · ${d.delay_min} min`,
     inbound_call_missed: 'Missed inbound call', inbound_call_answered: `Inbound call answered · ${fmtDur(d.duration)}`, consent_received: 'Consent received by text',
-    priority_changed: `Priority → ${d.to}`, owner_keypress: `Owner pressed ${d.digits || 'nothing'}`, repeat_contact: 'Called or texted again',
+    priority_changed: `Priority → ${d.to}${d.why ? ' (' + d.why + ')' : ''}`, follow_up_set: `Follow-up set · ${when(d.at)}${d.note ? ' · ' + d.note : ''}`, follow_up_cleared: 'Follow-up cleared', owner_keypress: `Owner pressed ${d.digits || 'nothing'}`, repeat_contact: 'Called or texted again',
   };
   return map[e.type] || pretty(e.type);
 }
@@ -354,8 +398,9 @@ async function openLead(id) {
     ['Time to contact', fmtDur(l.first_contact_at && (new Date(l.first_contact_at) - new Date(l.created_at)) / 1000 | 0)]];
   $('#sheet').innerHTML = `
     <div class="row" style="align-items:center"><h2 style="flex:1 1 auto">${esc(name)}</h2><button class="btn" id="closeDrawer">Close</button></div>
-    <div class="chips"><span class="chip st">${esc(l.lead_status)}</span><span class="chip ${l.lead_priority === 'HIGH PRIORITY' ? 'hi' : ''}">${esc(l.lead_priority)}</span>${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}</div>
-    <div class="row" data-id="${esc(l.lead_id)}"><button class="btn red" data-act="call" ${l.phone ? '' : 'disabled'}>📞 Call</button><button class="btn" data-act="text" ${l.phone && l.contact_consent && !l.sms_opt_out ? '' : 'disabled'}>💬 Text</button><button class="btn" data-act="email" ${l.email ? '' : 'disabled'}>✉️ Email</button><button class="btn green" data-act="contacted">✓ Contacted</button></div>
+    <div class="chips"><span class="chip st">${esc(l.lead_status)}</span>${prioChip(l) || `<span class="chip">${esc(l.lead_priority)}</span>`}${l.callback_requested ? `<span class="chip cb">📞 CALLBACK ${l.first_contact_at ? 'DONE' : 'REQUESTED'}</span>` : ''}${followChip(l)}${l.sms_opt_out ? '<span class="chip warn">TEXT OPT-OUT</span>' : ''}</div>
+    ${l.follow_up_at ? `<div class="kv"><span>Follow-up</span>${esc(when(l.follow_up_at))}${l.follow_up_note ? ' · ' + esc(l.follow_up_note) : ''}</div>` : ''}
+    <div class="row" data-id="${esc(l.lead_id)}"><button class="btn red" data-act="call" ${l.phone ? '' : 'disabled'}>📞 Call</button><button class="btn" data-act="text" ${l.phone && l.contact_consent && !l.sms_opt_out ? '' : 'disabled'}>💬 Text</button><button class="btn" data-act="email" ${l.email ? '' : 'disabled'}>✉️ Email</button><button class="btn green" data-act="contacted">✓ Contacted</button><button class="btn" data-act="followup">⏰ Follow-up</button></div>
     <div class="grid2">${kv.map(([k, v]) => `<div class="kv"><span>${k}</span>${esc(v || '—')}</div>`).join('')}</div>
     ${l.description ? `<div class="kv"><span>What happened</span>${esc(l.description)}</div>` : ''}
     <div class="sec">Add note</div>
@@ -382,6 +427,12 @@ async function act(id, what, value) {
       await api('email-logged', { method: 'POST', body: { lead_id: id } });
       location.href = `mailto:${encodeURIComponent(lead.email || '')}?subject=${encodeURIComponent('Your CrashHelp TX request')}`;
     } else if (what === 'contacted') { await api('mark-contacted', { method: 'POST', body: { lead_id: id } }); toast('Marked contacted'); }
+    else if (what === 'followup') {
+      const h = prompt('Follow up in how many hours? (e.g. 1, 4, 24 — or 0 to clear)', lead.follow_up_at ? '0' : '2');
+      if (h === null || h.trim() === '' || isNaN(+h)) return;
+      const note = +h > 0 ? (prompt('Note (optional):', lead.follow_up_note || '') || '') : '';
+      await api('follow-up', { method: 'POST', body: { lead_id: id, hours: +h, note } }); toast(+h > 0 ? `Follow-up set for ${h}h from now` : 'Follow-up cleared');
+    }
     else if (what === 'note') { await api('note', { method: 'POST', body: { lead_id: id, note: value || prompt('Note:') || '' } }); toast('Note saved'); }
     else if (what === 'status') { await api('status-change', { method: 'POST', body: { lead_id: id, status: value } }); toast('Status → ' + value); }
     else if (what === 'assign') { const to = prompt('Assign to (name):', lead.assigned_to || me.name); if (to === null) return; await api('assign', { method: 'POST', body: { lead_id: id, assigned_to: to } }); toast('Assigned'); }
@@ -396,6 +447,15 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('change', (e) => { const s = e.target.closest('select[data-act="status"]'); if (s) act(s.closest('[data-id]').dataset.id, 'status', s.value); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openId) closeDrawer(); if (e.key === 'Enter' && e.target.dataset.open) openLead(e.target.dataset.open); });
+
+// ---------- Views ----------
+function setView(v) {
+  view = v || ''; document.querySelectorAll('#views button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === view)));
+  loadLeads().catch(() => {});
+}
+document.getElementById('views').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setView(b.dataset.v); });
+document.getElementById('kpis').addEventListener('click', (e) => { const k = e.target.closest('[data-view]'); if (k) setView(k.dataset.view); });
+document.getElementById('kpis').addEventListener('keydown', (e) => { const k = e.target.closest('[data-view]'); if (k && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setView(k.dataset.view); } });
 
 // ---------- Status ----------
 async function loadStatus() {

@@ -143,14 +143,16 @@ async function handleSms(req, res) {
     }
     await db.query('DELETE FROM sms_sessions WHERE phone = $1', [from]);
     const summary = 'Text quiz · ' + Q.filter((x) => x.label).map((x) => `${x.label}: ${x.show ? x.show(next[x.key]) : next[x.key]}`).join(' · ');
-    const fields = { first_name: next.first_name, crash_city: next.crash_city, preferred_contact: next.preferred_contact, injured: next.injured, medical_care: next.medical_care, description: summary };
+    const recency = { 'Today': 'today', 'In the last few days': 'days', 'Within the last month': 'month', 'More than a month ago': 'older' }[next.when] || null;
+    const fields = { crash_recency: recency, first_name: next.first_name, crash_city: next.crash_city, preferred_contact: next.preferred_contact, injured: next.injured, medical_care: next.medical_care, description: summary };
     // Promote a missed-call record to a real lead, or create one.
     const pending = lead && lead.lead_status === 'PENDING CONSENT' ? lead : null;
     if (pending) {
       await db.query(
         `UPDATE leads SET first_name = $2, crash_city = $3, preferred_contact = $4, contact_consent = true, consent_text = $5, lead_status = 'NEW',
-           injury_status = $6, medical_status = $7, description = $8, updated_at = now() WHERE lead_id = $1`,
-        [pending.lead_id, fields.first_name, fields.crash_city, fields.preferred_contact, next.consent_text, fields.injured, fields.medical_care, summary]
+           injury_status = $6, medical_status = $7, description = $8, lead_priority = $9, updated_at = now() WHERE lead_id = $1`,
+        [pending.lead_id, fields.first_name, fields.crash_city, fields.preferred_contact, next.consent_text, fields.injured, fields.medical_care, summary,
+          leads.priorityFor({ phone: from, crash_city: fields.crash_city, injury_status: fields.injured, medical_status: fields.medical_care, crash_recency: recency })]
       );
       await store.event(pending.lead_id, 'consent_received', { via: 'sms_yes' });
       const settings = await store.getSettings();

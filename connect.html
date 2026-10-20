@@ -218,12 +218,12 @@ footer p{margin:0 0 8px}
     if (!d.name.trim()) return (err.textContent = 'Enter your name.');
     if (!validPhone(d.phone)) return (err.textContent = 'Enter a 10-digit phone number.');
     const consent = f.contact_consent.checked;
-    send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: 'call', contact_consent: consent, consent_text: consent ? consentText : '', source: 'express-callback', description: 'Express Connect: callback requested' }, $('button[type=submit]', f), err);
+    send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: 'call', contact_consent: consent, consent_text: consent ? consentText : '', source: 'express-callback', callback_requested: true, description: 'Express Connect: callback requested' }, $('button[type=submit]', f), err);
   });
 
   // QUIZ
   const Q = [
-    { k: 'when', q: 'When did the crash happen?', a: ['Today', 'In the last few days', 'Within the last month', 'More than a month ago'] },
+    { k: 'when', q: 'When did the crash happen?', a: [['Today', 'today'], ['In the last few days', 'days'], ['Within the last month', 'month'], ['More than a month ago', 'older']] },
     { k: 'hurt', q: 'Were you hurt?', a: [['Yes', 'yes'], ['No', 'no'], ['Not sure yet', 'unsure']] },
     { k: 'doctor', q: 'Have you seen a doctor?', a: [['Yes', 'yes'], ['Not yet', 'not_yet'], ['No', 'no']] },
     { k: 'fault', q: 'Who caused the crash?', a: ['The other driver', 'Not sure', 'Partly me', 'Someone else'] },
@@ -267,7 +267,7 @@ footer p{margin:0 0 8px}
       const city = { 'Houston area': 'Houston', 'Dallas–Fort Worth': 'Dallas–Fort Worth', 'San Antonio': 'San Antonio', 'Austin': 'Austin' }[answers.area && answers.area.label] || '';
       const summary = 'Express Connect quiz · ' + Q.map((it) => `${it.q} ${answers[it.k] ? answers[it.k].label : '—'}`).join(' · ');
       send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: d.preferred_contact, contact_consent: consent, consent_text: consent ? consentText : '',
-        injured: answers.hurt && answers.hurt.value, medical_care: answers.doctor && answers.doctor.value, crash_city: city, description: summary, source: 'express-quiz' }, $('button[type=submit]', f), err);
+        crash_recency: answers.when && answers.when.value, injured: answers.hurt && answers.hurt.value, medical_care: answers.doctor && answers.doctor.value, crash_city: city, description: summary, source: 'express-quiz' }, $('button[type=submit]', f), err);
     });
   }
 })();

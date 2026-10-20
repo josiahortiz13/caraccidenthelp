@@ -13,6 +13,8 @@ const { sendJson, clientIp, clean, maskPhone, normalizePhone } = require('../lib
 
 const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers'];
 
+// Views: all (default), urgent, callbacks, missed (missed inbound calls), followup.
+// Order: open + not yet contacted first, then URGENT → HIGH → NORMAL → LOW, then oldest waiting first.
 async function listLeads(q) {
   const params = [];
   let where = 'duplicate_of IS NULL';
@@ -22,15 +24,24 @@ async function listLeads(q) {
     where += ' AND is_test = false';
     if (q.status) { params.push(q.status); where += ` AND lead_status = $${params.length}`; }
   }
+  if (q.view === 'urgent') where += ` AND lead_priority = 'URGENT'`;
+  if (q.view === 'callbacks') where += ' AND callback_requested = true';
+  if (q.view === 'missed') where += ` AND source = 'inbound_call' AND (lead_status = 'PENDING CONSENT' OR first_contact_at IS NULL)`;
+  if (q.view === 'followup') where += ` AND (follow_up_at IS NOT NULL OR lead_status IN ('FOLLOW-UP', 'CONTACT ATTEMPTED', 'NO RESPONSE')) AND lead_status NOT IN ('CLOSED', 'NOT QUALIFIED', 'DUPLICATE', 'REFERRED')`;
   if (q.search) {
     params.push(`%${String(q.search).toLowerCase()}%`);
     where += ` AND (lower(coalesce(first_name,'')||' '||coalesce(last_name,'')) LIKE $${params.length} OR phone LIKE $${params.length} OR lower(coalesce(email,'')) LIKE $${params.length} OR lower(lead_id) LIKE $${params.length})`;
   }
+  const open = `(l.lead_status = ANY($${params.length + 1}) AND l.first_contact_at IS NULL)`;
+  const order = q.view === 'followup'
+    ? `(l.follow_up_at IS NULL), l.follow_up_at ASC, ${open} DESC, l.updated_at ASC`
+    : `${open} DESC, CASE l.lead_priority WHEN 'URGENT' THEN 0 WHEN 'HIGH PRIORITY' THEN 1 WHEN 'NORMAL PRIORITY' THEN 2 ELSE 3 END,
+       CASE WHEN ${open} THEN l.created_at END ASC, l.created_at DESC`;
   const r = await db.query(
     `SELECT l.*, EXTRACT(EPOCH FROM (now() - l.created_at))::int AS age_sec,
        (SELECT count(*)::int FROM leads d WHERE d.duplicate_of = l.lead_id) AS repeat_count
      FROM leads l WHERE ${where}
-     ORDER BY (l.lead_status = ANY($${params.length + 1}) AND l.first_contact_at IS NULL) DESC, l.created_at DESC LIMIT 300`,
+     ORDER BY ${order} LIMIT 300`,
     [...params, leads.OPEN_STATUSES]
   );
   return r.rows;
@@ -61,13 +72,19 @@ async function metrics(test = false) {
       count(*) FILTER (WHERE appointment_at IS NOT NULL)::int AS appointments,
       count(*) FILTER (WHERE lead_status = 'REFERRED')::int AS referred,
       count(*) FILTER (WHERE lead_status = 'NO RESPONSE')::int AS no_response,
-      count(*) FILTER (WHERE lead_priority = 'HIGH PRIORITY' AND lead_status = ANY($1))::int AS high_open
+      count(*) FILTER (WHERE lead_priority = 'HIGH PRIORITY' AND lead_status = ANY($1))::int AS high_open,
+      count(*) FILTER (WHERE lead_priority = 'URGENT' AND lead_status = ANY($1) AND first_contact_at IS NULL)::int AS urgent_open,
+      count(*) FILTER (WHERE callback_requested AND lead_status = ANY($1) AND first_contact_at IS NULL)::int AS callbacks_waiting,
+      count(*) FILTER (WHERE callback_requested AND first_contact_at IS NOT NULL AND created_at >= now() - interval '30 days')::int AS callbacks_done,
+      count(*) FILTER (WHERE source = 'inbound_call' AND first_contact_at IS NULL AND created_at >= now() - interval '7 days')::int AS missed_calls,
+      count(*) FILTER (WHERE follow_up_at IS NOT NULL AND follow_up_at <= now() AND lead_status NOT IN ('CLOSED','NOT QUALIFIED','DUPLICATE','REFERRED','CONTACTED','QUALIFIED','APPOINTMENT SET'))::int AS followups_due
     FROM leads WHERE duplicate_of IS NULL AND is_test = $2`, [leads.OPEN_STATUSES, test]);
   const times = await one(`SELECT
       round(avg(EXTRACT(EPOCH FROM (first_alert_at - created_at))))::int AS avg_alert_sec,
       round(avg(EXTRACT(EPOCH FROM (first_response_at - created_at))))::int AS avg_attempt_sec,
       round(avg(EXTRACT(EPOCH FROM (first_contact_at - created_at))))::int AS avg_contact_sec,
       round(avg(EXTRACT(EPOCH FROM (appointment_at - created_at))))::int AS avg_appointment_sec,
+      round(avg(EXTRACT(EPOCH FROM (first_contact_at - created_at))) FILTER (WHERE callback_requested))::int AS avg_callback_sec,
       count(*) FILTER (WHERE first_response_at IS NOT NULL AND first_response_at - created_at > make_interval(mins => $1::int))::int AS over_target
     FROM leads WHERE duplicate_of IS NULL AND is_test = $2 AND created_at >= now() - interval '30 days' AND source <> 'inbound_call'`, [target, test]);
   const sources = await db.query(`SELECT coalesce(nullif(utm_source,''), source, 'direct') AS source, coalesce(nullif(utm_campaign,''),'—') AS campaign,
@@ -158,6 +175,20 @@ module.exports = async (req, res) => {
       case 'status-change': {
         await leads.setStatus(body.lead_id, body.status, user.name);
         return sendJson(res, 200, { ok: true });
+      }
+
+      case 'follow-up': {
+        // Set (or clear, with hours = 0) when to follow up with this lead.
+        const hrs = Number(body.hours);
+        const at = body.at ? new Date(body.at) : (hrs > 0 ? new Date(Date.now() + Math.min(hrs, 24 * 60) * 3600e3) : null);
+        if (at && isNaN(at)) return sendJson(res, 400, { error: 'Bad follow-up time' });
+        const cur = await db.one('SELECT lead_status FROM leads WHERE lead_id = $1', [body.lead_id]);
+        if (!cur) return sendJson(res, 404, { error: 'Not found' });
+        await db.query('UPDATE leads SET follow_up_at = $2, follow_up_note = $3, updated_at = now() WHERE lead_id = $1', [body.lead_id, at, clean(body.note, 300) || null]);
+        if (at && leads.OPEN_STATUSES.includes(cur.lead_status)) await leads.setStatus(body.lead_id, 'FOLLOW-UP', user.name);
+        await store.event(body.lead_id, at ? 'follow_up_set' : 'follow_up_cleared', at ? { at: at.toISOString(), note: clean(body.note, 300) } : {}, user.name);
+        await crm.sync(body.lead_id, 'follow_up');
+        return sendJson(res, 200, { ok: true, follow_up_at: at });
       }
 
       case 'mark-contacted': {

@@ -62,7 +62,7 @@ test('1. form → database → lead ID → confirmation SMS → owner + backup a
   assert.equal(r.status, 200);
   assert.match(r.json.lead_id, /^CH-\d{6}-[0-9A-F]{5}$/);
   const l = await lead(r.json.lead_id);
-  assert.equal(l.phone, TESTER); assert.equal(l.lead_status, 'NEW'); assert.equal(l.lead_priority, 'HIGH PRIORITY');
+  assert.equal(l.phone, TESTER); assert.equal(l.lead_status, 'NEW'); assert.equal(l.lead_priority, 'URGENT', 'hurt + crashed today');
   assert.equal(l.utm_campaign, 'crash-video'); assert.equal(l.fbclid, 'fb.1.abc'); assert.equal(l.contact_consent, true);
   assert.ok(l.first_alert_at, 'first_alert_at recorded');
 
@@ -81,8 +81,8 @@ test('1. form → database → lead ID → confirmation SMS → owner + backup a
   assert.equal(callsTo(OWNER)[0].machineDetection, 'Enable');
 
   const subjects = fakeMail.sent.map((m) => `${m.to} ${m.subject}`);
-  assert.ok(subjects.includes('owner@example.com 🚨 New CrashHelp TX Lead — Maria — Houston'));
-  assert.ok(subjects.includes('backup@example.com 🚨 New CrashHelp TX Lead — Maria — Houston'));
+  assert.ok(subjects.includes('owner@example.com 🔴 URGENT — 🚨 New CrashHelp TX Lead — Maria — Houston'));
+  assert.ok(subjects.includes('backup@example.com 🔴 URGENT — 🚨 New CrashHelp TX Lead — Maria — Houston'));
   assert.ok(subjects.includes('maria@example.com We received your CrashHelp TX request'));
 
   const crm = h.crmFake.calls.map((c) => `${c.method} ${c.url.replace('https://services.leadconnectorhq.com', '')}`);
@@ -645,4 +645,73 @@ test('36. Texting OFF: the text quiz sends nothing to the person and creates no 
     const m = await db.one(`SELECT status, error FROM messages WHERE to_number = $1 AND purpose = 'sms_flow_reply' ORDER BY created_at DESC LIMIT 1`, [TESTER]);
     assert.equal(m.status, 'blocked'); assert.equal(m.error, 'consumer_texting_off');
   } finally { process.env.CONSUMER_SMS_ENABLED = 'true'; }
+});
+
+test('37. Priority: callback requests and hurt-today quiz leads are URGENT and sort first', async () => {
+  const post = (b) => fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.7.7.' + Math.floor(Math.random() * 250) }, body: JSON.stringify(b) }).then((r) => r.json());
+  const normal = await post({ name: 'Nora Old', phone: '(832) 555-0201', injured: 'no', medical_care: 'no', crash_recency: 'older', crash_city: 'Katy', source: 'express-quiz', contact_consent: true });
+  const lowinfo = await post({ name: 'Lou Info', phone: '(832) 555-0202', source: 'web_form' });
+  const quizUrgent = await post({ name: 'Quinn Hurt', phone: '(832) 555-0203', injured: 'yes', medical_care: 'not_yet', crash_recency: 'today', crash_city: 'Houston', source: 'express-quiz', contact_consent: true });
+  const cb = await post({ name: 'Cal Back', phone: '(832) 555-0204', source: 'express-callback', callback_requested: true });
+  assert.equal((await lead(normal.lead_id)).lead_priority, 'NORMAL PRIORITY');
+  assert.equal((await lead(lowinfo.lead_id)).lead_priority, 'LOW INFORMATION');
+  assert.equal((await lead(quizUrgent.lead_id)).lead_priority, 'URGENT');
+  const c = await lead(cb.lead_id); assert.equal(c.lead_priority, 'URGENT'); assert.equal(c.callback_requested, true);
+  assert.ok(smsTo(OWNER).some((m) => /^🔴 URGENT · CALLBACK REQUESTED/.test(m.body)), 'owner alert flags the callback');
+  assert.ok(fakeMail.sent.some((m) => /^🔴 CALLBACK NOW/.test(m.subject)), 'email subject flags the callback');
+  const list = (await admin('leads')).json.leads.map((l) => l.lead_id);
+  assert.ok(list.indexOf(cb.lead_id) < list.indexOf(normal.lead_id) && list.indexOf(quizUrgent.lead_id) < list.indexOf(normal.lead_id) && list.indexOf(normal.lead_id) < list.indexOf(lowinfo.lead_id), 'URGENT first, LOW INFO last');
+  assert.ok(list.indexOf(quizUrgent.lead_id) < list.indexOf(cb.lead_id), 'among URGENT, the one waiting longest is first');
+});
+
+test('38. Callback tracking: waiting → completed, views and dashboard counts', async () => {
+  const r = await fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.7.8.1' }, body: JSON.stringify({ name: 'Cara Back', phone: '(832) 555-0211', source: 'express-callback', callback_requested: true }) }).then((x) => x.json());
+  let m = (await admin('metrics')).json.counts;
+  assert.equal(m.callbacks_waiting, 1); assert.equal(m.urgent_open, 1);
+  const cbView = (await admin('leads', { params: { view: 'callbacks' } })).json.leads;
+  assert.deepEqual(cbView.map((l) => l.lead_id), [r.lead_id]);
+  await backdate(r.lead_id, 4);
+  await admin('mark-contacted', { method: 'POST', body: { lead_id: r.lead_id } });
+  m = (await admin('metrics')).json;
+  assert.equal(m.counts.callbacks_waiting, 0); assert.equal(m.counts.callbacks_done, 1);
+  assert.ok(m.times.avg_callback_sec >= 230 && m.times.avg_callback_sec < 400, 'callback time ≈ 4 minutes');
+  // a repeat visitor who now asks for a callback makes the original URGENT
+  const first = await submit({ phone: '(832) 555-0212', email: 'rep@example.com', injured: 'no', crash_date: '2026-01-01' });
+  assert.notEqual((await lead(first.json.lead_id)).lead_priority, 'URGENT');
+  await fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.7.8.2' }, body: JSON.stringify({ name: 'Maria Lopez', phone: '(832) 555-0212', source: 'express-callback', callback_requested: true }) });
+  const upd = await lead(first.json.lead_id); assert.equal(upd.lead_priority, 'URGENT'); assert.equal(upd.callback_requested, true);
+});
+
+test('39. Missed calls view and follow-ups: set, due, cleared; CSRF required', async () => {
+  await h.twilioPost(base, 'r=voice', { CallSid: 'CAm1', From: '+18325550221', To: '+13468601929' });
+  await h.twilioPost(base, 'r=dial-status', { CallSid: 'CAm1', From: '+18325550221', DialCallStatus: 'no-answer' });
+  const missed = (await admin('leads', { params: { view: 'missed' } })).json.leads;
+  assert.equal(missed.length, 1); assert.equal(missed[0].phone, '+18325550221'); assert.equal(missed[0].lead_priority, 'URGENT', 'missed calls get called back first');
+  assert.equal((await admin('metrics')).json.counts.missed_calls, 1);
+
+  const { json } = await submit({ phone: '(832) 555-0222', email: 'fu@example.com' });
+  const noCsrf = await admin('follow-up', { method: 'POST', body: { lead_id: json.lead_id, hours: 2 }, csrf: false });
+  assert.equal(noCsrf.status, 403, 'CSRF header required');
+  const set = await admin('follow-up', { method: 'POST', body: { lead_id: json.lead_id, hours: 2, note: 'Call after work' } });
+  assert.equal(set.status, 200);
+  let l = await lead(json.lead_id); assert.equal(l.lead_status, 'FOLLOW-UP'); assert.equal(l.follow_up_note, 'Call after work');
+  assert.equal((await admin('metrics')).json.counts.followups_due, 0, 'not due yet');
+  await db.query(`UPDATE leads SET follow_up_at = now() - interval '1 minute' WHERE lead_id = $1`, [json.lead_id]);
+  assert.equal((await admin('metrics')).json.counts.followups_due, 1, 'due now');
+  const fu = (await admin('leads', { params: { view: 'followup' } })).json.leads.map((x) => x.lead_id);
+  assert.ok(fu.includes(json.lead_id));
+  await admin('follow-up', { method: 'POST', body: { lead_id: json.lead_id, hours: 0 } });
+  l = await lead(json.lead_id); assert.equal(l.follow_up_at, null);
+  assert.ok((await events(json.lead_id)).some((e) => e.type === 'follow_up_set'));
+});
+
+test('40. HighLevel: one contact + one opportunity per person; repeats never create duplicates', async () => {
+  const a = await submit({ phone: '(832) 555-0231', email: 'dupe@example.com' });
+  await submit({ phone: '(832) 555-0231', email: 'dupe@example.com' });
+  await submit({ phone: '(832) 555-0231', email: '' });
+  const opps = h.crmFake.calls.filter((c) => c.method === 'POST' && c.url.endsWith('/opportunities/'));
+  assert.equal(opps.length, 1, 'only one opportunity created');
+  assert.equal((await lead(a.json.lead_id)).repeat_count ?? null, null);
+  const rows = (await db.query(`SELECT count(*)::int AS n FROM leads WHERE phone = '+18325550231' AND duplicate_of IS NULL`)).rows[0].n;
+  assert.equal(rows, 1, 'one open lead; repeats linked to it');
 });
