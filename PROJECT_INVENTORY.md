@@ -30,7 +30,7 @@ Fabricated reviews and results are illegal under the FTC's 2024 fake-review rule
 | Lead API | `api/lead.js` | Takes name, phone, email, city, when, desc, source. Emails crashhelptx@gmail.com via Gmail SMTP and texts the owner via Twilio. Nothing is stored. |
 | Twilio | `twilio@5` in `api/lead.js` and `api/crash-alert.js` | Env vars: `TWILIO_ACCOUNT_SID`, `TWILIO_API_KEY`/`SECRET` or `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`, `OWNER_PHONE`. Last commit was debugging SMS not firing. |
 | Email | `nodemailer` + `GMAIL_APP_PASSWORD` | Internal alert only, no confirmation email to the lead |
-| Tracking | Meta Pixel `861917090286441`, GA4 `G-RGZP7959W8` | Present in source; the live-page fetch didn't detect them, so verify in Meta Events Manager |
+| Tracking | Meta Pixel `916414724736743`, GA4 `G-RGZP7959W8` | Present in source; the live-page fetch didn't detect them, so verify in Meta Events Manager |
 | Phone | (346) 860-1929, WhatsApp button | |
 | Agent spec | `lead-engine-agent.md` | Generic Trade Lead Engine v1.0 (not the CrashHelp edition you sent) |
 | Secrets hygiene | `.gitignore` covers `.env`, `.vercel`, `leads/` | Good. No secrets found in source. |
