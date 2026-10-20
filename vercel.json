@@ -382,6 +382,30 @@
     {
       "source": "/denton.html",
       "destination": "/denton.html"
+    },
+    {
+      "source": "/houston-car-accident-checklist",
+      "destination": "/houston-car-accident-checklist.html"
+    },
+    {
+      "source": "/houston-car-accident-checklist.html",
+      "destination": "/houston-car-accident-checklist.html"
+    },
+    {
+      "source": "/texas-crash-report",
+      "destination": "/texas-crash-report.html"
+    },
+    {
+      "source": "/texas-crash-report.html",
+      "destination": "/texas-crash-report.html"
+    },
+    {
+      "source": "/insurance-adjuster-call",
+      "destination": "/insurance-adjuster-call.html"
+    },
+    {
+      "source": "/insurance-adjuster-call.html",
+      "destination": "/insurance-adjuster-call.html"
     }
   ]
 }
