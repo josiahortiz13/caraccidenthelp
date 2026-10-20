@@ -314,8 +314,8 @@ nav{
 
 /* VIDEO */
 .video-section{position:relative;z-index:1;padding:80px 24px;border-top:1px solid var(--border);text-align:center}
-.vid-wrap{width:100%;max-width:960px;margin:32px auto 0;border-radius:16px;overflow:hidden;border:1px solid var(--red-border);background:#000}
-.vid-wrap video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.vid-wrap{width:100%;max-width:min(560px,calc(80svh * 4 / 5));margin:32px auto 0;border-radius:16px;overflow:hidden;border:1px solid var(--red-border);background:#000}
+.vid-wrap video{display:block;width:100%;height:auto;aspect-ratio:4/5;background:#000}
 .video-section .sec-sub{margin-bottom:0}
 .vid-desc{font-size:13px;color:var(--muted);max-width:620px;margin:14px auto 0}
 .vid-cta{display:flex;flex-direction:column;gap:12px;max-width:440px;margin:24px auto 0}
@@ -746,12 +746,12 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   <h2 class="sec-title" id="video-title">A crash changes<br/>everything.</h2>
   <p class="sec-sub">Available 24/7 to help you find the right attorney.</p>
   <div class="vid-wrap" id="vid-wrap">
-    <video id="chx-video" controls playsinline preload="metadata" poster="/media/crashhelp-15s-wide.jpg" aria-describedby="video-desc">
-      <source src="/media/crashhelp-15s-wide.mp4" type="video/mp4"/>
-      <source src="/media/crashhelp-15s-wide.webm" type="video/webm"/>
+    <video id="chx-video" controls playsinline preload="metadata" poster="/media/crashhelptx-ad-4x5-v3.jpg" aria-describedby="video-desc">
+      <source src="/media/crashhelptx-ad-4x5-v3.mp4" type="video/mp4"/>
+      <source src="/media/crashhelptx-ad-4x5-v3.webm" type="video/webm"/>
     </video>
   </div>
-  <p class="vid-desc" id="video-desc">In-car footage of a crash, followed by the CrashHelp TX end card: "Just crashed? Start here." On-screen text only, no spoken words.</p>
+  <p class="vid-desc" id="video-desc">In-car footage of a crash. On-screen text: "This is how fast it happens." then "Hit by another driver in Texas?" then the CrashHelp TX end card: "Just crashed? Start here." crashhelptx.com, 24/7 service. No spoken words.</p>
   <div class="vid-cta">
     <a href="/connect" class="btn-call" data-vcta="connect">Just crashed? Start here →</a>
     <a href="/houston-car-accident-checklist" class="btn-scroll" data-vcta="checklist">Read the after-a-crash checklist</a>
@@ -765,14 +765,14 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   // Phones get the vertical cut; everything else gets the wide one. Chosen once, before anything loads.
   if (window.matchMedia && matchMedia('(max-width: 680px)').matches) {
     wrap.classList.add('portrait');
-    v.setAttribute('poster', '/media/crashhelp-15s-vertical.jpg');
-    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-wide.', '-vertical.')); });
+    v.setAttribute('poster', '/media/crashhelptx-ad-9x16-v3.jpg');
+    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-4x5-', '-9x16-')); });
     v.load();
   }
   var sent = {};
   function ev(name) {
     if (sent[name]) return; sent[name] = 1;
-    var d = { video: 'crashhelp-15s', format: wrap.classList.contains('portrait') ? 'vertical' : 'wide' };
+    var d = { video: 'crashhelptx-ad-v3', format: wrap.classList.contains('portrait') ? 'vertical' : 'feed' };
     try { window.gtag && gtag('event', name, d); } catch (e) {}
     try { window.fbq && fbq('trackCustom', name, d); } catch (e) {}
   }
