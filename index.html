@@ -611,6 +611,12 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 </style>
 <style>html,body{overflow-x:clip}.urgency-ticker{overflow:hidden;max-width:100%}</style>
 <script src="/attribution.js"></script>
+<style id="hero-video-css">
+.hero-video{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.hero-video video,.hero-video img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-video::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,8,8,.84) 0%,rgba(8,8,8,.72) 45%,rgba(8,8,8,.94) 100%),radial-gradient(ellipse 120% 80% at 50% -10%,rgba(224,48,48,.22) 0%,transparent 60%)}
+@media(prefers-reduced-motion:reduce){.hero-video video{display:none}.hero-video{background:url(/media/crash-hero-poster.jpg) center/cover}}
+</style>
 </head>
 <body>
 
@@ -644,6 +650,12 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-video" aria-hidden="true">
+    <video autoplay muted loop playsinline preload="metadata" poster="/media/crash-hero-poster.jpg">
+      <source src="/media/crash-hero.webm" type="video/webm"/>
+      <source src="/media/crash-hero.mp4" type="video/mp4"/>
+    </video>
+  </div>
   <div class="hero-orb hero-orb-1"></div>
   <div class="hero-orb hero-orb-2"></div>
   <div class="hero-particles" id="hero-particles"></div>
