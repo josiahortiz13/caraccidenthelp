@@ -98,6 +98,7 @@ async function handleSms(req, res) {
     await db.query('DELETE FROM opt_outs WHERE phone = $1', [from]);
     await db.query('UPDATE leads SET sms_opt_out = false, sms_opt_out_at = NULL WHERE phone = $1', [from]);
     await store.event(lead?.lead_id || null, 'sms_opt_in', { keyword: word });
+    if (lead) await require('../lib/crm').sync(lead.lead_id, 'opted_in');
   } else if (optedOut) {
     return sendXml(res, empty()); // never text an opted-out number
   }

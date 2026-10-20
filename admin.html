@@ -157,6 +157,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   .legend{display:none}
   .card h3{font-size:17px}
 }
+.kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}@media(max-width:640px){.kpis.k5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#launchNumber .d{margin-top:6px}
 </style>
 </head>
 <body>
@@ -183,6 +185,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <button role="tab" data-tab="sources">Sources</button>
       <button role="tab" data-tab="status">Twilio &amp; Systems</button>
       <button role="tab" data-tab="settings">Settings</button>
+      <button role="tab" data-tab="launch" class="owner-only">Launch</button>
     </nav>
     <span class="who" id="who"></span>
     <button class="btn" id="soundBtn" title="Play a sound when a new lead arrives">🔕 Sound</button>
@@ -276,6 +279,27 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
 
     <div data-panel="settings" class="hidden"><form class="settings" id="settingsForm"></form></div>
+
+    <div data-panel="launch" class="hidden">
+      <div class="row" style="margin-bottom:12px;align-items:center">
+        <button class="btn red" id="launchRefresh" style="flex:0 0 auto">Refresh</button>
+        <button class="btn" id="launchTwilio" style="flex:0 0 auto">Re-check Twilio (read-only)</button>
+        <span class="hint" id="launchWhen" style="margin:0"></span>
+      </div>
+      <div class="kpis k5" id="launchKpis"></div>
+      <div class="sec" style="margin:4px 0 10px">Business number &amp; texting</div>
+      <div class="st-card" id="launchNumber" style="margin-bottom:16px"></div>
+      <div class="sec" style="margin:4px 0 10px">Features</div>
+      <div class="tablebox"><table><thead><tr><th>Feature</th><th>Status</th><th>Evidence</th></tr></thead><tbody id="launchFeatures"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Automated tests</div>
+      <div class="tablebox"><table><thead><tr><th>Suite</th><th>Run</th><th class="num">Passed</th><th class="num">Failed</th></tr></thead><tbody id="launchSuites"></tbody></table></div>
+      <div class="tablebox" id="launchFailBox"><table><thead><tr><th>Failed test</th><th>Suite</th><th>Detail</th></tr></thead><tbody id="launchFails"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Approvals needed</div>
+      <p class="hint">Ticking a box only records who approved and when. It turns nothing on.</p>
+      <div class="tablebox"><table><thead><tr><th></th><th>Approval</th><th>Who</th><th>Recorded</th></tr></thead><tbody id="launchApprovals"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Missing configuration</div>
+      <div class="tablebox"><table><thead><tr><th>Setting</th><th>Status</th><th>Note</th></tr></thead><tbody id="launchMissing"></tbody></table></div>
+    </div>
   </div>
 </section>
 
@@ -656,12 +680,41 @@ $('#repPrint').onclick = () => window.print();
 $('#ledgerForm').onsubmit = async (e) => { e.preventDefault(); const f = e.target; try { await api('ledger-add', { method: 'POST', body: { month: $('#repMonth').value, kind: f.kind.value, channel: f.channel.value, amount: +f.amount.value, note: f.note.value } }); f.amount.value = ''; f.note.value = ''; toast('Added'); loadReport(); } catch (err) { toast(err.message); } };
 $('#ledgerBody').addEventListener('click', async (e) => { const b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this entry?')) return; await api('ledger-delete', { method: 'POST', body: { id: +b.dataset.del } }); loadReport(); });
 
+// ---------- Launch readiness ----------
+async function loadLaunch() {
+  const r = await api('launch');
+  const s = r.summary;
+  $('#launchWhen').textContent = `${r.environment} · updated ${when(r.generated_at)}`;
+  $('#launchKpis').innerHTML = [['Features ready', s.ready, 'ok'], ['Blocked', s.blocked, s.blocked ? 'bad' : 'ok'], ['Approvals pending', s.approvals_pending, s.approvals_pending ? 'na' : 'ok'], ['Missing config', s.missing_config, s.missing_config ? 'bad' : 'ok'], ['Failed tests', s.failed_tests, s.failed_tests ? 'bad' : 'ok']]
+    .map(([k, v, c]) => `<div class="kpi"><div class="n v ${c}">${v}</div><div class="l">${k}</div></div>`).join('');
+  const n = r.site_number;
+  const svc = (n?.messaging_services || []).map((m) => `${esc(m.name)}: senders …${esc(m.senders_last4.join(', …') || 'none')} · campaigns ${m.campaigns.length ? m.campaigns.map((c) => esc(c.status)).join(', ') : 'none'}`).join('<br>');
+  const l14 = n?.last_14_days;
+  $('#launchNumber').innerHTML = n ? `<div class="k">Why the business number can't text</div><div class="d" style="color:var(--text);font-size:14px">${esc(n.why)}</div>
+    <div class="d">On this Twilio account: ${n.on_this_account ? 'yes' : 'no'}${n.on_subaccount ? ' · on subaccount ' + esc(n.on_subaccount) : ''} · Hosted SMS order: ${esc(n.hosted_sms_order || '—')}</div>
+    <div class="d">${svc || 'No Messaging Services'}</div>
+    ${l14 ? `<div class="d">Last 14 days from Twilio: ${l14.outbound} outbound texts · ${l14.delivered} delivered · ${l14.blocked_30034_unregistered} blocked as unregistered (30034) · ${l14.other_errors} other errors</div>` : ''}
+    <div class="d">Checked ${when(n.at)}. Voice on the business number is never changed by this dashboard.</div>`
+    : '<div class="d">Not checked yet. Press "Re-check Twilio".</div>';
+  $('#launchFeatures').innerHTML = r.features.map((x) => `<tr><td>${esc(x.name)}</td><td class="res-${esc(x.state)}">${esc(x.state)}</td><td>${esc(x.note)}</td></tr>`).join('');
+  $('#launchSuites').innerHTML = r.tests.length ? r.tests.map((t) => `<tr><td>${esc(t.suite)}</td><td>${esc(when(t.at))} · ${esc(t.by)}</td><td class="num res-PASS">${t.passed}</td><td class="num ${t.failed ? 'res-FAIL' : ''}">${t.failed}</td></tr>`).join('') : '<tr><td colspan="4">No automated runs recorded yet.</td></tr>';
+  $('#launchFails').innerHTML = r.failed_tests.length ? r.failed_tests.map((t) => `<tr><td class="res-FAIL">${esc(t.name)}</td><td>${esc(t.suite)}</td><td>${esc(t.note)}</td></tr>`).join('') : '<tr><td colspan="3" class="res-PASS">No failed tests in the latest runs.</td></tr>';
+  $('#launchApprovals').innerHTML = r.approvals.map((a) => `<tr><td><input type="checkbox" data-appr="${esc(a.key)}" ${a.done ? 'checked' : ''} ${a.auto ? 'disabled title="Read from the live system"' : ''} aria-label="${esc(a.label)}"></td><td>${esc(a.label)}${a.auto ? ' <span class="hint">(automatic)</span>' : ''}</td><td>${esc(a.who)}</td><td>${a.at ? esc(when(a.at)) + ' · ' + esc(a.by) : ''}</td></tr>`).join('');
+  $('#launchMissing').innerHTML = r.missing.length ? r.missing.map((c) => `<tr><td>${esc(c.name)}</td><td class="res-${esc(c.state)}">${esc(c.state)}</td><td>${esc(c.note || '')}</td></tr>`).join('') : '<tr><td colspan="3" class="res-PASS">Nothing missing.</td></tr>';
+}
+$('#launchRefresh').onclick = () => loadLaunch().catch((e) => toast(e.message));
+$('#launchTwilio').onclick = async () => { toast('Checking Twilio…'); try { await api('twilio-check'); await loadLaunch(); toast('Twilio checked'); } catch (e) { toast(e.message); } };
+$('#launchApprovals').addEventListener('change', async (e) => {
+  const c = e.target.closest('[data-appr]'); if (!c) return;
+  try { await api('launch-approval', { method: 'POST', body: { key: c.dataset.appr, done: c.checked } }); toast(c.checked ? 'Approval recorded' : 'Approval cleared'); loadLaunch(); } catch (err) { c.checked = !c.checked; toast(err.message); }
+});
+
 // ---------- Boot ----------
 document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
   document.querySelectorAll('nav button').forEach((x) => x.setAttribute('aria-selected', x === b));
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== b.dataset.tab));
   if (b.dataset.tab === 'status') { loadStatus(); loadTestNumbers(); } if (b.dataset.tab === 'settings') loadSettings();
-  if (b.dataset.tab === 'inbox') loadInbox(); if (b.dataset.tab === 'calls') loadCalls(); if (b.dataset.tab === 'reports') loadReport();
+  if (b.dataset.tab === 'inbox') loadInbox(); if (b.dataset.tab === 'calls') loadCalls(); if (b.dataset.tab === 'reports') loadReport(); if (b.dataset.tab === 'launch') loadLaunch().catch((e) => toast(e.message));
 });
 $('#search').oninput = () => { clearTimeout(window._s); window._s = setTimeout(loadLeads, 250); };
 $('#statusFilter').onchange = () => { loadLeads(); loadMetrics(); };

@@ -86,10 +86,10 @@ test('1. form → database → lead ID → confirmation SMS → owner + backup a
   assert.ok(subjects.includes('maria@example.com We received your CrashHelp TX request'));
 
   const crm = h.crmFake.calls.map((c) => `${c.method} ${c.url.replace('https://services.leadconnectorhq.com', '')}`);
-  assert.deepEqual(crm, ['POST /contacts/upsert', `POST /contacts/ghl_contact_${h.crmFake.n - 1}/notes`, 'POST /opportunities/']);
+  assert.deepEqual(crm, ['POST /contacts/upsert', `POST /contacts/ghl_contact_${h.crmFake.n - 1}/notes`, `POST /contacts/ghl_contact_${h.crmFake.n - 1}/tags`, 'POST /opportunities/']);
   assert.equal(h.crmFake.calls[0].headers.Version, '2021-07-28');
   assert.equal(h.crmFake.calls[0].body.locationId, 'loc123');
-  assert.equal(h.crmFake.calls[2].body.pipelineStageId, 'st_new');
+  assert.equal(h.crmFake.calls[3].body.pipelineStageId, 'st_new');
   const after = await lead(r.json.lead_id);
   assert.ok(after.crm_contact_id && after.crm_opportunity_id);
 
@@ -803,4 +803,49 @@ test('44. Monthly report: real counts by channel, owner-entered spend/revenue, c
   assert.equal((await admin('ledger-add', { cookie: staffCookie, method: 'POST', body: { month, kind: 'revenue', amount: 1 } })).status, 403);
   const qv = (await admin('leads', { params: { view: 'qualified' } })).json.leads.map((l) => l.lead_id);
   assert.deepEqual(qv, [a.json.lead_id]);
+});
+
+test('45. HighLevel consent sync: STOP sets DND + do-not-contact; START swaps the tag but never clears DND', async () => {
+  const { json } = await submit({ phone: '(832) 555-0291', email: 'consent45@example.com' });
+  const P = '+18325550291';
+  const contact = (await lead(json.lead_id)).crm_contact_id; assert.ok(contact);
+  const tagCalls = () => h.crmFake.calls.filter((c) => c.url.endsWith('/tags')); // the fake hands out a new contact id per upsert
+  assert.ok(tagCalls().some((c) => c.method === 'POST' && c.body.tags.includes('consent-to-contact')), 'consent tag on create');
+  h.crmFake.calls.length = 0;
+  await h.twilioPost(base, 'r=sms', { MessageSid: 'SM45a', From: P, To: '+13468601929', Body: 'STOP' });
+  const up = h.crmFake.calls.find((c) => c.url.endsWith('/contacts/upsert'));
+  assert.equal(up.body.dnd, true, 'DND on in HighLevel');
+  assert.ok(tagCalls().some((c) => c.method === 'POST' && c.body.tags.includes('do-not-contact')));
+  assert.ok(h.crmFake.calls.some((c) => c.url.endsWith('/notes') && /Opted out by text/.test(c.body.body)));
+  assert.equal((await lead(json.lead_id)).crm_dnd_synced, true);
+  h.crmFake.calls.length = 0;
+  await h.twilioPost(base, 'r=sms', { MessageSid: 'SM45b', From: P, To: '+13468601929', Body: 'START' });
+  assert.ok(tagCalls().some((c) => c.method === 'DELETE' && c.body.tags.includes('do-not-contact')));
+  assert.ok(tagCalls().some((c) => c.method === 'POST' && c.body.tags.includes('sms-resubscribed')));
+  const up2 = h.crmFake.calls.find((c) => c.url.endsWith('/contacts/upsert'));
+  assert.notEqual(up2.body.dnd, false, 'never clears DND automatically');
+  assert.equal((await lead(json.lead_id)).crm_dnd_synced, false);
+});
+
+test('46. Launch readiness: owner-only report from live data, approvals recorded (not switched on), test runs recorded', async () => {
+  await submit({ phone: '(832) 555-0461', email: 'l46@example.com', source: 'express-callback', callback_requested: 'true', callback_window: 'asap' });
+  const r = await admin('launch');
+  assert.equal(r.status, 200);
+  const feat = Object.fromEntries(r.json.features.map((x) => [x.name, x]));
+  assert.equal(feat['Express Connect: Request Callback'].state, 'READY');
+  assert.match(feat['Express Connect: Request Callback'].note, /saved/);
+  assert.ok(r.json.approvals.find((a) => a.key === 'ship_connect' && !a.done));
+  assert.equal((await admin('launch', { cookie: staffCookie })).status, 403, 'staff cannot see launch');
+  assert.equal((await admin('launch-approval', { method: 'POST', body: { key: 'ship_connect', done: true } })).status, 200);
+  assert.equal((await admin('launch-approval', { method: 'POST', body: { key: 'texting_on', done: true } })).status, 400, 'live-derived approvals cannot be ticked');
+  const r2 = (await admin('launch')).json;
+  const ship = r2.approvals.find((a) => a.key === 'ship_connect');
+  assert.equal(ship.done, true); assert.ok(ship.by && ship.at);
+  const t = r2.approvals.find((a) => a.key === 'texting_on'); assert.equal(t.auto, true); assert.equal(t.done, true, 'read from CONSUMER_SMS_ENABLED (on in the test harness)'); assert.equal(t.by, null);
+  await admin('launch-tests', { method: 'POST', body: { suite: 'unit', items: [{ name: 'a', result: 'PASS' }, { name: 'b', result: 'FAIL', note: 'broke' }] } });
+  const r3 = (await admin('launch')).json;
+  assert.equal(r3.summary.failed_tests, 1); assert.equal(r3.failed_tests[0].name, 'b');
+  assert.equal(r3.tests.find((t) => t.suite === 'unit').passed, 1);
+  await admin('launch-approval', { method: 'POST', body: { key: 'ship_connect', done: false } });
+  await admin('launch-tests', { method: 'POST', body: { suite: 'unit', items: [{ name: 'a', result: 'PASS' }] } });
 });

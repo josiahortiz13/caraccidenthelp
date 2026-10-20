@@ -9,9 +9,10 @@ const leads = require('../lib/leads');
 const escalation = require('../lib/escalation');
 const email = require('../lib/email');
 const staging = require('../lib/staging');
+const launch = require('../lib/launch');
 const { sendJson, clientIp, clean, maskPhone, normalizePhone } = require('../lib/util');
 
-const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers', 'inbox', 'thread', 'calls', 'audit-log', 'report', 'ledger'];
+const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers', 'inbox', 'thread', 'calls', 'audit-log', 'report', 'ledger', 'launch'];
 
 // Views: all (default), urgent, callbacks, missed (missed inbound calls), followup.
 // Order: open + not yet contacted first, then URGENT → HIGH → NORMAL → LOW, then oldest waiting first.
@@ -452,6 +453,19 @@ module.exports = async (req, res) => {
         const result = await staging.runE2E({ leadPhoneIndex: body.phone_index, kind: body.kind === 'escalation' ? 'escalation' : 'chain' }, user.name);
         await store.audit(user.name, 'e2e_test_run', result.lead_id, { kind: result.kind });
         return sendJson(res, 200, result);
+      }
+
+      // ---- Launch readiness (owner only) ----
+      case 'launch':
+      case 'launch-approval':
+      case 'launch-tests': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        if (a === 'launch') return sendJson(res, 200, await launch.report(req));
+        if (a === 'launch-approval') {
+          try { await launch.setApproval(String(body.key || ''), !!body.done, user.name); } catch (e) { return sendJson(res, 400, { error: e.message }); }
+          return sendJson(res, 200, { ok: true });
+        }
+        return sendJson(res, 200, { ok: true, suite: await launch.recordTests(body.suite, body.items, user.name) });
       }
 
       default: return sendJson(res, 404, { error: 'Unknown action' });
