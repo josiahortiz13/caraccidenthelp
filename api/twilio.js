@@ -14,6 +14,7 @@ const store = require('../lib/store');
 const tw = require('../lib/twilio');
 const leads = require('../lib/leads');
 const { sendXml, xmlEscape, normalizePhone, baseUrl, twilioUrl, fill } = require('../lib/util');
+const log = require('../lib/log');
 
 const STOP_WORDS = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'REVOKE', 'OPTOUT'];
 const START_WORDS = ['START', 'UNSTOP', 'YES'];
@@ -388,7 +389,7 @@ module.exports = async (req, res) => {
   try {
     return await handler(req, res);
   } catch (e) {
-    console.error('twilio webhook error', req.query.r, e);
+    log.error('twilio webhook failed', e, { route: req.query.r });
     await store.setStatus('webhook', { state: 'FAILED', error: `${req.query.r}: ${e.message}` });
     // Inbound calls must still reach a human even if our code breaks.
     if (req.query.r === 'voice') {

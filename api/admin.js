@@ -11,6 +11,7 @@ const email = require('../lib/email');
 const staging = require('../lib/staging');
 const launch = require('../lib/launch');
 const { sendJson, clientIp, clean, maskPhone, normalizePhone } = require('../lib/util');
+const log = require('../lib/log');
 
 const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers', 'inbox', 'thread', 'calls', 'audit-log', 'report', 'ledger', 'launch'];
 
@@ -196,6 +197,7 @@ function agentPhone(settings, user) {
 
 module.exports = async (req, res) => {
   const q = req.query || Object.fromEntries(new URL(req.url, 'http://x').searchParams);
+  if (!q.search && req.headers['x-search']) { try { q.search = decodeURIComponent(String(req.headers['x-search'])).slice(0, 100); } catch { /* ignore bad encoding */ } }
   const a = q.a;
   const body = req.body || {};
 
@@ -471,7 +473,7 @@ module.exports = async (req, res) => {
       default: return sendJson(res, 404, { error: 'Unknown action' });
     }
   } catch (e) {
-    console.error('admin error', a, e);
+    log.error('admin action failed', e, { action: a });
     return sendJson(res, 500, { error: e.message });
   }
 };

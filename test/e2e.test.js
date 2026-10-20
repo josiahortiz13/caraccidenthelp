@@ -527,7 +527,7 @@ test('26. HighLevel needs only token + location: pipeline and stage IDs are foun
   } finally { process.env.GHL_PIPELINE_ID = saved.p; process.env.GHL_STAGE_IDS = saved.s; }
 });
 
-test('27. database outage: lead is NOT lost — full submission texted + emailed to owner and written to the log', async () => {
+test('27. database outage: lead is NOT lost — full submission texted + emailed to owner; the log has a reference ID only, no personal data', async () => {
   const logs = []; const origErr = console.error; console.error = (...a) => { logs.push(a.join(' ')); };
   global.__crashhelpDbFail = true;
   try {
@@ -535,7 +535,11 @@ test('27. database outage: lead is NOT lost — full submission texted + emailed
     assert.equal(r.status, 200); assert.equal(r.json.saved, false);
     assert.ok(smsTo(OWNER).some((m) => /DATABASE DOWN/.test(m.body) && /Dbdown/.test(m.body) && /8325550123/.test(m.body)), 'owner SMS carries the lead');
     assert.ok(fakeMail.sent.some((m) => /database down/i.test(m.subject) && /Dbdown/.test(m.text)), 'owner email carries the lead');
-    assert.ok(logs.some((l) => l.startsWith('CRASHHELP_LEAD_FALLBACK ') && l.includes('dbdown@example.com')), 'full lead in runtime log');
+    const ref = (fakeMail.sent.find((m) => /database down/i.test(m.subject)).text.match(/Ref: (FB-[0-9A-F]{8})/) || [])[1];
+    assert.ok(ref, 'email carries a reference ID');
+    assert.ok(logs.some((l) => l.includes(ref)), 'log carries the same reference ID');
+    const all = logs.join('\n');
+    for (const pii of ['Dbdown', 'dbdown@example.com', '5550123', '555-0123']) assert.ok(!all.includes(pii), `log must not contain ${pii}`);
   } finally { global.__crashhelpDbFail = false; console.error = origErr; }
 });
 
@@ -584,9 +588,9 @@ test('30. browser retry queue: attribution.js keeps a failed lead and resends it
   assert.equal(store.chx_pending_leads, undefined, 'queue cleared after successful resend');
 });
 
-test('31. health ?db=1 reports connection and all 11 tables', async () => {
+test('31. health ?db=1 reports connection and all 12 tables', async () => {
   const r = await (await fetch(base + '/api/health?db=1')).json();
-  assert.equal(r.db.state, 'CONNECTED'); assert.equal(r.db.tables, 11); assert.deepEqual(r.db.missing, []);
+  assert.equal(r.db.state, 'CONNECTED'); assert.equal(r.db.tables, 12); assert.deepEqual(r.db.missing, []);
 });
 
 test('32. QA Bot login works on Preview and is refused in Production', async () => {
@@ -848,4 +852,21 @@ test('46. Launch readiness: owner-only report from live data, approvals recorded
   assert.equal(r3.tests.find((t) => t.suite === 'unit').passed, 1);
   await admin('launch-approval', { method: 'POST', body: { key: 'ship_connect', done: false } });
   await admin('launch-tests', { method: 'POST', body: { suite: 'unit', items: [{ name: 'a', result: 'PASS' }] } });
+});
+
+test('47. ops lead check: needs the cron token, reports save count, dashboard view and email receipts without personal data', async () => {
+  const { json } = await submit({ phone: '(832) 555-0471', email: '', first_name: 'Opscheck', utm_source: 'crashhelp_test' });
+  assert.equal((await fetch(base + '/api/health?lead=' + json.lead_id)).status, 401);
+  const r = await (await fetch(base + '/api/health?lead=' + json.lead_id, { headers: { authorization: 'Bearer ' + h.ENV.CRON_SECRET } })).json();
+  assert.equal(r.lead.found, true); assert.equal(r.lead.rows_with_same_phone, 1);
+  assert.match(r.lead.dashboard_view, /Leads/);
+  assert.ok(r.lead.emails.every((e) => e.type === 'email_sent' && e.smtp === 'fake'));
+  const txt = JSON.stringify(r);
+  for (const pii of ['Opscheck', '5550471']) assert.ok(!txt.includes(pii));
+});
+
+test('48. log redaction strips emails, phone numbers and database values', () => {
+  const { redact } = require('../lib/log');
+  const out = redact(new Error('duplicate key value violates unique constraint: Key (phone)=(+18325550199) for jane@x.com at postgres://u:p@h/db'));
+  assert.ok(!/8325550199|jane@x\.com|u:p@h/.test(out), out);
 });

@@ -315,10 +315,13 @@ const OPEN = ['NEW', 'PENDING CONSENT', 'CONTACT ATTEMPTED'];
 let me = null, leads = [], statuses = [], seen = new Set(), firstLoad = true, sound = false, serverOffset = 0, openId = null;
 
 async function api(action, { method = 'GET', body, params = {} } = {}) {
-  const qs = new URLSearchParams({ a: action, ...params }).toString();
+  // Search text travels in a header, never in the URL (hosting logs record URLs).
+  const { search, ...rest } = params;
+  const qs = new URLSearchParams({ a: action, ...rest }).toString();
+  const headers = method === 'POST' ? { 'Content-Type': 'application/json', 'X-CrashHelp': '1' } : {};
+  if (search) headers['X-Search'] = encodeURIComponent(search);
   const res = await fetch('/api/admin?' + qs, {
-    method, credentials: 'same-origin',
-    headers: method === 'POST' ? { 'Content-Type': 'application/json', 'X-CrashHelp': '1' } : {},
+    method, credentials: 'same-origin', headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
