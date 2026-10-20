@@ -870,3 +870,17 @@ test('48. log redaction strips emails, phone numbers and database values', () =>
   const out = redact(new Error('duplicate key value violates unique constraint: Key (phone)=(+18325550199) for jane@x.com at postgres://u:p@h/db'));
   assert.ok(!/8325550199|jane@x\.com|u:p@h/.test(out), out);
 });
+
+test('47. Double submit / retry with the same details: saved and linked, but only ONE alert email', async () => {
+  const a = await submit({ phone: '(832) 555-0471', email: 'dbl47@example.com', source: 'main-form' });
+  const before = fakeMail.sent.filter((m) => m.to === 'owner@example.com').length;
+  const b = await submit({ phone: '(832) 555-0471', email: 'dbl47@example.com', source: 'main-form', client_retry: true });
+  assert.equal(b.json.lead_id, a.json.lead_id, 'linked to the original');
+  assert.equal(fakeMail.sent.filter((m) => m.to === 'owner@example.com').length, before, 'no second alert email');
+  assert.ok(await db.one(`SELECT 1 FROM events WHERE lead_id = $1 AND type = 'repeat_alert_suppressed'`, [a.json.lead_id]));
+  const rows = (await db.one(`SELECT count(*)::int AS n FROM leads WHERE phone = '+18325550471'`)).n;
+  assert.equal(rows, 2, 'both submissions kept (one original + one linked duplicate)');
+  const c = await submit({ phone: '(832) 555-0471', source: 'express-callback', callback_requested: 'true', callback_window: 'asap' });
+  assert.equal(c.json.lead_id, a.json.lead_id);
+  assert.equal(fakeMail.sent.filter((m) => m.to === 'owner@example.com').length, before + 1, 'a callback request is new info: alert sent');
+});

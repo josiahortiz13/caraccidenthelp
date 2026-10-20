@@ -730,8 +730,13 @@ function submitLead(data, successEl, btn, btnOriginal){
   })
   .then(function(r){
     if(!r.ok) throw new Error('Server error');
-    if(window.fbq) fbq('track', 'Lead');
-    if(window.gtag) gtag('event','conversion',{send_to:'G-RGZP7959W8'});
+    return r.json().catch(function(){ return {}; });
+  })
+  .then(function(j){
+    // One conversion per saved lead: the lead ID is the event ID, so Meta/GA count it once.
+    var id = j && j.lead_id;
+    if(window.fbq) fbq('track', 'Lead', {content_name: data.source || 'form'}, id ? {eventID: id} : undefined);
+    if(window.gtag) gtag('event','conversion',{send_to:'G-RGZP7959W8',transaction_id:id||undefined});
     window.location.href = '/thank-you';
   })
   .catch(function(){
