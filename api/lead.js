@@ -38,11 +38,12 @@ module.exports = async (req, res) => {
     // 3) If neither reached the owner, answer 503 so the browser keeps it and retries.
     console.error('LEAD INTAKE FAILED', err && err.message);
     console.error('CRASHHELP_LEAD_FALLBACK ' + JSON.stringify({ at: new Date().toISOString(), lead: data }));
-    const summary = fill('🚨 CRASHHELP LEAD (DATABASE DOWN — NOT SAVED)\n{{first_name}} {{last_name}}\n{{phone}} {{email}}\nCity: {{crash_city}}\nCrash: {{crash_date}}\nPrefers: {{preferred_contact}}\nSource: {{utm_source}} / {{utm_campaign}}\nPage: {{landing_page}}', data);
+    const noDb = !process.env.DATABASE_URL && process.env.PGLITE !== '1'; // not configured yet, vs. configured but failing
+    const summary = fill((noDb ? '🚨 NEW CRASHHELP LEAD (email only, dashboard not connected yet)' : '🚨 CRASHHELP LEAD (DATABASE DOWN — NOT SAVED)') + '\n{{first_name}} {{last_name}}\n{{phone}} {{email}}\nCity: {{crash_city}}\nCrash: {{crash_date}}\nPrefers: {{preferred_contact}}\nCallback: {{callback_window}}\nInjured: {{injury_status}} · Doctor: {{medical_status}}\nNotes: {{description}}\nSource: {{utm_source}} / {{utm_campaign}}\nPage: {{landing_page}}', data);
     const owner = process.env.OWNER_ALERT_PHONE || process.env.OWNER_PHONE;
     const [sms, mail] = await Promise.allSettled([
       owner ? tw.sendSms({ to: owner, body: summary, kind: 'internal', purpose: 'fallback_alert' }) : Promise.resolve({ ok: false }),
-      email.send({ to: process.env.OWNER_ALERT_EMAIL || process.env.GMAIL_USER || 'crashhelptx@gmail.com', subject: '🚨 CrashHelp lead — database down, saved here only', text: summary, purpose: 'fallback_alert' }),
+      email.send({ to: process.env.OWNER_ALERT_EMAIL || process.env.GMAIL_USER || 'crashhelptx@gmail.com', subject: noDb ? `🚨 New CrashHelp lead — ${data.first_name || ''} ${data.phone || ''}`.trim() : '🚨 CrashHelp lead — database down, saved here only', text: summary, purpose: 'fallback_alert' }),
     ]);
     const delivered = [sms, mail].some((r) => r.status === 'fulfilled' && r.value && r.value.ok);
     console.error('CRASHHELP_LEAD_FALLBACK_RESULT ' + JSON.stringify({ sms: sms.status === 'fulfilled' ? !!sms.value.ok : false, email: mail.status === 'fulfilled' ? !!mail.value.ok : false }));
