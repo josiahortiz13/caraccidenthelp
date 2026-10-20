@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Express Connect · CrashHelp TX</title>
+<meta name="description" content="Crash in Texas? Call now, request a callback, or take a 60-second accident quiz. Free, 24/7.">
+<link rel="canonical" href="https://www.crashhelptx.com/connect">
+<link rel="icon" href="/logo.svg">
+<meta property="og:title" content="CrashHelp TX · Express Connect">
+<meta property="og:description" content="Call now, request a callback, or take a 60-second accident quiz. Free, 24/7.">
+<meta property="og:image" content="https://www.crashhelptx.com/og-image.png">
+<meta name="theme-color" content="#0d0c0d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@700;900&family=Overpass+Mono:wght@700&family=Public+Sans:wght@400;500;600&display=swap">
+<!-- Meta Pixel -->
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','861917090286441');fbq('track','PageView');</script>
+<!-- Google tag -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-RGZP7959W8"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-RGZP7959W8');</script>
+<style>
+:root{--bg:#0d0c0d;--panel:#171516;--panel2:#1e1b1c;--line:#2e292a;--text:#f3eee6;--dim:#a59c99;--red:#e3262f;--red-d:#b81c24;--amber:#ffb81c;--ok:#3ccf7a;
+--sign:"Overpass","Arial Narrow",Arial,sans-serif;--body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Overpass Mono",ui-monospace,monospace;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.55 var(--body);padding-bottom:calc(78px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;overflow-x:clip}
+.wrap{max-width:620px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+h1,h2,h3{font-family:var(--sign);margin:0;line-height:1.02;text-wrap:balance}
+:focus-visible{outline:3px solid var(--amber);outline-offset:3px;border-radius:6px}
+a{color:inherit}
+.top{display:flex;justify-content:space-between;align-items:center;padding-block:14px;border-bottom:1px solid var(--line)}
+.logo{font:900 20px var(--sign);text-decoration:none}.logo b{color:var(--red)}
+.live{font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:7px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(60,207,122,.6);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(60,207,122,0)}100%{box-shadow:0 0 0 0 rgba(60,207,122,0)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hero{padding-block:30px 22px}
+.kicker{display:inline-block;background:var(--amber);color:#1a1300;font:900 12px var(--sign);letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:4px;margin-bottom:14px}
+.hero h1{font-size:clamp(42px,12vw,72px);font-weight:900;text-transform:uppercase;letter-spacing:-.02em}
+.hero h1 span{color:var(--red);display:block}
+.hero p{color:var(--dim);font-size:17px;margin:14px 0 0;max-width:38ch}
+.choices{display:grid;gap:12px;padding-bottom:8px}
+.choice{display:grid;grid-template-columns:52px minmax(0,1fr) 20px;align-items:center;gap:14px;width:100%;text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:18px 16px;color:var(--text);text-decoration:none;cursor:pointer;font:inherit;transition:border-color .15s,transform .15s}
+.choice:hover{border-color:#4a4243}.choice:active{transform:scale(.99)}
+.choice .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:var(--panel2)}
+.choice .ic svg{width:26px;height:26px}
+.choice h2{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.01em}
+.choice p{margin:3px 0 0;color:var(--dim);font-size:14.5px}
+.choice .go{color:var(--dim);font:900 20px var(--sign)}
+.choice.primary{background:var(--red);border-color:var(--red)}
+.choice.primary .ic{background:rgba(255,255,255,.16)}.choice.primary p,.choice.primary .go{color:#ffe3e4}
+.choice.primary:hover{background:var(--red-d);border-color:var(--red-d)}
+.trust{display:flex;flex-wrap:wrap;gap:8px 16px;padding-block:14px 4px;color:var(--dim);font:700 12px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.trust span::before{content:"✓ ";color:var(--ok)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;margin-block:8px 28px}
+.back{background:none;border:0;color:var(--dim);font:700 13px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:6px 0;cursor:pointer;margin-bottom:10px}
+.panel h2{font-size:clamp(28px,8vw,38px);font-weight:900;text-transform:uppercase;margin-bottom:6px}
+.panel .sub{color:var(--dim);margin:0 0 18px}
+.prog{display:flex;gap:6px;margin-bottom:18px}.prog i{flex:1;height:5px;border-radius:99px;background:var(--line);transition:background .2s}.prog i.on{background:var(--red)}
+.qcount{font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.qtext{font:900 clamp(26px,7.5vw,34px)/1.05 var(--sign);text-transform:uppercase;margin:0 0 18px}
+.answers{display:grid;gap:10px}
+.ans{width:100%;text-align:left;background:var(--bg);color:var(--text);border:2px solid var(--line);border-radius:12px;padding:16px;font:600 17px var(--body);cursor:pointer;min-height:56px}
+.ans:hover{border-color:#4a4243}.ans.sel{border-color:var(--red);background:color-mix(in srgb,var(--red) 16%,var(--bg))}
+.f{display:grid;gap:6px;margin-bottom:14px}
+.f>span{font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+input[type=text],input[type=tel]{width:100%;background:var(--bg);color:var(--text);border:2px solid var(--line);border-radius:12px;padding:15px;font:500 17px var(--body)}
+input:focus{border-color:var(--red);outline:none}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.seg label{position:relative}.seg input{position:absolute;opacity:0;inset:0}
+.seg span{display:block;text-align:center;border:2px solid var(--line);border-radius:12px;padding:12px;font-weight:600;cursor:pointer}
+.seg input:checked+span{border-color:var(--red);background:color-mix(in srgb,var(--red) 16%,var(--bg))}
+.seg input:focus-visible+span{outline:3px solid var(--amber);outline-offset:2px}
+.consent{display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:13px;color:var(--dim);margin-bottom:16px;line-height:1.5}
+.consent input{width:22px;height:22px;accent-color:var(--red);margin-top:1px}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:18px;font:900 17px var(--sign);text-transform:uppercase;letter-spacing:.03em;cursor:pointer;text-align:center;text-decoration:none}
+.btn.red{background:var(--red);color:#fff}.btn.red:hover{background:var(--red-d)}.btn.red:disabled{opacity:.6;cursor:default}
+.btn.ghost{background:transparent;color:var(--text);border:2px solid var(--line);margin-top:10px}
+.err{color:#ff8a8f;min-height:1.4em;font-size:14px;margin:-4px 0 10px}
+.fine{font-size:12px;color:var(--dim);margin:14px 0 0;line-height:1.5}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.note{background:var(--panel2);border-left:4px solid var(--amber);border-radius:10px;padding:14px 16px;margin-bottom:18px;color:var(--text);font-size:15px}
+.done{text-align:center;display:grid;gap:12px;justify-items:center;padding-block:10px}
+.done .check{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#06210f;display:grid;place-items:center;font:900 32px var(--sign)}
+.done h2{margin:0}.done p{color:var(--dim);margin:0;max-width:36ch}
+.ref{font:700 13px var(--mono);color:var(--dim);letter-spacing:.05em}
+footer{border-top:1px solid var(--line);padding-block:24px;color:var(--dim);font-size:12.5px}
+footer p{margin:0 0 8px}
+.callbar{position:fixed;left:0;right:0;bottom:0;background:var(--red);padding-bottom:env(safe-area-inset-bottom);z-index:9}
+.callbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px}
+.callbar b{font:900 15px var(--sign);text-transform:uppercase}
+.callbar a{background:#fff;color:#8f1219;font:900 15px var(--sign);text-transform:uppercase;padding:11px 16px;border-radius:99px;text-decoration:none;white-space:nowrap}
+[hidden]{display:none!important}
+</style>
+<script src="/attribution.js"></script>
+</head>
+<body>
+<div class="wrap top"><a class="logo" href="/">CRASH<b>HELP</b>TX</a><span class="live"><i></i>Open 24/7</span></div>
+
+<main class="wrap">
+  <!-- CHOOSER -->
+  <section id="chooser" aria-labelledby="h1">
+    <header class="hero">
+      <div class="kicker">Express Connect</div>
+      <h1 id="h1">Crash in Texas? <span>Get connected.</span></h1>
+      <p>Free to talk. Pick whatever is fastest for you right now.</p>
+    </header>
+    <div class="choices">
+      <a class="choice primary" href="tel:+13468601929" data-choice="call">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></span>
+        <span><h2>Call now</h2><p>(346) 860-1929 · talk to someone now</p></span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
+      <button class="choice" type="button" data-choice="callback" aria-controls="callback">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#ffb81c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <span><h2>Request a callback</h2><p>Leave your name and number. We call you back as soon as possible.</p></span>
+        <span class="go" aria-hidden="true">→</span>
+      </button>
+      <button class="choice" type="button" data-choice="quiz" aria-controls="quiz">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#ffb81c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l2 2 4-4"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg></span>
+        <span><h2>Quick accident quiz</h2><p>5 quick taps, about 60 seconds. Then request help.</p></span>
+        <span class="go" aria-hidden="true">→</span>
+      </button>
+    </div>
+    <div class="trust"><span>Free to talk</span><span>Confidential</span><span>Se habla español</span></div>
+  </section>
+
+  <!-- CALLBACK -->
+  <section id="callback" class="panel" hidden aria-labelledby="cb-h">
+    <button class="back" type="button" data-back>← All options</button>
+    <h2 id="cb-h">Request a callback</h2>
+    <p class="sub">We'll call you back as soon as possible.</p>
+    <form id="cbForm" novalidate>
+      <input class="hp" name="company_website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="f"><span>Your name</span><input type="text" name="name" autocomplete="name" required></label>
+      <label class="f"><span>Phone</span><input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555" required></label>
+      <label class="consent"><input type="checkbox" name="contact_consent"><span data-consent>I agree that CrashHelp TX and the attorneys or professionals it refers me to may contact me about this request by call or text at the number I entered, including by automated means. Consent is not required to get help; you can call us instead. Message and data rates may apply. Reply STOP to opt out.</span></label>
+      <div class="err" role="alert"></div>
+      <button class="btn red" type="submit">Call me back</button>
+      <p class="fine">By requesting a callback you're asking us to call you about this request. See our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms</a>.</p>
+    </form>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" class="panel" hidden aria-labelledby="qz-h">
+    <button class="back" type="button" data-back>← All options</button>
+    <h2 id="qz-h" class="hp">Quick accident quiz</h2>
+    <div class="prog" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div id="qBody" aria-live="polite"></div>
+  </section>
+
+  <!-- DONE -->
+  <section id="done" class="panel" hidden aria-live="polite">
+    <div class="done">
+      <div class="check" aria-hidden="true">✓</div>
+      <h2>Request received.</h2>
+      <p id="doneMsg">Someone will review your request and reach out as soon as possible.</p>
+      <div class="ref" id="doneRef"></div>
+      <a class="btn red" href="tel:+13468601929" data-choice="call">Call now instead</a>
+      <p class="fine">While you wait: keep photos of the scene and vehicles, insurance info for everyone involved, and the crash report number if you have it.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>CrashHelp TX is a referral service, not a law firm. Nothing on this page is legal or medical advice, and no outcome is promised. Requesting help does not create an attorney-client relationship.</p>
+  <p>In an emergency, call 911. · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/es">Español</a></p>
+</footer>
+
+<div class="callbar"><div class="wrap"><b>Talk to someone now</b><a href="tel:+13468601929" data-choice="call">Call (346) 860-1929</a></div></div>
+
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const track = (name, data) => { try { window.gtag && gtag('event', name, data || {}); } catch (e) {} try { window.fbq && fbq('trackCustom', name, data || {}); } catch (e) {} };
+  const screens = { chooser: $('#chooser'), callback: $('#callback'), quiz: $('#quiz'), done: $('#done') };
+  function show(name) {
+    Object.entries(screens).forEach(([k, el]) => { el.hidden = k !== name; });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const h = screens[name].querySelector('h2:not(.hp), h1, .qtext'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+  }
+  const digits = (p) => String(p || '').replace(/\D/g, '');
+  const validPhone = (p) => { const d = digits(p); return d.length === 10 || (d.length === 11 && d[0] === '1'); };
+  const consentText = $('#callback [data-consent]').textContent.trim();
+
+  document.querySelectorAll('[data-choice]').forEach((el) => el.addEventListener('click', () => {
+    const c = el.dataset.choice; track('express_choice', { choice: c });
+    if (c === 'callback') show('callback');
+    if (c === 'quiz') { qi = 0; answers = {}; renderQ(); show('quiz'); track('quiz_start'); }
+  }));
+  document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => show('chooser')));
+
+  async function send(payload, btn, errEl) {
+    errEl.textContent = ''; const label = btn.textContent; btn.disabled = true; btn.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const r = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(r.error || 'Something went wrong. Please call (346) 860-1929.');
+      try { window.fbq && fbq('track', 'Lead', { content_name: payload.source }, { eventID: r.lead_id }); } catch (e) {}
+      $('#doneRef').textContent = r.lead_id ? 'Reference ' + r.lead_id : '';
+      $('#doneMsg').textContent = payload.preferred_contact === 'text'
+        ? 'Someone will review your request and reach out as soon as possible.'
+        : 'Keep your phone nearby. Someone will call you as soon as possible.';
+      show('done');
+    } catch (ex) {
+      errEl.textContent = ex.message || 'Something went wrong. Please call (346) 860-1929.';
+      btn.disabled = false; btn.textContent = label;
+    }
+  }
+
+  // Clear a shown error as soon as the visitor changes something.
+  document.addEventListener('input', (e) => { const f = e.target.form; const er = f && f.querySelector('.err'); if (er) er.textContent = ''; });
+  document.addEventListener('change', (e) => { const f = e.target.form; const er = f && f.querySelector('.err'); if (er) er.textContent = ''; });
+
+  // CALLBACK
+  $('#cbForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target, err = $('.err', f), d = Object.fromEntries(new FormData(f));
+    if (!d.name.trim()) return (err.textContent = 'Enter your name.');
+    if (!validPhone(d.phone)) return (err.textContent = 'Enter a 10-digit phone number.');
+    const consent = f.contact_consent.checked;
+    send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: 'call', contact_consent: consent, consent_text: consent ? consentText : '', source: 'express-callback', description: 'Express Connect: callback requested' }, $('button[type=submit]', f), err);
+  });
+
+  // QUIZ
+  const Q = [
+    { k: 'when', q: 'When did the crash happen?', a: ['Today', 'In the last few days', 'Within the last month', 'More than a month ago'] },
+    { k: 'hurt', q: 'Were you hurt?', a: [['Yes', 'yes'], ['No', 'no'], ['Not sure yet', 'unsure']] },
+    { k: 'doctor', q: 'Have you seen a doctor?', a: [['Yes', 'yes'], ['Not yet', 'not_yet'], ['No', 'no']] },
+    { k: 'fault', q: 'Who caused the crash?', a: ['The other driver', 'Not sure', 'Partly me', 'Someone else'] },
+    { k: 'area', q: 'Where in Texas?', a: ['Houston area', 'Dallas–Fort Worth', 'San Antonio', 'Austin', 'Somewhere else in Texas'] },
+  ];
+  let qi = 0, answers = {};
+  const bars = [...document.querySelectorAll('#quiz .prog i')];
+  function renderQ() {
+    bars.forEach((b, i) => b.classList.toggle('on', i <= qi));
+    const body = $('#qBody');
+    if (qi < Q.length) {
+      const it = Q[qi];
+      body.innerHTML = `<div class="qcount">Question ${qi + 1} of ${Q.length}</div><p class="qtext">${it.q}</p><div class="answers">${it.a.map((x) => { const [label, val] = Array.isArray(x) ? x : [x, x]; return `<button type="button" class="ans${answers[it.k] && answers[it.k].label === label ? ' sel' : ''}" data-l="${label}" data-v="${val}">${label}</button>`; }).join('')}</div>${qi > 0 ? '<button class="btn ghost" type="button" id="qPrev">Previous question</button>' : ''}`;
+      body.querySelectorAll('.ans').forEach((b) => b.onclick = () => { answers[it.k] = { label: b.dataset.l, value: b.dataset.v }; b.classList.add('sel'); track('quiz_answer', { q: qi + 1 }); setTimeout(() => { qi++; renderQ(); }, 160); });
+      const p = $('#qPrev'); if (p) p.onclick = () => { qi--; renderQ(); };
+      return;
+    }
+    const hurtish = answers.hurt && answers.hurt.value !== 'no';
+    body.innerHTML = `<div class="qcount">Last step</div><p class="qtext">Where can we reach you?</p>
+      <div class="note">${hurtish ? 'Thanks. A free review can help you understand your options and next steps.' : 'Thanks. Even without injuries, you can still ask questions about your options.'} Every situation is different, and no result is promised.</div>
+      <form id="qzForm" novalidate>
+        <input class="hp" name="company_website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <label class="f"><span>Your name</span><input type="text" name="name" autocomplete="name" required></label>
+        <label class="f"><span>Phone</span><input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555" required></label>
+        <div class="f"><span>Best way to reach you</span></div>
+        <div class="seg" role="radiogroup" aria-label="Best way to reach you"><label><input type="radio" name="preferred_contact" value="call" checked><span>Call me</span></label><label><input type="radio" name="preferred_contact" value="text"><span>Text me</span></label></div>
+        <label class="consent"><input type="checkbox" name="contact_consent"><span>${consentText}</span></label>
+        <div class="err" role="alert"></div>
+        <button class="btn red" type="submit">Request help</button>
+        <button class="btn ghost" type="button" id="qPrev2">Previous question</button>
+        <p class="fine">See our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms</a>.</p>
+      </form>`;
+    $('#qPrev2').onclick = () => { qi = Q.length - 1; renderQ(); };
+    $('#qzForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = e.target, err = $('.err', f), d = Object.fromEntries(new FormData(f));
+      if (!d.name.trim()) return (err.textContent = 'Enter your name.');
+      if (!validPhone(d.phone)) return (err.textContent = 'Enter a 10-digit phone number.');
+      const consent = f.contact_consent.checked;
+      if (d.preferred_contact === 'text' && !consent) return (err.textContent = 'To be contacted by text, check the consent box. Or choose "Call me."');
+      const city = { 'Houston area': 'Houston', 'Dallas–Fort Worth': 'Dallas–Fort Worth', 'San Antonio': 'San Antonio', 'Austin': 'Austin' }[answers.area && answers.area.label] || '';
+      const summary = 'Express Connect quiz · ' + Q.map((it) => `${it.q} ${answers[it.k] ? answers[it.k].label : '—'}`).join(' · ');
+      send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: d.preferred_contact, contact_consent: consent, consent_text: consent ? consentText : '',
+        injured: answers.hurt && answers.hurt.value, medical_care: answers.doctor && answers.doctor.value, crash_city: city, description: summary, source: 'express-quiz' }, $('button[type=submit]', f), err);
+    });
+  }
+})();
+</script>
+</body>
+</html>

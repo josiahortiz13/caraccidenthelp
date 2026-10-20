@@ -15,7 +15,7 @@ const ENV = {
   ADMIN_USERS: JSON.stringify([{ name: 'Josiah', role: 'owner', password: 'owner-pass' }, { name: 'Staff', role: 'staff', password: 'staff-pass' }]),
   CRM_MODE: 'ghl', GHL_API_KEY: 'pit-test', GHL_LOCATION_ID: 'loc123', GHL_PIPELINE_ID: 'pipe1',
   GHL_STAGE_IDS: JSON.stringify({ NEW: 'st_new', CONTACTED: 'st_contacted', QUALIFIED: 'st_q' }),
-  INSECURE_COOKIES: '1',
+  INSECURE_COOKIES: '1', CONSUMER_SMS_ENABLED: 'true',
 };
 Object.assign(process.env, ENV);
 
@@ -50,6 +50,7 @@ function start(port = 0) {
     req.on('end', async () => {
       const u = new URL(req.url, 'http://localhost');
       if (u.pathname === '/admin') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'admin.html'))); }
+      if (u.pathname === '/connect') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'connect.html'))); }
       if (u.pathname === '/start') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'start.html'))); }
       const h = handlers[u.pathname];
       if (!h) {

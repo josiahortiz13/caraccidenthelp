@@ -596,3 +596,29 @@ test('32. QA Bot login works on Preview and is refused in Production', async () 
     assert.notEqual(no.status, 200);
   } finally { delete process.env.QA_ADMIN_PASSWORD; delete process.env.VERCEL_ENV; }
 });
+
+test('33. Express Connect: callback and quiz requests save first with source, answers and consent', async () => {
+  const post = (b) => fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.9.9.' + Math.floor(Math.random() * 250) }, body: JSON.stringify(b) }).then(async (r) => ({ status: r.status, json: await r.json() }));
+  const cb = await post({ name: 'Ana Ruiz', phone: '(832) 555-0161', preferred_contact: 'call', contact_consent: false, source: 'express-callback', description: 'Express Connect: callback requested' });
+  assert.equal(cb.status, 200);
+  const l1 = await lead(cb.json.lead_id);
+  assert.equal(l1.source, 'express-callback'); assert.equal(l1.first_name, 'Ana'); assert.equal(l1.contact_consent, false);
+  assert.ok(smsTo(OWNER).length >= 1, 'owner alerted'); assert.equal(smsTo('+18325550161').length, 0, 'no consent, no text');
+  const qz = await post({ name: 'Leo Park', phone: '(832) 555-0162', preferred_contact: 'text', contact_consent: true, consent_text: 'I agree…', injured: 'yes', medical_care: 'not_yet', crash_city: 'Houston', source: 'express-quiz', description: 'Express Connect quiz · When did the crash happen? Today · Were you hurt? Yes' });
+  const l2 = await lead(qz.json.lead_id);
+  assert.equal(l2.source, 'express-quiz'); assert.equal(l2.injury_status, 'yes'); assert.equal(l2.medical_status, 'not_yet'); assert.equal(l2.crash_city, 'Houston');
+  assert.match(l2.description, /Were you hurt\? Yes/); assert.equal(l2.contact_consent, true);
+  const page = await (await fetch(base + '/connect')).text();
+  assert.match(page, /Call now/); assert.match(page, /Request a callback/); assert.match(page, /Quick accident quiz/); assert.match(page, /no outcome is promised/i);
+});
+
+test('34. Consumer texting switch OFF: no texts to leads even with consent, owner alerts still go', async () => {
+  process.env.CONSUMER_SMS_ENABLED = 'false';
+  try {
+    const r = await submit();
+    assert.equal(r.status, 200);
+    assert.equal(smsTo('+18325550199').length, 0, 'no consumer text');
+    assert.ok(smsTo(OWNER).length >= 1, 'owner still alerted');
+    assert.ok((await events(r.json.lead_id)).some((e) => e.type === 'sms_blocked' && e.detail.reason === 'consumer_texting_off'));
+  } finally { process.env.CONSUMER_SMS_ENABLED = 'true'; }
+});

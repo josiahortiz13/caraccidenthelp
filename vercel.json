@@ -80,6 +80,10 @@
       "destination": "/start.html"
     },
     {
+      "source": "/connect",
+      "destination": "/connect.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },
