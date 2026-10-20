@@ -884,3 +884,12 @@ test('47. Double submit / retry with the same details: saved and linked, but onl
   assert.equal(c.json.lead_id, a.json.lead_id);
   assert.equal(fakeMail.sent.filter((m) => m.to === 'owner@example.com').length, before + 1, 'a callback request is new info: alert sent');
 });
+
+test('48. Retry of a NEW-source repeat is suppressed too (callback lead, then main form, then main-form retry = 2 alerts, not 3)', async () => {
+  const before = fakeMail.sent.filter((m) => m.to === 'owner@example.com').length;
+  const a = await submit({ phone: '(832) 555-0481', email: '', source: 'express-callback', callback_requested: 'true', callback_window: 'evening' });
+  await submit({ phone: '(832) 555-0481', email: '', source: 'main-form' });
+  const c = await submit({ phone: '(832) 555-0481', email: '', source: 'main-form', client_retry: true });
+  assert.equal(c.json.lead_id, a.json.lead_id);
+  assert.equal(fakeMail.sent.filter((m) => m.to === 'owner@example.com').length, before + 2, 'original + one repeat alert; the retry adds none');
+});
