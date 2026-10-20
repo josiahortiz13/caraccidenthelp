@@ -5,7 +5,7 @@ const EXPECTED = ['leads', 'events', 'messages', 'calls', 'opt_outs', 'sms_sessi
 module.exports = async (req, res) => {
   const out = { ok: true, ts: Date.now(), v: 3 };
   if (req.query && req.query.db) {
-    if (!process.env.DATABASE_URL && process.env.PGLITE !== '1') {
+    if (!require('../lib/db').configured()) {
       out.db = { state: 'NOT CONFIGURED' };
     } else {
       try {

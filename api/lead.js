@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
     // Logs carry a reference ID only. The lead itself goes to the owner by email (and text when available).
     const ref = 'FB-' + require('crypto').randomBytes(4).toString('hex').toUpperCase();
     log.error('lead intake failed, using email backup', err, { ref });
-    const noDb = !process.env.DATABASE_URL && process.env.PGLITE !== '1'; // not configured yet, vs. configured but failing
+    const noDb = !require('../lib/db').configured(); // not configured yet, vs. configured but failing
     const summary = fill((noDb ? '🚨 NEW CRASHHELP LEAD (email only, dashboard not connected yet)' : '🚨 CRASHHELP LEAD (DATABASE DOWN — NOT SAVED)') + '\nRef: ' + ref + '\n{{first_name}} {{last_name}}\n{{phone}} {{email}}\nCity: {{crash_city}}\nCrash: {{crash_date}}\nPrefers: {{preferred_contact}}\nCallback: {{callback_window}}\nInjured: {{injury_status}} · Doctor: {{medical_status}}\nNotes: {{description}}\nSource: {{utm_source}} / {{utm_campaign}}\nPage: {{landing_page}}', data);
     const owner = process.env.OWNER_ALERT_PHONE || process.env.OWNER_PHONE;
     const [sms, mail] = await Promise.allSettled([
