@@ -715,3 +715,92 @@ test('40. HighLevel: one contact + one opportunity per person; repeats never cre
   const rows = (await db.query(`SELECT count(*)::int AS n FROM leads WHERE phone = '+18325550231' AND duplicate_of IS NULL`)).rows[0].n;
   assert.equal(rows, 1, 'one open lead; repeats linked to it');
 });
+
+test('41. Callback time window: ASAP is URGENT, a later window is HIGH; window shown in the owner alert', async () => {
+  const post = (b) => fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.6.6.' + Math.floor(Math.random() * 250) }, body: JSON.stringify(b) }).then((r) => r.json());
+  const a = await post({ name: 'Asa Now', phone: '(832) 555-0241', source: 'express-callback', callback_requested: true, callback_window: 'asap' });
+  const e = await post({ name: 'Eve Later', phone: '(832) 555-0242', source: 'express-callback', callback_requested: true, callback_window: 'evening', description: 'Express Connect: callback requested (evening) · rear-ended on 610' });
+  const la = await lead(a.json ? a.json.lead_id : a.lead_id), le = await lead(e.lead_id);
+  assert.equal(la.lead_priority, 'URGENT'); assert.equal(le.lead_priority, 'HIGH PRIORITY'); assert.equal(le.callback_window, 'evening');
+  assert.ok(smsTo(OWNER).some((m) => /Call back: Evening \(5–8pm\)/.test(m.body)));
+  assert.ok(smsTo(OWNER).some((m) => /Call back: AS SOON AS POSSIBLE/.test(m.body)));
+  const page = await (await fetch(base + '/connect')).text();
+  assert.match(page, /When should we call\?/); assert.match(page, /call 911 or go to an emergency room/); assert.match(page, /autoConfig',false/);
+});
+
+test('42. HighLevel tasks: callback task created with due time, closed when contacted; follow-up task replaced and closed', async () => {
+  const post = (b) => fetch(base + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': '10.5.5.' + Math.floor(Math.random() * 250) }, body: JSON.stringify(b) }).then((r) => r.json());
+  const cb = await post({ name: 'Tess Task', phone: '(832) 555-0251', source: 'express-callback', callback_requested: true, callback_window: 'asap' });
+  const taskCalls = () => h.crmFake.calls.filter((c) => /\/tasks/.test(c.url));
+  const created = taskCalls().filter((c) => c.method === 'POST');
+  assert.equal(created.length, 1); assert.match(created[0].body.title, /^📞 Call back Tess Task \(ASAP\)/);
+  assert.ok(Math.abs(new Date(created[0].body.dueDate) - Date.now()) < 6 * 60e3, 'ASAP task due within ~5 minutes');
+  const up = h.crmFake.calls.find((c) => c.url.endsWith('/contacts/upsert'));
+  assert.ok(up.body.tags.includes('sms-by-crashhelp-site'), 'tag tells HighLevel workflows not to text');
+  await admin('mark-contacted', { method: 'POST', body: { lead_id: cb.lead_id } });
+  assert.ok(taskCalls().some((c) => c.method === 'PUT' && /\/completed$/.test(c.url)), 'callback task closed');
+  // follow-up: set, move, clear
+  const { json } = await submit({ phone: '(832) 555-0252', email: 'fut@example.com' });
+  h.crmFake.calls.length = 0;
+  await admin('follow-up', { method: 'POST', body: { lead_id: json.lead_id, hours: 2, note: 'after work' } });
+  assert.equal(taskCalls().filter((c) => c.method === 'POST').length, 1);
+  await admin('follow-up', { method: 'POST', body: { lead_id: json.lead_id, hours: 5 } });
+  assert.equal(taskCalls().filter((c) => c.method === 'POST').length, 2, 'new task for the new time');
+  assert.equal(taskCalls().filter((c) => c.method === 'PUT').length, 1, 'old task closed');
+  await admin('follow-up', { method: 'POST', body: { lead_id: json.lead_id, hours: 0 } });
+  assert.equal(taskCalls().filter((c) => c.method === 'PUT').length, 2, 'cleared follow-up closes its task');
+  // scheduled window: evening task is due at 5pm Houston time (or now if already in the window)
+  const crm = require('../lib/crm');
+  const d = crm.callbackDue({ callback_window: 'evening' }, new Date('2026-10-20T15:00:00Z')); // 10am CT
+  assert.equal(d.toISOString(), '2026-10-20T22:00:00.000Z');
+  const d2 = crm.callbackDue({ callback_window: 'morning' }, new Date('2026-10-20T20:00:00Z')); // 3pm CT → tomorrow 8am
+  assert.equal(d2.toISOString(), '2026-10-21T13:00:00.000Z');
+});
+
+test('43. Inbox, calls history and audit log; Twilio retries of the same text are handled once', async () => {
+  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMdup1', From: TESTER, To: '+13468601929', Body: 'CRASH' });
+  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMdup1', From: TESTER, To: '+13468601929', Body: 'CRASH' });
+  assert.equal(smsTo(TESTER).length, 1, 'retry did not send a second reply');
+  const inbox = (await admin('inbox')).json.threads;
+  assert.equal(inbox[0].phone, TESTER); assert.equal(inbox[0].inbound, 1);
+  const th = (await admin('thread', { params: { phone: TESTER } })).json;
+  assert.deepEqual(th.messages.map((m) => m.direction), ['inbound', 'outbound']);
+  await submit();
+  const calls = (await admin('calls')).json.calls;
+  assert.ok(calls.some((c) => c.purpose === 'owner_alert'));
+  assert.equal((await admin('audit-log', { cookie: staffCookie })).status, 403, 'staff cannot see the audit log');
+  const log = (await admin('audit-log')).json.entries; assert.ok(log.some((e) => e.action === 'viewed_thread'));
+  // texting OFF → staff text gets a clear reason
+  process.env.CONSUMER_SMS_ENABLED = 'false';
+  try {
+    const l = await db.one('SELECT lead_id FROM leads WHERE phone = $1 AND duplicate_of IS NULL', [TESTER]);
+    const t = await admin('text', { method: 'POST', body: { lead_id: l.lead_id, body: 'hi' } });
+    assert.equal(t.status, 400); assert.match(t.json.error, /Texting is OFF/);
+  } finally { process.env.CONSUMER_SMS_ENABLED = 'true'; }
+});
+
+test('44. Monthly report: real counts by channel, owner-entered spend/revenue, cost per inquiry, P&L; owner only', async () => {
+  const month = new Date().toLocaleString('sv-SE', { timeZone: 'America/Chicago' }).slice(0, 7);
+  await db.query('DELETE FROM ledger');
+  const empty = (await admin('report', { params: { month } })).json;
+  assert.equal(empty.money.ad_spend, null, 'nothing entered → blank, not zero'); assert.equal(empty.money.profit, null);
+  const a = await submit({ phone: '(832) 555-0261', email: 'a1@example.com', utm_source: 'facebook', utm_campaign: 'hou-video', fbclid: 'x' });
+  await submit({ phone: '(832) 555-0262', email: 'a2@example.com', utm_source: 'facebook', utm_campaign: 'hou-video', fbclid: 'y' });
+  await submit({ phone: '(832) 555-0263', email: 'a3@example.com', utm_source: 'google', utm_campaign: 'hou-search', fbclid: '', gclid: 'g' });
+  await admin('status-change', { method: 'POST', body: { lead_id: a.json.lead_id, status: 'QUALIFIED' } });
+  for (const e of [{ kind: 'ad_spend', channel: 'meta', amount: 200 }, { kind: 'ad_spend', channel: 'google', amount: 100 }, { kind: 'revenue', channel: 'other', amount: 1000, note: 'verified invoice #1' }, { kind: 'expense', channel: 'other', amount: 150 }, { kind: 'ad_clicks', channel: 'meta', amount: 80 }]) {
+    assert.equal((await admin('ledger-add', { method: 'POST', body: { month, ...e } })).status, 200);
+  }
+  assert.equal((await admin('ledger-add', { method: 'POST', body: { month, kind: 'ad_spend', amount: -5 } })).status, 400);
+  const r = (await admin('report', { params: { month } })).json;
+  assert.equal(r.totals.inquiries, 3); assert.equal(r.totals.qualified, 1);
+  const meta = r.channels.find((c) => c.channel === 'meta'), google = r.channels.find((c) => c.channel === 'google');
+  assert.equal(meta.inquiries, 2); assert.equal(meta.spend, 200); assert.equal(meta.cost_per_inquiry, 100); assert.equal(meta.cost_per_qualified, 200); assert.equal(meta.conversion_rate, 2.5);
+  assert.equal(google.inquiries, 1); assert.equal(google.cost_per_inquiry, 100);
+  assert.equal(r.money.ad_spend, 300); assert.equal(r.money.revenue, 1000); assert.equal(r.money.expenses, 150); assert.equal(r.money.profit, 550);
+  assert.equal(r.money.cost_per_inquiry, 100); assert.equal(r.money.cost_per_qualified, 300);
+  assert.equal((await admin('report', { cookie: staffCookie, params: { month } })).status, 403, 'staff cannot see money');
+  assert.equal((await admin('ledger-add', { cookie: staffCookie, method: 'POST', body: { month, kind: 'revenue', amount: 1 } })).status, 403);
+  const qv = (await admin('leads', { params: { view: 'qualified' } })).json.leads.map((l) => l.lead_id);
+  assert.deepEqual(qv, [a.json.lead_id]);
+});

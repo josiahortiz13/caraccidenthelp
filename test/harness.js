@@ -26,6 +26,8 @@ global.__crashhelpFetch = async (url, opts) => {
   if (crmFake.fail) return { ok: false, status: 503, text: async () => '{"message":"Service unavailable"}' };
   let data = {};
   if (url.includes('/opportunities/pipelines')) data = { pipelines: [{ id: 'pipe_auto', name: 'CrashHelp TX', stages: ['NEW LEAD', 'CONTACT ATTEMPTED', 'CONTACTED', 'QUALIFIED', 'REFERRED / TRANSFERRED', 'FOLLOW-UP', 'CLOSED', 'DO NOT CONTACT'].map((n, i) => ({ id: 'auto_st_' + i, name: n })) }] };
+  else if (/\/tasks\/[^/]+\/completed$/.test(url)) data = { task: { completed: true } };
+  else if (url.endsWith('/tasks')) data = { task: { id: 'ghl_task_' + (++crmFake.n) } };
   else if (url.endsWith('/contacts/upsert')) data = { new: true, contact: { id: 'ghl_contact_' + (++crmFake.n) } };
   else if (url.endsWith('/opportunities/')) data = { opportunity: { id: 'ghl_opp_' + (++crmFake.n) } };
   return { ok: true, status: 200, text: async () => JSON.stringify(data) };

@@ -127,6 +127,19 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .toggle input{width:20px;height:20px;accent-color:var(--red)}
 .esc-row{display:grid;grid-template-columns:90px 1fr 1fr 1fr auto;gap:8px;align-items:center}
 @media(max-width:560px){.esc-row{grid-template-columns:1fr 1fr}}
+.hint{color:var(--dim);font-size:13px;margin:0 0 12px}
+.inbox{display:grid;grid-template-columns:minmax(220px,340px) minmax(0,1fr);gap:12px;padding-bottom:40px}
+@media(max-width:760px){.inbox{grid-template-columns:1fr}}
+.threads{display:grid;gap:6px;align-content:start;max-height:70vh;overflow:auto}
+.th{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;text-align:left;display:grid;gap:2px}
+.th[aria-current="true"]{border-color:var(--red)}
+.th b{font:900 15px var(--sign)} .th small{color:var(--dim);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thread{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;align-content:start;min-height:300px}
+.bubbles{display:grid;gap:8px;max-height:55vh;overflow:auto}
+.bub{max-width:80%;padding:9px 12px;border-radius:12px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.bub.in{background:var(--raise);justify-self:start}.bub.out{background:color-mix(in srgb,var(--red) 22%,var(--panel));justify-self:end}
+.bub time{display:block;font:500 11px var(--mono);color:var(--dim);margin-top:4px}
+@media print{header,#views,.toolbar,#ledgerForm,nav,.btn{display:none!important}body{background:#fff;color:#000}}
 #toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:12px 18px;border-radius:10px;font-weight:600;z-index:60;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 /* phone: compact header and counters so the queue is on the first screen */
@@ -164,6 +177,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <span class="mode" id="modeTag">TEST MODE</span>
     <nav role="tablist">
       <button role="tab" data-tab="leads" aria-selected="true">Leads</button>
+      <button role="tab" data-tab="inbox">Inbox</button>
+      <button role="tab" data-tab="calls">Calls</button>
+      <button role="tab" data-tab="reports" class="owner-only">Reports</button>
       <button role="tab" data-tab="sources">Sources</button>
       <button role="tab" data-tab="status">Twilio &amp; Systems</button>
       <button role="tab" data-tab="settings">Settings</button>
@@ -183,6 +199,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <button type="button" data-v="callbacks" aria-pressed="false">📞 Callbacks<b data-c="callbacks_waiting"></b></button>
         <button type="button" data-v="missed" aria-pressed="false">📵 Missed calls<b data-c="missed_calls"></b></button>
         <button type="button" data-v="followup" aria-pressed="false">⏰ Follow-ups<b data-c="followups_due"></b></button>
+        <button type="button" data-v="quiz" aria-pressed="false">📝 Quiz</button>
+        <button type="button" data-v="qualified" aria-pressed="false">✅ Qualified</button>
       </div>
       <div class="toolbar">
         <input id="search" placeholder="Search name, phone, email, lead ID" aria-label="Search leads">
@@ -190,6 +208,39 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="legend"><span><i style="background:var(--green)"></i>0–5 min</span><span><i style="background:var(--amber)"></i>5–15</span><span><i style="background:var(--orange)"></i>15–30</span><span><i style="background:var(--red)"></i>30+ uncontacted</span></div>
       </div>
       <div class="queue" id="queue"></div>
+    </div>
+
+    <div data-panel="inbox" class="hidden">
+      <p class="hint" id="inboxNote"></p>
+      <div class="inbox"><div class="threads" id="threads"></div><div class="thread" id="thread"><div class="empty">Pick a conversation.</div></div></div>
+    </div>
+
+    <div data-panel="calls" class="hidden">
+      <div class="tablebox"><table><thead><tr><th>When</th><th>Direction</th><th>Who</th><th>Purpose</th><th>Result</th><th class="num">Length</th></tr></thead><tbody id="callsBody"></tbody></table></div>
+      <p class="hint">Calls placed or received through the CrashHelp Twilio number. Calls made straight to a number that isn't on Twilio (like a personal cell) can't be tracked here; clicks on "Call now" are counted in Google Analytics and Meta as "click to call".</p>
+    </div>
+
+    <div data-panel="reports" class="hidden">
+      <div class="row" style="align-items:end;margin-bottom:14px"><label style="flex:0 1 200px">Month <input type="month" id="repMonth"></label><button class="btn" id="repPrint" style="flex:0 0 auto">Print / save PDF</button></div>
+      <p class="hint" id="repNote"></p>
+      <div class="kpis" id="repKpis" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+      <div class="sec" style="margin:4px 0 10px">By channel</div>
+      <div class="tablebox"><table><thead><tr><th>Channel</th><th class="num">Inquiries</th><th class="num">Qualified</th><th class="num">Ad spend</th><th class="num">Cost / inquiry</th><th class="num">Cost / qualified</th><th class="num">Ad clicks</th><th class="num">Click → inquiry</th></tr></thead><tbody id="repChannels"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Money (owner-entered)</div>
+      <div class="tablebox"><table><tbody id="repMoney"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Sources &amp; campaigns</div>
+      <div class="tablebox"><table><thead><tr><th>Source</th><th>Campaign</th><th class="num">Inquiries</th><th class="num">Qualified</th></tr></thead><tbody id="repSources"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Enter this month's numbers</div>
+      <form class="row" id="ledgerForm" style="margin-bottom:10px">
+        <label>Type <select name="kind"><option value="ad_spend">Ad spend ($)</option><option value="revenue">Verified revenue ($)</option><option value="expense">Operating expense ($)</option><option value="ad_clicks">Ad clicks (count)</option><option value="visitors">Website visitors (count)</option></select></label>
+        <label>Channel <select name="channel"><option value="meta">Meta (FB/IG)</option><option value="google">Google</option><option value="other">Other / none</option></select></label>
+        <label>Amount <input name="amount" type="number" min="0" step="0.01" required></label>
+        <label>Note <input name="note" maxlength="200" placeholder="e.g. Meta invoice, Oct"></label>
+        <button class="btn red" type="submit" style="flex:0 0 auto">Add</button>
+      </form>
+      <div class="tablebox"><table><thead><tr><th>Type</th><th>Channel</th><th class="num">Amount</th><th>Note</th><th>By</th><th></th></tr></thead><tbody id="ledgerBody"></tbody></table></div>
+      <div class="sec" style="margin:4px 0 10px">Audit log</div>
+      <div class="tablebox" style="max-height:360px;overflow:auto"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Lead</th></tr></thead><tbody id="auditBody"></tbody></table></div>
     </div>
 
     <div data-panel="sources" class="hidden">
@@ -549,11 +600,68 @@ async function loadSettings() {
   };
 }
 
+// ---------- Inbox ----------
+let threadPhone = null;
+async function loadInbox() {
+  const [d, st] = await Promise.all([api('inbox'), api('status').catch(() => null)]);
+  $('#inboxNote').textContent = 'Texts to and from the CrashHelp number, newest first.' + (st && st.consumer_texting === false ? '' : '');
+  $('#threads').innerHTML = d.threads.length ? d.threads.map((t) => `<button class="th" data-phone="${esc(t.phone)}" aria-current="${t.phone === threadPhone}"><b>${esc(t.name || t.phone)}</b><small>${t.last_direction === 'inbound' ? '← ' : '→ '}${esc(t.last_body || '')}</small><small>${esc(when(t.last_at))}${t.opted_out ? ' · OPTED OUT' : ''}</small></button>`).join('') : '<div class="empty">No texts yet.</div>';
+  if (threadPhone) loadThread(threadPhone);
+}
+async function loadThread(phone) {
+  threadPhone = phone;
+  document.querySelectorAll('.th').forEach((b) => b.setAttribute('aria-current', String(b.dataset.phone === phone)));
+  const d = await api('thread', { params: { phone } });
+  const l = d.lead;
+  const canReply = l && l.contact_consent && !l.sms_opt_out;
+  $('#thread').innerHTML = `<div class="row" style="align-items:center"><div style="flex:1 1 auto"><b style="font:900 18px var(--sign)">${esc(l ? [l.first_name, l.last_name].filter(Boolean).join(' ') || phone : phone)}</b><div class="hint" style="margin:0">${esc(phone)}${l ? ` · <a href="#${esc(l.lead_id)}" data-open="${esc(l.lead_id)}" style="color:var(--amber)">${esc(l.lead_id)}</a>` : ' · no lead record'}</div></div></div>
+    <div class="bubbles" id="bubbles">${d.messages.map((m) => `<div class="bub ${m.direction === 'inbound' ? 'in' : 'out'}">${esc(m.body || '')}<time>${esc(when(m.created_at))}${m.direction === 'outbound' ? ' · ' + esc(m.status || '') + (m.error ? ' · ' + esc(m.error) : '') : ''}</time></div>`).join('')}</div>
+    <form class="row" id="replyForm"><textarea id="replyText" rows="2" maxlength="600" ${canReply ? '' : 'disabled'} placeholder="${canReply ? 'Reply…' : l ? (l.sms_opt_out ? 'Opted out of texts. Call instead.' : 'No consent to text yet. Call instead.') : 'Not a lead yet. Call instead.'}"></textarea><button class="btn red" type="submit" ${canReply ? '' : 'disabled'}>Send</button></form>`;
+  const bb = $('#bubbles'); bb.scrollTop = bb.scrollHeight;
+  $('#replyForm').onsubmit = async (e) => { e.preventDefault(); const t = $('#replyText').value.trim(); if (!t) return;
+    try { await api('text', { method: 'POST', body: { lead_id: l.lead_id, body: t } }); toast('Sent'); } catch (err) { toast(err.message); } loadInbox(); };
+}
+$('#threads').addEventListener('click', (e) => { const b = e.target.closest('.th'); if (b) loadThread(b.dataset.phone); });
+
+// ---------- Calls ----------
+async function loadCalls() {
+  const d = await api('calls');
+  $('#callsBody').innerHTML = d.calls.length ? d.calls.map((c) => `<tr><td>${esc(when(c.created_at))}</td><td>${c.direction === 'inbound' ? '← in' : '→ out'}</td><td>${c.lead_id ? `<a href="#${esc(c.lead_id)}" data-open="${esc(c.lead_id)}" style="color:var(--amber)">${esc(c.name || c.phone)}</a>` : esc(c.phone || '—')}</td><td>${esc(pretty(c.purpose))}</td><td>${esc(c.status || '')}${c.answered_by ? ' · ' + esc(c.answered_by) : ''}${c.connected ? ' ✓' : ''}</td><td class="num">${c.duration ? fmtDur(c.duration) : '—'}</td></tr>`).join('') : '<tr><td colspan="6">No calls in the last 30 days.</td></tr>';
+}
+
+// ---------- Reports ----------
+const money = (v) => v == null ? '—' : (v < 0 ? '−$' : '$') + Math.abs(Number(v)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const num = (v) => v == null ? '—' : Number(v).toLocaleString('en-US');
+const pct = (v) => v == null ? '—' : v + '%';
+async function loadReport() {
+  const mi = $('#repMonth'); if (!mi.value) mi.value = new Date().toLocaleString('sv-SE', { timeZone: 'America/Chicago' }).slice(0, 7);
+  const [r, l, a] = await Promise.all([api('report', { params: { month: mi.value } }), api('ledger', { params: { month: mi.value } }), api('audit-log')]);
+  const t = r.totals;
+  $('#repNote').textContent = r.note;
+  $('#repKpis').innerHTML = [['Inquiries', num(t.inquiries)], ['Valid', num(t.valid)], ['Qualified', num(t.qualified)], ['Quiz', num(t.quiz)],
+    ['Callbacks done', `${num(t.callbacks_completed)}/${num(t.callbacks_requested)}`], ['Avg callback', fmtDur(t.avg_callback_sec)], ['Avg response', fmtDur(t.avg_response_sec)], ['Inbound calls', num(t.inbound_calls)]]
+    .map(([k, v]) => `<div class="kpi"><div class="n" style="font-size:24px">${v}</div><div class="l">${k}</div></div>`).join('');
+  $('#repChannels').innerHTML = r.channels.map((c) => `<tr><td>${{ meta: 'Meta (FB/IG)', google: 'Google', other: 'Other / organic' }[c.channel]}</td><td class="num">${c.inquiries}</td><td class="num">${c.qualified}</td><td class="num">${money(c.spend)}</td><td class="num">${money(c.cost_per_inquiry)}</td><td class="num">${money(c.cost_per_qualified)}</td><td class="num">${num(c.ad_clicks)}</td><td class="num">${pct(c.conversion_rate)}</td></tr>`).join('');
+  const m = r.money, tr = r.traffic;
+  $('#repMoney').innerHTML = [['Ad spend', money(m.ad_spend)], ['Verified revenue', money(m.revenue)], ['Operating expenses', money(m.expenses)], ['Profit / loss', money(m.profit)], ['Cost per inquiry', money(m.cost_per_inquiry)], ['Cost per qualified inquiry', money(m.cost_per_qualified)],
+    ['Website visitors', num(tr.visitors)], ['Visitor → inquiry', pct(tr.visitor_to_inquiry)], ['Ad clicks', num(tr.ad_clicks)], ['Ad click → inquiry', pct(tr.click_to_inquiry)], ['Callback completion', pct(r.callback_completion)]]
+    .map(([k, v]) => `<tr><td>${k}</td><td class="num">${v}</td></tr>`).join('');
+  $('#repSources').innerHTML = r.by_source.length ? r.by_source.map((s) => `<tr><td>${esc(s.source)}</td><td>${esc(s.campaign)}</td><td class="num">${s.inquiries}</td><td class="num">${s.qualified}</td></tr>`).join('') : '<tr><td colspan="4">No inquiries this month.</td></tr>';
+  const kindName = { ad_spend: 'Ad spend', revenue: 'Revenue', expense: 'Expense', ad_clicks: 'Ad clicks', visitors: 'Visitors' };
+  $('#ledgerBody').innerHTML = l.entries.length ? l.entries.map((e) => `<tr><td>${kindName[e.kind]}</td><td>${esc(e.channel)}</td><td class="num">${['ad_clicks', 'visitors'].includes(e.kind) ? num(e.amount) : money(e.amount)}</td><td>${esc(e.note || '')}</td><td>${esc(e.created_by || '')}</td><td><button class="btn" data-del="${e.id}">Delete</button></td></tr>`).join('') : '<tr><td colspan="6">Nothing entered for this month.</td></tr>';
+  $('#auditBody').innerHTML = a.entries.map((e) => `<tr><td>${esc(when(e.at))}</td><td>${esc(e.actor)}</td><td>${esc(pretty(e.action))}</td><td>${esc(e.lead_id || '')}</td></tr>`).join('');
+}
+$('#repMonth').onchange = () => loadReport();
+$('#repPrint').onclick = () => window.print();
+$('#ledgerForm').onsubmit = async (e) => { e.preventDefault(); const f = e.target; try { await api('ledger-add', { method: 'POST', body: { month: $('#repMonth').value, kind: f.kind.value, channel: f.channel.value, amount: +f.amount.value, note: f.note.value } }); f.amount.value = ''; f.note.value = ''; toast('Added'); loadReport(); } catch (err) { toast(err.message); } };
+$('#ledgerBody').addEventListener('click', async (e) => { const b = e.target.closest('[data-del]'); if (!b || !confirm('Delete this entry?')) return; await api('ledger-delete', { method: 'POST', body: { id: +b.dataset.del } }); loadReport(); });
+
 // ---------- Boot ----------
 document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
   document.querySelectorAll('nav button').forEach((x) => x.setAttribute('aria-selected', x === b));
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== b.dataset.tab));
   if (b.dataset.tab === 'status') { loadStatus(); loadTestNumbers(); } if (b.dataset.tab === 'settings') loadSettings();
+  if (b.dataset.tab === 'inbox') loadInbox(); if (b.dataset.tab === 'calls') loadCalls(); if (b.dataset.tab === 'reports') loadReport();
 });
 $('#search').oninput = () => { clearTimeout(window._s); window._s = setTimeout(loadLeads, 250); };
 $('#statusFilter').onchange = () => { loadLeads(); loadMetrics(); };

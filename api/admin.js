@@ -11,7 +11,7 @@ const email = require('../lib/email');
 const staging = require('../lib/staging');
 const { sendJson, clientIp, clean, maskPhone, normalizePhone } = require('../lib/util');
 
-const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers'];
+const READ_ACTIONS = ['me', 'leads', 'lead', 'metrics', 'status', 'settings', 'env-check', 'twilio-check', 'test-numbers', 'inbox', 'thread', 'calls', 'audit-log', 'report', 'ledger'];
 
 // Views: all (default), urgent, callbacks, missed (missed inbound calls), followup.
 // Order: open + not yet contacted first, then URGENT → HIGH → NORMAL → LOW, then oldest waiting first.
@@ -25,6 +25,8 @@ async function listLeads(q) {
     if (q.status) { params.push(q.status); where += ` AND lead_status = $${params.length}`; }
   }
   if (q.view === 'urgent') where += ` AND lead_priority = 'URGENT'`;
+  if (q.view === 'quiz') where += ` AND source IN ('express-quiz', 'sms-quiz')`;
+  if (q.view === 'qualified') where += ` AND lead_status IN ('QUALIFIED', 'APPOINTMENT SET', 'REFERRED')`;
   if (q.view === 'callbacks') where += ' AND callback_requested = true';
   if (q.view === 'missed') where += ` AND source = 'inbound_call' AND (lead_status = 'PENDING CONSENT' OR first_contact_at IS NULL)`;
   if (q.view === 'followup') where += ` AND (follow_up_at IS NOT NULL OR lead_status IN ('FOLLOW-UP', 'CONTACT ATTEMPTED', 'NO RESPONSE')) AND lead_status NOT IN ('CLOSED', 'NOT QUALIFIED', 'DUPLICATE', 'REFERRED')`;
@@ -104,6 +106,66 @@ async function metrics(test = false) {
   return { counts, times, target_min: target, sources: sources.rows, activity };
 }
 
+function monthStart(m) {
+  const ok = /^\d{4}-(0[1-9]|1[0-2])$/.test(String(m || ''));
+  const d = ok ? String(m) : new Date().toLocaleString('sv-SE', { timeZone: 'America/Chicago' }).slice(0, 7);
+  return d + '-01';
+}
+
+const CHANNEL_SQL = `CASE WHEN lower(coalesce(utm_source,'')) IN ('facebook','fb','instagram','ig','meta') OR coalesce(fbclid,'') <> '' THEN 'meta'
+  WHEN lower(coalesce(utm_source,'')) IN ('google','adwords','gads') OR coalesce(gclid,'') <> '' THEN 'google' ELSE 'other' END`;
+
+async function monthlyReport(m) {
+  const month = monthStart(m);
+  const range = [month];
+  const span = `created_at >= ($1::date AT TIME ZONE 'America/Chicago') AND created_at < (($1::date + interval '1 month') AT TIME ZONE 'America/Chicago')`;
+  const base = `FROM leads WHERE ${span} AND duplicate_of IS NULL AND is_test = false AND source NOT ILIKE 'partner%'`;
+  const QUAL = `lead_status IN ('QUALIFIED','APPOINTMENT SET','REFERRED')`;
+  const VALID = `(coalesce(phone,'') <> '' OR coalesce(email,'') <> '') AND lead_status NOT IN ('NOT QUALIFIED','DUPLICATE')`;
+  const t = await db.one(`SELECT count(*)::int AS inquiries,
+      count(*) FILTER (WHERE ${VALID})::int AS valid,
+      count(*) FILTER (WHERE ${QUAL})::int AS qualified,
+      count(*) FILTER (WHERE callback_requested)::int AS callbacks_requested,
+      count(*) FILTER (WHERE callback_requested AND first_contact_at IS NOT NULL)::int AS callbacks_completed,
+      count(*) FILTER (WHERE source = 'inbound_call')::int AS inbound_calls,
+      count(*) FILTER (WHERE source IN ('express-quiz','sms-quiz'))::int AS quiz,
+      round(avg(EXTRACT(EPOCH FROM (first_response_at - created_at))) FILTER (WHERE source <> 'inbound_call'))::int AS avg_response_sec,
+      round(avg(EXTRACT(EPOCH FROM (first_contact_at - created_at))) FILTER (WHERE callback_requested))::int AS avg_callback_sec
+    ${base}`, range);
+  const bySource = (await db.query(`SELECT ${CHANNEL_SQL} AS channel, coalesce(nullif(utm_source,''), source, 'direct') AS source, coalesce(nullif(utm_campaign,''),'—') AS campaign,
+      count(*)::int AS inquiries, count(*) FILTER (WHERE ${QUAL})::int AS qualified
+    ${base} GROUP BY 1,2,3 ORDER BY inquiries DESC LIMIT 30`, range)).rows;
+  const ledger = (await db.query(`SELECT kind, channel, sum(amount)::float AS total FROM ledger WHERE month = $1 GROUP BY 1,2`, [month])).rows;
+  const sum = (kind, ch) => ledger.filter((r) => r.kind === kind && (!ch || r.channel === ch)).reduce((a, r) => a + r.total, 0);
+  const has = (kind) => ledger.some((r) => r.kind === kind);
+  const channels = ['meta', 'google', 'other'].map((ch) => {
+    const rows = bySource.filter((r) => r.channel === ch);
+    const inq = rows.reduce((a, r) => a + r.inquiries, 0), qual = rows.reduce((a, r) => a + r.qualified, 0);
+    const spend = sum('ad_spend', ch), clicks = sum('ad_clicks', ch);
+    const hasCh = (kind) => ledger.some((r) => r.kind === kind && r.channel === ch);
+    return { channel: ch, inquiries: inq, qualified: qual, spend: hasCh('ad_spend') ? spend : null, ad_clicks: hasCh('ad_clicks') ? clicks : null,
+      cost_per_inquiry: spend && inq ? +(spend / inq).toFixed(2) : null, cost_per_qualified: spend && qual ? +(spend / qual).toFixed(2) : null,
+      conversion_rate: clicks && inq ? +(inq / clicks * 100).toFixed(1) : null };
+  });
+  const spend = sum('ad_spend'), revenue = sum('revenue'), expenses = sum('expense'), visitors = sum('visitors'), clicks = sum('ad_clicks');
+  return {
+    month, generated_at: new Date().toISOString(),
+    note: 'Leads, calls and callbacks are tracked by this system. Spend, revenue, expenses, visitors and ad clicks are what the owner entered for this month. Test leads are excluded. Blank means not entered, not zero.',
+    totals: t,
+    money: {
+      ad_spend: has('ad_spend') ? spend : null, revenue: has('revenue') ? revenue : null, expenses: has('expense') ? expenses : null,
+      profit: has('revenue') || has('ad_spend') || has('expense') ? +(revenue - spend - expenses).toFixed(2) : null,
+      cost_per_inquiry: has('ad_spend') && t.inquiries ? +(spend / t.inquiries).toFixed(2) : null,
+      cost_per_qualified: has('ad_spend') && t.qualified ? +(spend / t.qualified).toFixed(2) : null,
+    },
+    traffic: { visitors: has('visitors') ? visitors : null, ad_clicks: has('ad_clicks') ? clicks : null,
+      visitor_to_inquiry: has('visitors') && visitors ? +(t.inquiries / visitors * 100).toFixed(2) : null,
+      click_to_inquiry: has('ad_clicks') && clicks ? +(t.inquiries / clicks * 100).toFixed(2) : null },
+    channels, by_source: bySource,
+    callback_completion: t.callbacks_requested ? +(t.callbacks_completed / t.callbacks_requested * 100).toFixed(0) : null,
+  };
+}
+
 async function twilioStatus() {
   const s = await store.getStatuses();
   const settings = await store.getSettings();
@@ -158,6 +220,76 @@ module.exports = async (req, res) => {
   try {
     switch (a) {
       case 'me': return sendJson(res, 200, { user });
+
+      // Two-way messages: one row per phone number, newest activity first.
+      case 'inbox': {
+        const r = await db.query(`
+          WITH m AS (
+            SELECT CASE WHEN direction = 'inbound' THEN from_number ELSE to_number END AS phone, *
+            FROM messages WHERE kind = 'consumer' AND created_at >= now() - interval '90 days')
+          SELECT phone,
+            (array_agg(body ORDER BY created_at DESC))[1] AS last_body,
+            (array_agg(direction ORDER BY created_at DESC))[1] AS last_direction,
+            (array_agg(status ORDER BY created_at DESC))[1] AS last_status,
+            max(created_at) AS last_at,
+            count(*) FILTER (WHERE direction = 'inbound')::int AS inbound,
+            count(*)::int AS total,
+            (SELECT l.lead_id FROM leads l WHERE l.phone = m.phone AND l.duplicate_of IS NULL ORDER BY l.created_at DESC LIMIT 1) AS lead_id,
+            (SELECT trim(coalesce(l.first_name,'') || ' ' || coalesce(l.last_name,'')) FROM leads l WHERE l.phone = m.phone AND l.duplicate_of IS NULL ORDER BY l.created_at DESC LIMIT 1) AS name,
+            EXISTS (SELECT 1 FROM opt_outs o WHERE o.phone = m.phone) AS opted_out
+          FROM m GROUP BY phone ORDER BY last_at DESC LIMIT 100`);
+        return sendJson(res, 200, { threads: r.rows });
+      }
+      case 'thread': {
+        const phone = normalizePhone(q.phone);
+        if (!phone) return sendJson(res, 400, { error: 'phone required' });
+        const r = await db.query(`SELECT created_at, direction, purpose, body, status, error FROM messages
+          WHERE kind = 'consumer' AND (from_number = $1 OR to_number = $1) ORDER BY created_at ASC LIMIT 300`, [phone]);
+        const lead = await db.one('SELECT lead_id, first_name, last_name, contact_consent, sms_opt_out FROM leads WHERE phone = $1 AND duplicate_of IS NULL ORDER BY created_at DESC LIMIT 1', [phone]);
+        await store.audit(user.name, 'viewed_thread', lead?.lead_id || null, { phone_last4: phone.slice(-4) });
+        return sendJson(res, 200, { phone, lead, messages: r.rows });
+      }
+      case 'calls': {
+        const r = await db.query(`SELECT c.created_at, c.direction, c.purpose, c.status, c.duration, c.connected, c.answered_by, c.lead_id,
+            CASE WHEN c.direction = 'inbound' THEN c.from_number ELSE c.to_number END AS phone,
+            trim(coalesce(l.first_name,'') || ' ' || coalesce(l.last_name,'')) AS name
+          FROM calls c LEFT JOIN leads l ON l.lead_id = c.lead_id
+          WHERE c.created_at >= now() - interval '30 days' ORDER BY c.created_at DESC LIMIT 200`);
+        return sendJson(res, 200, { calls: r.rows });
+      }
+      // Monthly business report. Owner only. Real tracked data + owner-entered ledger; test leads excluded.
+      case 'report': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        return sendJson(res, 200, await monthlyReport(q.month));
+      }
+      case 'ledger': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        const m = monthStart(q.month);
+        const r = await db.query('SELECT id, kind, channel, amount::float AS amount, note, created_by, created_at FROM ledger WHERE month = $1 ORDER BY kind, channel, id', [m]);
+        return sendJson(res, 200, { month: m, entries: r.rows });
+      }
+      case 'ledger-add': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        const kind = ['ad_spend', 'revenue', 'expense', 'visitors', 'ad_clicks'].includes(body.kind) ? body.kind : null;
+        const channel = ['meta', 'google', 'other'].includes(body.channel) ? body.channel : 'other';
+        const amount = Number(body.amount);
+        if (!kind || !Number.isFinite(amount) || amount < 0 || amount > 1e8) return sendJson(res, 400, { error: 'Pick a type and enter a positive amount.' });
+        const r = await db.one('INSERT INTO ledger (month, kind, channel, amount, note, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id', [monthStart(body.month), kind, channel, amount, clean(body.note, 200) || null, user.name]);
+        await store.audit(user.name, 'ledger_add', null, { id: r.id, kind, channel, amount });
+        return sendJson(res, 200, { ok: true, id: r.id });
+      }
+      case 'ledger-delete': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        await db.query('DELETE FROM ledger WHERE id = $1', [Number(body.id) || 0]);
+        await store.audit(user.name, 'ledger_delete', null, { id: Number(body.id) || 0 });
+        return sendJson(res, 200, { ok: true });
+      }
+
+      case 'audit-log': {
+        if (user.role !== 'owner') return sendJson(res, 403, { error: 'Owner only' });
+        const r = await db.query('SELECT at, actor, action, lead_id, detail FROM audit ORDER BY at DESC LIMIT 300');
+        return sendJson(res, 200, { entries: r.rows });
+      }
 
       case 'leads': {
         // The dashboard polls this; piggyback an escalation tick so alerts fire even if the external cron lags.
@@ -241,7 +373,7 @@ module.exports = async (req, res) => {
         if (r.ok) await leads.markAttempt(lead.lead_id, 'text', user.name);
         await store.audit(user.name, 'text_lead', lead.lead_id, { ok: r.ok, reason: r.reason || r.error || null });
         if (!r.ok) {
-          const why = { opted_out: 'This person opted out of texts.', test_mode_blocked: 'Test mode is on and this number is not an approved test number.' }[r.reason] || r.error;
+          const why = { opted_out: 'This person opted out of texts.', test_mode_blocked: 'Test mode is on and this number is not an approved test number.', consumer_texting_off: 'Texting is OFF until Twilio A2P approval. Call them instead.', optout_check_unavailable: 'Could not confirm opt-out status. Try again or call.' }[r.reason] || r.error;
           return sendJson(res, 400, { error: why });
         }
         return sendJson(res, 200, { ok: true });

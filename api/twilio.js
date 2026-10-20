@@ -74,11 +74,13 @@ async function handleSms(req, res) {
   const word = body.toUpperCase().replace(/[^A-Z]/g, '');
   const lead = await latestLeadForPhone(from);
 
-  await db.query(
+  const ins = await db.query(
     `INSERT INTO messages (sid, lead_id, direction, kind, purpose, to_number, from_number, body, status) VALUES ($1,$2,'inbound','consumer','inbound',$3,$4,$5,'received')
-     ON CONFLICT (sid) DO NOTHING`,
+     ON CONFLICT (sid) DO NOTHING RETURNING id`,
     [req.body.MessageSid || null, lead?.lead_id || null, normalizePhone(req.body.To), from, body.slice(0, 1600)]
   );
+  // Twilio re-delivers a webhook if we're slow to answer. Same MessageSid = already handled: do nothing twice.
+  if (req.body.MessageSid && !ins.rows.length) return sendXml(res, empty());
   await store.setStatus('webhook', { state: 'WORKING', last: 'sms' });
 
   // STOP family: record the opt-out. Twilio's own opt-out handling sends the carrier-required reply.

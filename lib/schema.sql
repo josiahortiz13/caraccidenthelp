@@ -58,6 +58,11 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT fals
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS callback_requested BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_at TIMESTAMPTZ;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_note TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS callback_window TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_callback_task_id TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_callback_task_done BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_followup_task_id TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_followup_task_at TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS leads_phone_idx   ON leads (phone);
 CREATE INDEX IF NOT EXISTS leads_email_idx   ON leads (lower(email));
 CREATE INDEX IF NOT EXISTS leads_status_idx  ON leads (lead_status);
@@ -154,4 +159,17 @@ CREATE TABLE IF NOT EXISTS system_status (
   key   TEXT PRIMARY KEY,
   value JSONB NOT NULL,
   at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Owner-entered monthly figures for reporting: ad spend, verified revenue, expenses, and
+-- traffic totals copied from Google Analytics / Meta Ads. Nothing here is estimated by the app.
+CREATE TABLE IF NOT EXISTS ledger (
+  id          BIGSERIAL PRIMARY KEY,
+  month       DATE NOT NULL,              -- first day of the month
+  kind        TEXT NOT NULL,              -- ad_spend | revenue | expense | visitors | ad_clicks
+  channel     TEXT NOT NULL DEFAULT 'other', -- meta | google | other
+  amount      NUMERIC(12,2) NOT NULL,
+  note        TEXT,
+  created_by  TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );

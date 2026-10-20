@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@700;900&family=Overpass+Mono:wght@700&family=Public+Sans:wght@400;500;600&display=swap">
 <!-- Meta Pixel -->
-<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','861917090286441');fbq('track','PageView');</script>
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('set','autoConfig',false,'861917090286441');fbq('init','861917090286441');fbq('track','PageView');</script>
 <!-- Google tag -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-RGZP7959W8"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-RGZP7959W8');</script>
@@ -70,6 +70,11 @@ input:focus{border-color:var(--red);outline:none}
 .seg span{display:block;text-align:center;border:2px solid var(--line);border-radius:12px;padding:12px;font-weight:600;cursor:pointer}
 .seg input:checked+span{border-color:var(--red);background:color-mix(in srgb,var(--red) 16%,var(--bg))}
 .seg input:focus-visible+span{outline:3px solid var(--amber);outline-offset:2px}
+.seg4{grid-template-columns:repeat(4,1fr)}@media(max-width:380px){.seg4{grid-template-columns:1fr 1fr}}
+.seg4 span{padding:11px 4px;font-size:15px}
+textarea{width:100%;background:var(--bg);color:var(--text);border:2px solid var(--line);border-radius:12px;padding:13px;font:500 16px var(--body);resize:vertical}
+textarea:focus{border-color:var(--red);outline:none}
+.sos{background:color-mix(in srgb,var(--red) 14%,var(--panel2));border-left:4px solid var(--red);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:14.5px}
 .consent{display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:13px;color:var(--dim);margin-bottom:16px;line-height:1.5}
 .consent input{width:22px;height:22px;accent-color:var(--red);margin-top:1px}
 .btn{display:block;width:100%;border:0;border-radius:14px;padding:18px;font:900 17px var(--sign);text-transform:uppercase;letter-spacing:.03em;cursor:pointer;text-align:center;text-decoration:none}
@@ -133,6 +138,9 @@ footer p{margin:0 0 8px}
       <input class="hp" name="company_website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <label class="f"><span>Your name</span><input type="text" name="name" autocomplete="name" required></label>
       <label class="f"><span>Phone</span><input type="tel" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 555-5555" required></label>
+      <div class="f"><span>When should we call?</span></div>
+      <div class="seg seg4" role="radiogroup" aria-label="When should we call?"><label><input type="radio" name="callback_window" value="asap" checked><span>ASAP</span></label><label><input type="radio" name="callback_window" value="morning"><span>Morning</span></label><label><input type="radio" name="callback_window" value="afternoon"><span>Afternoon</span></label><label><input type="radio" name="callback_window" value="evening"><span>Evening</span></label></div>
+      <label class="f"><span>What happened? (optional)</span><textarea name="note" rows="2" maxlength="500" placeholder="A few words is fine"></textarea></label>
       <label class="consent"><input type="checkbox" name="contact_consent"><span data-consent>I agree that CrashHelp TX and the attorneys or professionals it refers me to may contact me about this request by call or text at the number I entered, including by automated means. Consent is not required to get help; you can call us instead. Message and data rates may apply. Reply STOP to opt out.</span></label>
       <div class="err" role="alert"></div>
       <button class="btn red" type="submit">Call me back</button>
@@ -197,7 +205,9 @@ footer p{margin:0 0 8px}
       if (!res.ok) throw new Error(r.error || 'Something went wrong. Please call (346) 860-1929.');
       try { window.fbq && fbq('track', 'Lead', { content_name: payload.source }, { eventID: r.lead_id }); } catch (e) {}
       $('#doneRef').textContent = r.lead_id ? 'Reference ' + r.lead_id : '';
-      $('#doneMsg').textContent = payload.preferred_contact === 'text'
+      $('#doneMsg').textContent = payload.callback_window && payload.callback_window !== 'asap'
+        ? `Got it. Someone will call you this ${payload.callback_window} (Houston time), or at the next available ${payload.callback_window}.`
+        : payload.preferred_contact === 'text'
         ? 'Someone will review your request and reach out as soon as possible.'
         : 'Keep your phone nearby. Someone will call you as soon as possible.';
       show('done');
@@ -218,7 +228,9 @@ footer p{margin:0 0 8px}
     if (!d.name.trim()) return (err.textContent = 'Enter your name.');
     if (!validPhone(d.phone)) return (err.textContent = 'Enter a 10-digit phone number.');
     const consent = f.contact_consent.checked;
-    send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: 'call', contact_consent: consent, consent_text: consent ? consentText : '', source: 'express-callback', callback_requested: true, description: 'Express Connect: callback requested' }, $('button[type=submit]', f), err);
+    const win = { asap: 'as soon as possible', morning: 'morning', afternoon: 'afternoon', evening: 'evening' }[d.callback_window] || 'as soon as possible';
+    send({ name: d.name.trim(), phone: d.phone, company_website: d.company_website, preferred_contact: 'call', contact_consent: consent, consent_text: consent ? consentText : '', source: 'express-callback', callback_requested: true, callback_window: d.callback_window || 'asap',
+      description: `Express Connect: callback requested (${win})` + (d.note && d.note.trim() ? ` · ${d.note.trim().slice(0, 500)}` : '') }, $('button[type=submit]', f), err);
   });
 
   // QUIZ
@@ -244,6 +256,7 @@ footer p{margin:0 0 8px}
     const hurtish = answers.hurt && answers.hurt.value !== 'no';
     body.innerHTML = `<div class="qcount">Last step</div><p class="qtext">Where can we reach you?</p>
       <div class="note">${hurtish ? 'Thanks. A free review can help you understand your options and next steps.' : 'Thanks. Even without injuries, you can still ask questions about your options.'} Every situation is different, and no result is promised.</div>
+      ${hurtish && answers.doctor && answers.doctor.value !== 'yes' ? '<div class="sos" role="note"><b>If you have severe pain, trouble breathing, a head injury, or you feel worse, call 911 or go to an emergency room now.</b> This form is not for emergencies.</div>' : ''}
       <form id="qzForm" novalidate>
         <input class="hp" name="company_website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <label class="f"><span>Your name</span><input type="text" name="name" autocomplete="name" required></label>
