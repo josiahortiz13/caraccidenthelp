@@ -22,6 +22,19 @@ module.exports = async (req, res) => {
       }
     }
   }
+  // Ops: one test notification to the configured lead-alert recipients (no lead data). POST + CRON_SECRET bearer.
+  if (req.query && req.query.test_email) {
+    const auth = String(req.headers.authorization || '');
+    const want = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
+    const crypto = require('crypto');
+    const ok = req.method === 'POST' && want && auth.length === want.length && crypto.timingSafeEqual(Buffer.from(auth), Buffer.from(want));
+    if (!ok) { res.statusCode = 401; res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ error: 'unauthorized' })); }
+    const settings = await require('../lib/store').getSettings();
+    const to = [settings.primary_email, settings.backup_email].filter(Boolean);
+    const r = to.length ? await require('../lib/email').send({ to: to.join(', '), subject: '✅ CrashHelp TX test notification', purpose: 'system_test',
+      text: 'This is a test of CrashHelp TX lead notifications. No lead or personal information is included.\n\nNew leads from crashhelptx.com will arrive at this address. If you received this, notifications are working.' }) : { ok: false, error: 'no_recipient' };
+    out.test_email = { recipients: to, ok: r.ok, accepted: r.accepted, rejected: r.rejected, smtp: r.smtp, error: r.error ? String(r.error).slice(0, 120) : undefined };
+  }
   // Ops check for one lead: did it save once, is it in the dashboard, which notifications went out.
   // Needs the CRON_SECRET bearer token. Returns IDs, flags, counts and timestamps only — no names, numbers or form data.
   if (req.query && req.query.lead) {
