@@ -311,6 +311,21 @@ nav{
 .stat-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,60px);color:var(--red);line-height:1}
 .stat-label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-top:4px}
 
+/* VIDEO */
+.video-section{position:relative;z-index:1;padding:80px 24px;border-top:1px solid var(--border);text-align:center}
+.vid-wrap{width:100%;max-width:960px;margin:32px auto 0;border-radius:16px;overflow:hidden;border:1px solid var(--red-border);background:#000}
+.vid-wrap video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.video-section .sec-sub{margin-bottom:0}
+.vid-desc{font-size:13px;color:var(--muted);max-width:620px;margin:14px auto 0}
+.vid-cta{display:flex;flex-direction:column;gap:12px;max-width:440px;margin:24px auto 0}
+.vid-cta .btn-scroll{display:block;text-decoration:none;text-align:center}
+.vid-fine{font-size:12px;color:var(--muted);margin-top:14px}
+@media(max-width:680px){
+  .video-section{padding:60px 16px}
+  .vid-wrap{max-width:min(420px,calc(78svh * 9 / 16))}
+  .vid-wrap.portrait video{aspect-ratio:9/16}
+}
+
 /* WHY SECTION */
 .section{position:relative;z-index:1;padding:88px 24px;border-top:1px solid var(--border)}
 .sec-label{text-align:center;font-size:11px;font-weight:700;letter-spacing:3px;color:var(--red);text-transform:uppercase;margin-bottom:8px}
@@ -710,6 +725,48 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
     <div class="stat-item fade-up"><div class="stat-num" data-static="ES">ES</div><div class="stat-label">Se Habla Español</div></div>
   </div>
 </div>
+
+<!-- VIDEO -->
+<section class="video-section" id="video" aria-labelledby="video-title">
+  <p class="sec-label">Watch · 15 seconds</p>
+  <h2 class="sec-title" id="video-title">A crash changes<br/>everything.</h2>
+  <p class="sec-sub">Know your next steps.</p>
+  <div class="vid-wrap" id="vid-wrap">
+    <video id="chx-video" controls playsinline preload="metadata" poster="/media/crashhelp-15s-wide.jpg" aria-describedby="video-desc">
+      <source src="/media/crashhelp-15s-wide.mp4" type="video/mp4"/>
+      <source src="/media/crashhelp-15s-wide.webm" type="video/webm"/>
+    </video>
+  </div>
+  <p class="vid-desc" id="video-desc">In-car footage of a crash, followed by the CrashHelp TX end card: "Just crashed? Start here." On-screen text only, no spoken words.</p>
+  <div class="vid-cta">
+    <a href="/connect" class="btn-call" data-vcta="connect">Just crashed? Start here →</a>
+    <a href="/houston-car-accident-checklist" class="btn-scroll" data-vcta="checklist">Read the after-a-crash checklist</a>
+  </div>
+  <p class="vid-fine">CrashHelp TX is a referral service, not a law firm. No outcome is promised.</p>
+</section>
+<script>
+(function () {
+  var v = document.getElementById('chx-video'), wrap = document.getElementById('vid-wrap');
+  if (!v) return;
+  // Phones get the vertical cut; everything else gets the wide one. Chosen once, before anything loads.
+  if (window.matchMedia && matchMedia('(max-width: 680px)').matches) {
+    wrap.classList.add('portrait');
+    v.setAttribute('poster', '/media/crashhelp-15s-vertical.jpg');
+    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-wide.', '-vertical.')); });
+    v.load();
+  }
+  var sent = {};
+  function ev(name) {
+    if (sent[name]) return; sent[name] = 1;
+    var d = { video: 'crashhelp-15s', format: wrap.classList.contains('portrait') ? 'vertical' : 'wide' };
+    try { window.gtag && gtag('event', name, d); } catch (e) {}
+    try { window.fbq && fbq('trackCustom', name, d); } catch (e) {}
+  }
+  v.addEventListener('play', function () { ev('video_play'); });
+  v.addEventListener('ended', function () { ev('video_complete'); });
+  document.querySelectorAll('[data-vcta]').forEach(function (a) { a.addEventListener('click', function () { ev('video_cta_' + a.dataset.vcta); }); });
+})();
+</script>
 
 <!-- WHY SECTION -->
 <section class="section">
