@@ -100,3 +100,15 @@ Brand is already approved. Register the campaign on a Messaging Service that hol
 **Reviewers open the consent URL and privacy policy.** /connect and the updated privacy/terms (SMS section) must be live on www.crashhelptx.com before the campaign is submitted.
 
 **After approval:** set CONSUMER_SMS_ENABLED=true (only after the owner says go).
+
+## Texting on the business number (346) 860-1929 — checked 2026-10-20 (read-only)
+
+- The number is **not** on this Twilio account or any subaccount. Its calls run through another provider, so Twilio cannot send or receive texts on it. Nothing here changes its voice service.
+- Twilio's Hosted SMS API (adds texting to a number while voice stays put) is not enabled on this account (`/v2/HostedNumber/Orders` not found). It is a Developer Preview that needs early access, and it only works for landline or toll-free numbers that don't already text through another provider.
+- The Twilio texting number (ends 5398) is in a Messaging Service with **no A2P campaign**. All 34 outbound texts in the last 14 days were blocked by carriers (error 30034).
+
+Options, none of which touch the business number's calls:
+1. **Recommended:** register the A2P campaign on the existing Messaging Service and text from the 5398 number. Keep 860-1929 for calls.
+2. Request Twilio Hosted SMS early access for 860-1929 (only if it is a landline/VoIP line that doesn't text today), sign the LOA, then register it in the same campaign.
+3. Ask the current provider of 860-1929 whether it offers registered business texting there.
+Porting 860-1929 to Twilio would move its calls and is **not** recommended without your explicit approval.
