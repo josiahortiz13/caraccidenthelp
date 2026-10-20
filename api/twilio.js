@@ -17,7 +17,22 @@ const { sendXml, xmlEscape, normalizePhone, baseUrl, twilioUrl, fill } = require
 
 const STOP_WORDS = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'REVOKE', 'OPTOUT'];
 const START_WORDS = ['START', 'UNSTOP', 'YES'];
-const KEYWORDS = ['CRASH', 'HELP', 'START'];
+const KEYWORDS = ['CRASH', 'QUIZ', 'START'];
+const HELP_WORDS = ['HELP', 'INFO'];
+const SMS_OPT_IN = 'CrashHelp TX: answer 5 quick questions about your Texas crash and we will contact you by call or text about it. Reply YES to start. Msg & data rates may apply. Msg frequency varies. Reply STOP to opt out, HELP for help.';
+const pick = (word, map) => { for (const [k, v] of map) if (word === k || word.startsWith(k)) return v; return null; };
+const SMS_QUIZ = [
+  { step: 'q_when', key: 'when', label: 'When', ask: 'When did the crash happen? Reply 1 = Today, 2 = Last few days, 3 = Within a month, 4 = Longer ago',
+    parse: (b, w) => ({ 1: 'Today', 2: 'In the last few days', 3: 'Within the last month', 4: 'More than a month ago' })[b.trim()[0]] || pick(w, [['TODAY', 'Today'], ['YESTERDAY', 'In the last few days']]) },
+  { step: 'q_hurt', key: 'injured', label: 'Hurt', ask: 'Were you hurt? Reply YES, NO, or NOT SURE',
+    parse: (b, w) => pick(w, [['NOTSURE', 'unsure'], ['UNSURE', 'unsure'], ['MAYBE', 'unsure'], ['YES', 'yes'], ['Y', 'yes'], ['NO', 'no'], ['N', 'no']]) },
+  { step: 'q_doctor', key: 'medical_care', label: 'Doctor', ask: 'Have you seen a doctor? Reply YES, NOT YET, or NO',
+    parse: (b, w) => pick(w, [['NOTYET', 'not_yet'], ['YES', 'yes'], ['Y', 'yes'], ['NO', 'no'], ['N', 'no']]) },
+  { step: 'q_city', key: 'crash_city', label: 'City', ask: 'What city in Texas did it happen in?',
+    parse: (b) => (b.trim() ? b.trim().slice(0, 60) : null) },
+  { step: 'q_contact', key: 'preferred_contact', label: 'Prefers', ask: 'Last one: how should we reach you? Reply CALL or TEXT',
+    parse: (b, w) => pick(w, [['CALL', 'call'], ['TEXT', 'text'], ['EMAIL', 'call']]) },
+];
 const VOICE = 'Polly.Joanna';
 
 const twiml = (inner) => `<?xml version="1.0" encoding="UTF-8"?><Response>${inner}</Response>`;
@@ -26,7 +41,7 @@ const empty = () => twiml('');
 const url = (q) => xmlEscape(twilioUrl(q));
 
 function landingUrl() {
-  return process.env.LANDING_PAGE_URL || `${baseUrl()}/start`;
+  return process.env.LANDING_PAGE_URL || `${baseUrl()}/connect`;
 }
 
 async function leadById(id) {
@@ -89,50 +104,62 @@ async function handleSms(req, res) {
   const step = session?.step;
   const data = session?.data || {};
 
+  // HELP: carrier-required help reply (never starts a conversation).
+  if (HELP_WORDS.includes(word)) {
+    return reply(res, from, `CrashHelp TX: help after a Texas crash. Call (346) 860-1929 or visit ${landingUrl()}. Msg & data rates may apply. Reply STOP to opt out.`, lead?.lead_id);
+  }
+
   if (KEYWORDS.includes(word) && !(step === 'awaiting_yes' && word === 'START')) {
     await setSession(from, 'awaiting_yes', { origin: 'keyword', keyword: word });
-    return reply(res, from, 'CrashHelp TX here. If you were recently involved in a crash and want us to contact you, reply YES.', lead?.lead_id);
+    return reply(res, from, SMS_OPT_IN, lead?.lead_id);
   }
 
   if (step === 'awaiting_yes') {
     if (word === 'YES' || word === 'Y') {
-      await setSession(from, 'ask_name', { ...data, consent_at: new Date().toISOString(), consent_text: 'Replied YES to: "If you were recently involved in a crash and want us to contact you, reply YES."' });
+      await setSession(from, 'ask_name', { ...data, consent_at: new Date().toISOString(), consent_text: `Replied YES to: "${SMS_OPT_IN}"` });
       return reply(res, from, 'Thanks. What is your first name?', lead?.lead_id);
     }
     await db.query('DELETE FROM sms_sessions WHERE phone = $1', [from]);
     return sendXml(res, empty());
   }
+
+  // Text quiz: the same 5 questions as the web quiz, one per message.
+  const Q = SMS_QUIZ;
+  const at = Q.findIndex((q) => q.step === step);
   if (step === 'ask_name') {
     const first = body.replace(/[^A-Za-zÀ-ÿ' -]/g, '').trim().split(/\s+/)[0]?.slice(0, 40) || '';
     if (!first) return reply(res, from, 'Sorry, what is your first name?', lead?.lead_id);
-    await setSession(from, 'ask_city', { ...data, first_name: first });
-    return reply(res, from, `Thanks ${first}. What city did the crash happen in?`, lead?.lead_id);
+    await setSession(from, Q[0].step, { ...data, first_name: first });
+    return reply(res, from, `Thanks ${first}. ${Q[0].ask}`, lead?.lead_id);
   }
-  if (step === 'ask_city') {
-    await setSession(from, 'ask_contact', { ...data, crash_city: body.slice(0, 60) });
-    return reply(res, from, 'How should we reach you? Reply CALL, TEXT, or EMAIL.', lead?.lead_id);
-  }
-  if (step === 'ask_contact') {
-    const pref = ['CALL', 'TEXT', 'EMAIL'].find((w) => word.startsWith(w));
-    if (!pref) return reply(res, from, 'Please reply CALL, TEXT, or EMAIL.', lead?.lead_id);
+  if (at >= 0) {
+    const q = Q[at];
+    const val = q.parse(body, word);
+    if (val === null) return reply(res, from, q.retry || q.ask, lead?.lead_id);
+    const next = { ...data, [q.key]: val };
+    if (at + 1 < Q.length) {
+      await setSession(from, Q[at + 1].step, next);
+      return reply(res, from, Q[at + 1].ask, lead?.lead_id);
+    }
     await db.query('DELETE FROM sms_sessions WHERE phone = $1', [from]);
+    const summary = 'Text quiz · ' + Q.filter((x) => x.label).map((x) => `${x.label}: ${x.show ? x.show(next[x.key]) : next[x.key]}`).join(' · ');
+    const fields = { first_name: next.first_name, crash_city: next.crash_city, preferred_contact: next.preferred_contact, injured: next.injured, medical_care: next.medical_care, description: summary };
     // Promote a missed-call record to a real lead, or create one.
     const pending = lead && lead.lead_status === 'PENDING CONSENT' ? lead : null;
     if (pending) {
       await db.query(
-        `UPDATE leads SET first_name = $2, crash_city = $3, preferred_contact = $4, contact_consent = true, consent_text = $5, lead_status = 'NEW', updated_at = now() WHERE lead_id = $1`,
-        [pending.lead_id, data.first_name, data.crash_city, pref.toLowerCase(), data.consent_text]
+        `UPDATE leads SET first_name = $2, crash_city = $3, preferred_contact = $4, contact_consent = true, consent_text = $5, lead_status = 'NEW',
+           injury_status = $6, medical_status = $7, description = $8, updated_at = now() WHERE lead_id = $1`,
+        [pending.lead_id, fields.first_name, fields.crash_city, fields.preferred_contact, next.consent_text, fields.injured, fields.medical_care, summary]
       );
       await store.event(pending.lead_id, 'consent_received', { via: 'sms_yes' });
       const settings = await store.getSettings();
       const fresh = await leadById(pending.lead_id);
-      await tw.sendSms({ to: from, body: fill(leads.CONSUMER_CONFIRMATION, { first_name: data.first_name }), leadId: pending.lead_id, kind: 'consumer', purpose: 'lead_confirmation' });
+      await tw.sendSms({ to: from, body: fill(leads.CONSUMER_CONFIRMATION, { first_name: fields.first_name }), leadId: pending.lead_id, kind: 'consumer', purpose: 'lead_confirmation' });
       await leads.alertNewLead(fresh, settings);
+      await require('../lib/crm').sync(pending.lead_id, 'consent_received');
     } else {
-      await leads.intake({
-        first_name: data.first_name, crash_city: data.crash_city, phone: from, preferred_contact: pref.toLowerCase(),
-        contact_consent: true, consent_text: data.consent_text, source: 'sms_keyword', utm_source: 'sms', keyword: data.keyword || null,
-      }, { actor: 'sms' });
+      await leads.intake({ ...fields, injury_status: fields.injured, medical_status: fields.medical_care, phone: from, contact_consent: true, consent_text: next.consent_text, source: 'sms-quiz', utm_source: 'sms', keyword: data.keyword || null }, { actor: 'sms' });
     }
     return sendXml(res, empty());
   }

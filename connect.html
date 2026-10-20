@@ -192,7 +192,7 @@ footer p{margin:0 0 8px}
   async function send(payload, btn, errEl) {
     errEl.textContent = ''; const label = btn.textContent; btn.disabled = true; btn.textContent = 'Sending…';
     try {
-      const res = await fetch('/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch('/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ city: payload.crash_city || '', desc: payload.description || '' }, payload)) });
       const r = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(r.error || 'Something went wrong. Please call (346) 860-1929.');
       try { window.fbq && fbq('track', 'Lead', { content_name: payload.source }, { eventID: r.lead_id }); } catch (e) {}

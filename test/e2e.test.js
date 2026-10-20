@@ -138,7 +138,7 @@ test('4. missed call → caller texted back → PENDING CONSENT → replies YES 
   const d = await h.twilioPost(base, 'r=dial-status', { CallSid: 'CAin1', From: TESTER, DialCallStatus: 'no-answer' });
   assert.match(d.text, /We just sent you a text/);
   const tb = smsTo(TESTER)[0].body;
-  assert.equal(tb, 'Hi, you reached CrashHelp TX. We missed your call. If you were recently involved in a crash and want help organizing your next steps, reply YES or start here: https://www.crashhelptx.com/start');
+  assert.equal(tb, 'Hi, you reached CrashHelp TX. We missed your call. If you were recently involved in a crash and want help organizing your next steps, reply YES or start here: https://www.crashhelptx.com/connect');
   assert.match(smsTo(OWNER)[0].body, /📵 MISSED CALL/);
   const pending = await db.one(`SELECT * FROM leads WHERE phone = $1`, [TESTER]);
   assert.equal(pending.lead_status, 'PENDING CONSENT'); assert.equal(pending.contact_consent, false); assert.equal(pending.marketing_consent, false);
@@ -146,13 +146,12 @@ test('4. missed call → caller texted back → PENDING CONSENT → replies YES 
   reset();
   await h.twilioPost(base, 'r=sms', { MessageSid: 'SMin1', From: TESTER, To: '+13468601929', Body: 'yes' });
   assert.equal(smsTo(TESTER).at(-1).body, 'Thanks. What is your first name?');
-  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMin2', From: TESTER, To: '+13468601929', Body: 'Andre' });
-  assert.match(smsTo(TESTER).at(-1).body, /What city/);
-  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMin3', From: TESTER, To: '+13468601929', Body: 'Pasadena' });
-  assert.match(smsTo(TESTER).at(-1).body, /CALL, TEXT, or EMAIL/);
-  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMin4', From: TESTER, To: '+13468601929', Body: 'Call' });
+  const steps = [['Andre', /When did the crash happen/], ['2', /Were you hurt/], ['maybe', /seen a doctor/], ['not yet', /What city/], ['Pasadena', /CALL or TEXT/]];
+  for (const [i, [b, next]] of steps.entries()) { await h.twilioPost(base, 'r=sms', { MessageSid: 'SMin' + (i + 2), From: TESTER, To: '+13468601929', Body: b }); assert.match(smsTo(TESTER).at(-1).body, next); }
+  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMin9', From: TESTER, To: '+13468601929', Body: 'Call' });
   const l = await lead(pending.lead_id);
   assert.equal(l.lead_status, 'NEW'); assert.equal(l.contact_consent, true); assert.equal(l.first_name, 'Andre'); assert.equal(l.crash_city, 'Pasadena');
+  assert.equal(l.injury_status, 'unsure'); assert.equal(l.medical_status, 'not_yet'); assert.match(l.description, /When: In the last few days/);
   assert.match(smsTo(TESTER).at(-1).body, /^Hi Andre, this is CrashHelp TX\. We received your request/);
   assert.match(smsTo(OWNER).at(-1).body, /NEW CRASHHELP TX LEAD/);
   assert.equal(callsTo(OWNER).length, 1, 'owner phone rings for call request');
@@ -160,11 +159,15 @@ test('4. missed call → caller texted back → PENDING CONSENT → replies YES 
 
 test('5. keyword CRASH from a new number → short consent flow → lead created', async () => {
   await h.twilioPost(base, 'r=sms', { MessageSid: 'SMk1', From: TESTER, To: '+13468601929', Body: 'Crash' });
-  assert.equal(smsTo(TESTER)[0].body, 'CrashHelp TX here. If you were recently involved in a crash and want us to contact you, reply YES.');
+  const optin = smsTo(TESTER)[0].body;
+  assert.match(optin, /^CrashHelp TX: answer 5 quick questions/); assert.match(optin, /Reply YES/); assert.match(optin, /Msg & data rates may apply/); assert.match(optin, /STOP to opt out, HELP for help/);
   assert.equal(await db.one('SELECT 1 FROM leads WHERE phone = $1', [TESTER]), null, 'no lead before consent');
-  for (const [i, b] of ['YES', 'Keisha', 'Baytown', 'text'].entries()) await h.twilioPost(base, 'r=sms', { MessageSid: 'SMk' + (i + 2), From: TESTER, To: '+13468601929', Body: b });
+  // a bad answer gets the question again, nothing saved yet
+  for (const [i, b] of ['YES', 'Keisha', '1', 'banana'].entries()) await h.twilioPost(base, 'r=sms', { MessageSid: 'SMk' + (i + 2), From: TESTER, To: '+13468601929', Body: b });
+  assert.match(smsTo(TESTER).at(-1).body, /Were you hurt\? Reply YES, NO, or NOT SURE/);
+  for (const [i, b] of ['yes', 'yes', 'Baytown', 'text'].entries()) await h.twilioPost(base, 'r=sms', { MessageSid: 'SMk' + (i + 10), From: TESTER, To: '+13468601929', Body: b });
   const l = await db.one('SELECT * FROM leads WHERE phone = $1', [TESTER]);
-  assert.equal(l.source, 'sms_keyword'); assert.equal(l.preferred_contact, 'text'); assert.equal(l.contact_consent, true); assert.match(l.consent_text, /reply YES/);
+  assert.equal(l.source, 'sms-quiz'); assert.equal(l.injury_status, 'yes'); assert.equal(l.medical_status, 'yes'); assert.equal(l.crash_city, 'Baytown'); assert.match(l.description, /When: Today/); assert.equal(l.preferred_contact, 'text'); assert.equal(l.contact_consent, true); assert.match(l.consent_text, /Reply YES to start/);
   assert.equal(callsTo(OWNER).length, 0, 'no voice alert when they prefer text (setting: call requests only)');
 });
 
@@ -608,6 +611,11 @@ test('33. Express Connect: callback and quiz requests save first with source, an
   const l2 = await lead(qz.json.lead_id);
   assert.equal(l2.source, 'express-quiz'); assert.equal(l2.injury_status, 'yes'); assert.equal(l2.medical_status, 'not_yet'); assert.equal(l2.crash_city, 'Houston');
   assert.match(l2.description, /Were you hurt\? Yes/); assert.equal(l2.contact_consent, true);
+  const up = h.crmFake.calls.filter((c) => c.url.endsWith('/contacts/upsert')).map((c) => c.body.tags);
+  assert.ok(up.some((t) => t.includes('express-quiz')), 'HighLevel contact tagged express-quiz');
+  assert.ok(up.some((t) => t.includes('express-callback')), 'HighLevel contact tagged express-callback');
+  const note = h.crmFake.calls.find((c) => /\/notes$/.test(c.url) && /Were you hurt\? Yes/.test(c.body.body || ''));
+  assert.ok(note, 'quiz answers in the HighLevel note');
   const page = await (await fetch(base + '/connect')).text();
   assert.match(page, /Call now/); assert.match(page, /Request a callback/); assert.match(page, /Quick accident quiz/); assert.match(page, /no outcome is promised/i);
 });
@@ -620,5 +628,21 @@ test('34. Consumer texting switch OFF: no texts to leads even with consent, owne
     assert.equal(smsTo('+18325550199').length, 0, 'no consumer text');
     assert.ok(smsTo(OWNER).length >= 1, 'owner still alerted');
     assert.ok((await events(r.json.lead_id)).some((e) => e.type === 'sms_blocked' && e.detail.reason === 'consumer_texting_off'));
+  } finally { process.env.CONSUMER_SMS_ENABLED = 'true'; }
+});
+
+test('35. HELP gets the carrier help reply and never starts the quiz', async () => {
+  await h.twilioPost(base, 'r=sms', { MessageSid: 'SMh1', From: TESTER, To: '+13468601929', Body: 'HELP' });
+  assert.match(smsTo(TESTER)[0].body, /^CrashHelp TX: help after a Texas crash\. Call \(346\) 860-1929/); assert.match(smsTo(TESTER)[0].body, /Reply STOP to opt out/);
+  assert.equal(await db.one('SELECT 1 FROM sms_sessions WHERE phone = $1', [TESTER]), null);
+});
+
+test('36. Texting OFF: the text quiz sends nothing to the person and creates no lead', async () => {
+  process.env.CONSUMER_SMS_ENABLED = 'false';
+  try {
+    await h.twilioPost(base, 'r=sms', { MessageSid: 'SMoff1', From: TESTER, To: '+13468601929', Body: 'CRASH' });
+    assert.equal(smsTo(TESTER).length, 0, 'no reply text while texting is off');
+    const m = await db.one(`SELECT status, error FROM messages WHERE to_number = $1 AND purpose = 'sms_flow_reply' ORDER BY created_at DESC LIMIT 1`, [TESTER]);
+    assert.equal(m.status, 'blocked'); assert.equal(m.error, 'consumer_texting_off');
   } finally { process.env.CONSUMER_SMS_ENABLED = 'true'; }
 });

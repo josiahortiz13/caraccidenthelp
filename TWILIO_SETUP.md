@@ -80,3 +80,23 @@ Set `TWILIO_TEST_MODE=false` in Vercel and redeploy. The dashboard badge flips f
 - **New lead who asked for a call:** Twilio rings the owner. Owner hears the lead's first name and city and presses 1. Twilio dials the lead from the CrashHelp number, so the owner's cell is never shown. If the owner doesn't answer, or voicemail picks up, the backup phone rings after the delay set in Settings (default 2 minutes).
 - **Inbound call:** rings owner and backup at once with a short "Incoming CrashHelp TX call" whisper. If nobody answers in 20 seconds, the caller hears a short message, gets one text-back, and shows up on the dashboard as PENDING CONSENT.
 - **One-tap call from the dashboard:** Twilio rings your phone (set it under Settings → Agent phones), then connects you to the lead from the CrashHelp number.
+
+
+## A2P 10DLC campaign: exact values to paste (prepared 2026-10-19)
+Brand is already approved. Register the campaign on a Messaging Service that holds +1 346-680-5398.
+
+- **Use case:** Customer Care
+- **Campaign description:** CrashHelp TX helps people involved in Texas car crashes request help. People who submit our website form (with the consent checkbox) or text a keyword to our number and reply YES receive a confirmation of their request, a short set of questions about their crash, and follow-up messages about that request. Messages are only sent to people who asked to be contacted. We do not send marketing to purchased lists or public records.
+- **Sample message 1:** Hi Maria, this is CrashHelp TX. We received your request and someone will follow up shortly. Reply STOP to opt out.
+- **Sample message 2:** CrashHelp TX: answer 5 quick questions about your Texas crash and we will contact you by call or text about it. Reply YES to start. Msg & data rates may apply. Msg frequency varies. Reply STOP to opt out, HELP for help.
+- **Sample message 3:** Thanks Maria. When did the crash happen? Reply 1 = Today, 2 = Last few days, 3 = Within a month, 4 = Longer ago
+- **How do end-users consent:** Web form at https://www.crashhelptx.com/connect: the person enters their name and phone and checks an unchecked-by-default box reading "I agree that CrashHelp TX and the attorneys or professionals it refers me to may contact me about this request by call or text at the number I entered, including by automated means. Consent is not required to get help; you can call us instead. Message and data rates may apply. Reply STOP to opt out." Or by text: the person texts CRASH or QUIZ to +1 346-680-5398, receives the opt-in message above, and replies YES. Privacy policy: https://www.crashhelptx.com/privacy · Terms: https://www.crashhelptx.com/terms
+- **Opt-in keywords:** YES, CRASH, QUIZ, START · **Opt-out keywords:** STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT · **Help keywords:** HELP, INFO
+- **Opt-in message:** (sample message 2)
+- **Opt-out message:** You have successfully been unsubscribed from CrashHelp TX. You will not receive any more messages from this number. Reply START to resubscribe.
+- **Help message:** CrashHelp TX: help after a Texas crash. Call (346) 860-1929 or visit https://www.crashhelptx.com/connect. Msg & data rates may apply. Reply STOP to opt out.
+- **Embedded links:** Yes · **Embedded phone numbers:** Yes · **Age-gated content:** No · **Direct lending:** No · **Affiliate marketing:** No
+
+**Reviewers open the consent URL and privacy policy.** /connect and the updated privacy/terms (SMS section) must be live on www.crashhelptx.com before the campaign is submitted.
+
+**After approval:** set CONSUMER_SMS_ENABLED=true (only after the owner says go).
