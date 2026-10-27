@@ -27,7 +27,7 @@ async function listLeads(q) {
     if (q.status) { params.push(q.status); where += ` AND lead_status = $${params.length}`; }
   }
   if (q.view === 'urgent') where += ` AND lead_priority = 'URGENT'`;
-  if (q.view === 'quiz') where += ` AND source IN ('express-quiz', 'sms-quiz')`;
+  if (q.view === 'quiz') where += ` AND source IN ('express-quiz', 'quiz-funnel', 'quiz-funnel-es', 'sms-quiz')`;
   if (q.view === 'qualified') where += ` AND lead_status IN ('QUALIFIED', 'APPOINTMENT SET', 'REFERRED')`;
   if (q.view === 'callbacks') where += ' AND callback_requested = true';
   if (q.view === 'missed') where += ` AND source = 'inbound_call' AND (lead_status = 'PENDING CONSENT' OR first_contact_at IS NULL)`;
@@ -130,7 +130,7 @@ async function monthlyReport(m) {
       count(*) FILTER (WHERE callback_requested)::int AS callbacks_requested,
       count(*) FILTER (WHERE callback_requested AND first_contact_at IS NOT NULL)::int AS callbacks_completed,
       count(*) FILTER (WHERE source = 'inbound_call')::int AS inbound_calls,
-      count(*) FILTER (WHERE source IN ('express-quiz','sms-quiz'))::int AS quiz,
+      count(*) FILTER (WHERE source IN ('express-quiz','quiz-funnel','quiz-funnel-es','sms-quiz'))::int AS quiz,
       round(avg(EXTRACT(EPOCH FROM (first_response_at - created_at))) FILTER (WHERE source <> 'inbound_call'))::int AS avg_response_sec,
       round(avg(EXTRACT(EPOCH FROM (first_contact_at - created_at))) FILTER (WHERE callback_requested))::int AS avg_callback_sec
     ${base}`, range);

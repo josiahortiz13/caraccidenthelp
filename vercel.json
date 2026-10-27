@@ -89,6 +89,18 @@
       "destination": "/start.html"
     },
     {
+      "source": "/es/quiz",
+      "destination": "/quiz.html"
+    },
+    {
+      "source": "/quiz.html",
+      "destination": "/quiz.html"
+    },
+    {
+      "source": "/quiz",
+      "destination": "/quiz.html"
+    },
+    {
       "source": "/connect",
       "destination": "/connect.html"
     },

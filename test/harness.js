@@ -53,6 +53,7 @@ function start(port = 0) {
       const u = new URL(req.url, 'http://localhost');
       if (u.pathname === '/admin') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'admin.html'))); }
       if (u.pathname === '/connect') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'connect.html'))); }
+      if (u.pathname === '/quiz' || u.pathname === '/es/quiz') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'quiz.html'))); }
       if (u.pathname === '/start') { res.setHeader('Content-Type', 'text/html'); return res.end(fs.readFileSync(path.join(root, 'start.html'))); }
       const h = handlers[u.pathname];
       if (!h) {
