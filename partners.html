@@ -683,7 +683,7 @@ function handlePartnerSubmit(e){
     if(!r.ok) throw new Error();
     if(window.fbq) fbq('track','Lead');
     if(window.gtag) gtag('event','conversion',{send_to:'G-RGZP7959W8',value:1,currency:'USD'});
-    window.location.href = '/thank-you.html';
+    setTimeout(function(){ window.location.href = '/thank-you.html'; }, 900); // let the pixel/GA beacons finish before leaving
   }).catch(function(){
     btn.textContent = '⚠️ Error — Call (346) 860-1929';
     btn.disabled = false;

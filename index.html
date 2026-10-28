@@ -1011,7 +1011,7 @@ function submitLead(data, successEl, btn, btnOriginal){
     var id = j && j.lead_id;
     if(window.fbq) fbq('track', 'Lead', {content_name: data.source || 'form'}, id ? {eventID: id} : undefined);
     if(window.gtag) gtag('event','conversion',{send_to:'G-RGZP7959W8',value:1,currency:'USD',transaction_id:id||undefined});
-    window.location.href = '/thank-you.html';
+    setTimeout(function(){ window.location.href = '/thank-you.html'; }, 900); // let the pixel/GA beacons finish before leaving
   })
   .catch(function(){
     if(btn){ btn.textContent = '⚠️ Error — Try Calling Us'; btn.disabled = false; btn.style.background='#333'; }
