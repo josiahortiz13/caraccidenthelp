@@ -396,6 +396,13 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   font-size:15px;font-family:'Inter',sans-serif;
   outline:none;transition:border-color .2s;
 }
+.hero-mini-form select{color:#aaa;flex:1;min-width:180px;
+  flex:1;min-width:140px;padding:16px 20px;
+  border-radius:12px;border:1px solid #2a2a2a;
+  background:#161616;color:#fff;
+  font-size:15px;font-family:'Inter',sans-serif;
+  outline:none;transition:border-color .2s;
+}
 .hero-mini-form input:focus{border-color:var(--red)}
 .hero-mini-form input::placeholder{color:#555}
 .hero-mini-form .mini-submit{
@@ -528,6 +535,10 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
           <input type="text" id="h-name"  placeholder="Tu Nombre *" required/>
           <input type="tel"  id="h-phone" placeholder="Número de Teléfono *" required/>
         </div>
+        <div class="mini-row">
+          <select id="h-when" aria-label="¿Cuándo fue el choque?"><option value="">¿Cuándo fue el choque?</option><option value="today">Hoy</option><option value="days">Esta semana</option><option value="month">Este mes</option><option value="older">Hace más de un mes</option></select>
+          <select id="h-hurt" aria-label="¿Alguien resultó herido?"><option value="">¿Alguien resultó herido?</option><option value="yes">Sí</option><option value="no">No</option><option value="unsure">No estoy seguro</option></select>
+        </div>
         <button type="submit" class="mini-submit">🚀 Obtener Mi Revisión Gratis →</button>
         <div class="mini-or">o</div>
         <a href="tel:+13468601929" class="mini-call">📞 Llamar — (346) 860-1929</a>
@@ -636,6 +647,8 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
     <form class="lead-form" onsubmit="handleSubmit(event)">
       <input type="text"  id="f-name"  placeholder="Tu Nombre Completo *" required/>
       <input type="tel"   id="f-phone" placeholder="Número de Teléfono *" required/>
+      <select id="f-when" aria-label="¿Cuándo fue el choque?"><option value="">¿Cuándo fue el choque?</option><option value="today">Hoy</option><option value="days">Esta semana</option><option value="month">Este mes</option><option value="older">Hace más de un mes</option></select>
+      <select id="f-hurt" aria-label="¿Alguien resultó herido?"><option value="">¿Alguien resultó herido?</option><option value="yes">Sí</option><option value="no">No</option><option value="unsure">No estoy seguro</option></select>
       <button type="submit" class="submit-btn">📞 Obtener Mi Revisión de Caso Gratis →</button>
       <p class="form-note">Al enviar, aceptas ser contactado sobre tu caso. Este es un servicio de referencia — el envío no crea una relación abogado-cliente.</p>
       <div class="form-success" id="form-success">
@@ -747,7 +760,7 @@ function submitLead(data, successEl, btn, btnOriginal){
 function handleMiniSubmit(e){
   e.preventDefault();
   submitLead(
-    { name: document.getElementById('h-name').value, phone: document.getElementById('h-phone').value, source: 'hero-mini-es' },
+    { name: document.getElementById('h-name').value, phone: document.getElementById('h-phone').value, crash_recency: document.getElementById('h-when').value, injured: document.getElementById('h-hurt').value, source: 'hero-mini-es' },
     document.getElementById('mini-success'),
     e.target.querySelector('.mini-submit'),
     '🚀 Obtener Mi Revisión Gratis →'
@@ -760,6 +773,8 @@ function handleSubmit(e){
   submitLead({
     name:  document.getElementById('f-name').value,
     phone: document.getElementById('f-phone').value,
+    crash_recency: document.getElementById('f-when').value,
+    injured: document.getElementById('f-hurt').value,
     city:  'Texas (Español)',
     source:'main-form-es'
   },
@@ -767,7 +782,7 @@ function handleSubmit(e){
   e.target.querySelector('.submit-btn'),
   '📞 Obtener Mi Revisión de Caso Gratis →'
   );
-  e.target.querySelectorAll('input').forEach(function(i){ i.value=''; });
+  e.target.querySelectorAll('input,select').forEach(function(i){ i.value=''; });
 }
 
 /* EXIT-INTENT POPUP */
