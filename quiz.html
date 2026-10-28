@@ -226,7 +226,7 @@ footer p{margin:0 0 8px}
   const params = new URLSearchParams(location.search);
   let lang = (params.get('lang') || '').toLowerCase() === 'es' || /^\/es/.test(location.pathname) ? 'es' : 'en';
 
-  const track = (name, data) => { try { window.gtag && gtag('event', name, Object.assign({ lang }, data || {})); } catch (e) {} try { window.fbq && fbq('trackCustom', name, Object.assign({ lang }, data || {})); } catch (e) {} };
+  const track = (name, data) => { try { window.gtag && gtag('event', name, Object.assign({ lang }, data || {})); } catch (e) {} try { window.fbq && fbq('trackCustom', name, { lang }); } catch (e) {} /* no quiz answers (injury, crash timing) to Meta */ };
   document.querySelectorAll('a[href^="tel:"]').forEach((a) => a.addEventListener('click', () => track('call_click', { where: a.dataset.call || 'page' })));
 
   // ── Quiz state ───────────────────────────────────────────────────────────
