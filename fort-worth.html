@@ -956,5 +956,9 @@ document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe
 <style>
 @keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,68,.6)}50%{box-shadow:0 0 0 8px rgba(255,68,68,0)}}
 </style>
+<script>/* call-tap tracking: counts taps on the phone number as a Contact (no personal data) */
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="tel:"]');if(!a)return;
+try{window.fbq&&fbq('track','Contact',{content_name:'call_tap',page:location.pathname});}catch(x){}
+try{window.gtag&&gtag('event','call_tap',{page:location.pathname});}catch(x){}},true);</script>
 </body>
 </html>

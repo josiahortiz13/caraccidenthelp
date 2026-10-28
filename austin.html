@@ -836,5 +836,9 @@ var counterObs = new IntersectionObserver(function(entries){
 }, {threshold:0.4});
 document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe(el); });
 </script>
+<script>/* call-tap tracking: counts taps on the phone number as a Contact (no personal data) */
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="tel:"]');if(!a)return;
+try{window.fbq&&fbq('track','Contact',{content_name:'call_tap',page:location.pathname});}catch(x){}
+try{window.gtag&&gtag('event','call_tap',{page:location.pathname});}catch(x){}},true);</script>
 </body>
 </html>
