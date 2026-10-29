@@ -948,3 +948,20 @@ test('51. Funnel pages: homepage, /es and the 3 Houston road pages load the quiz
   for (const ev of ['QuizStart', 'QuizComplete', "'Lead'", 'CallClick']) assert.ok(js.includes(ev), ev);
   assert.ok(js.includes('I agree to receive calls and texts from CrashHelp TX about my inquiry. Msg & data rates may apply. Reply STOP to opt out.'));
 });
+
+test('52. Consent checkboxes are never pre-checked on any page (visitors must check them themselves)', async () => {
+  const fs = require('fs'), path = require('path');
+  const root = path.join(__dirname, '..');
+  const files = fs.readdirSync(root).filter((f) => f.endsWith('.html') && f !== 'admin.html').concat(fs.readdirSync(path.join(root, 'houston')).map((f) => 'houston/' + f), ['funnel.js']);
+  for (const f of files) {
+    const src = fs.readFileSync(path.join(root, f), 'utf8');
+    for (const tag of src.match(/<input[^>]*type=["']?checkbox[^>]*>/gi) || []) {
+      if (!/consent/i.test(tag)) continue;
+      // Allowed only: re-ticking a box the visitor already ticked before a re-render (language switch / back).
+      const stripped = tag.replace(/\$\{\s*consentWas\s*\?\s*'checked'\s*:\s*''\s*\}/, '').replace(/'\s*\+\s*\(form\.consent \? ' checked' : ''\)\s*\+\s*'/, '');
+      assert.ok(!/\bchecked\b/i.test(stripped), `${f}: consent box must not be pre-checked: ${tag}`);
+    }
+  }
+  const js = fs.readFileSync(path.join(root, 'funnel.js'), 'utf8');
+  assert.match(js, /consent: f\.contact_consent\.checked/, 'funnel only remembers the visitor\'s own tick');
+});
