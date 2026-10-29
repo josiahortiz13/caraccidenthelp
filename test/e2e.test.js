@@ -588,9 +588,9 @@ test('30. browser retry queue: attribution.js keeps a failed lead and resends it
   assert.equal(store.chx_pending_leads, undefined, 'queue cleared after successful resend');
 });
 
-test('31. health ?db=1 reports connection and all 12 tables', async () => {
+test('31. health ?db=1 reports connection and all 16 tables', async () => {
   const r = await (await fetch(base + '/api/health?db=1')).json();
-  assert.equal(r.db.state, 'CONNECTED'); assert.equal(r.db.tables, 12); assert.deepEqual(r.db.missing, []);
+  assert.equal(r.db.state, 'CONNECTED'); assert.equal(r.db.tables, 16); assert.deepEqual(r.db.missing, []);
 });
 
 test('32. QA Bot login works on Preview and is refused in Production', async () => {

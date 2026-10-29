@@ -174,3 +174,84 @@ CREATE TABLE IF NOT EXISTS ledger (
   created_by  TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Accident report uploads ("Your Crash Report, Explained"). Personal data lives here only until
+-- delete_after (30 days, or 180 days once the person asks for an attorney review); then files are
+-- removed from storage and the row keeps only ids and timestamps.
+CREATE TABLE IF NOT EXISTS report_cases (
+  case_id             TEXT PRIMARY KEY,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  token_hash          TEXT NOT NULL,             -- sha256 of the visitor's private link token
+  lang                TEXT NOT NULL DEFAULT 'en',
+  status              TEXT NOT NULL DEFAULT 'OPEN', -- OPEN | ANALYZING | READY | FAILED | DELETED
+  consent_text        TEXT NOT NULL,
+  consent_at          TIMESTAMPTZ NOT NULL,
+  ip_hash             TEXT,
+  description         TEXT,
+  analysis            JSONB,
+  analysis_model      TEXT,
+  analysis_at         TIMESTAMPTZ,
+  analysis_error      TEXT,
+  review_requested_at TIMESTAMPTZ,
+  review_consent_text TEXT,
+  lead_id             TEXT,
+  delete_after        TIMESTAMPTZ NOT NULL,
+  deleted_at          TIMESTAMPTZ,
+  deleted_by          TEXT
+);
+CREATE INDEX IF NOT EXISTS report_cases_purge_idx ON report_cases (delete_after) WHERE deleted_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS report_files (
+  file_id      TEXT PRIMARY KEY,
+  case_id      TEXT NOT NULL REFERENCES report_cases(case_id) ON DELETE CASCADE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  pathname     TEXT NOT NULL,
+  name         TEXT,
+  content_type TEXT NOT NULL,
+  size_bytes   BIGINT NOT NULL,
+  kind         TEXT NOT NULL,                     -- document | photo | video
+  status       TEXT NOT NULL DEFAULT 'PENDING',   -- PENDING | CLEAN | REJECTED | DELETED
+  scan_level   TEXT,
+  scan_detail  TEXT,
+  deleted_at   TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS report_files_case_idx ON report_files (case_id);
+
+-- Crash Radar: freeway crashes from the public Houston TranStar feed. No personal data: the feed has
+-- road, direction, cross street, lanes and status only. One row per TranStar incident number.
+CREATE TABLE IF NOT EXISTS radar_incidents (
+  source           TEXT NOT NULL,
+  incident_id      TEXT NOT NULL,
+  title            TEXT,
+  road             TEXT,
+  direction        TEXT,
+  cross_street     TEXT,
+  types            TEXT,
+  is_truck         BOOLEAN NOT NULL DEFAULT false,
+  severity         TEXT NOT NULL DEFAULT 'UNKNOWN', -- MAJOR | MINOR | UNKNOWN (CrashHelp rule from lanes affected)
+  lanes_text       TEXT,
+  status           TEXT NOT NULL,                   -- ACTIVE | CLEARED | UNKNOWN
+  feed_status      TEXT,                            -- detected | verified | cleared (as the feed says)
+  status_text      TEXT,
+  source_status_at TIMESTAMPTZ,                     -- the feed's own time for the current status
+  first_seen       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  gone_at          TIMESTAMPTZ,                     -- dropped off the feed without a Cleared entry
+  cleared_at       TIMESTAMPTZ,
+  alerted_at       TIMESTAMPTZ,
+  baseline         BOOLEAN NOT NULL DEFAULT false,  -- already on the feed at first run: never alerted, not listed
+  PRIMARY KEY (source, incident_id)
+);
+CREATE INDEX IF NOT EXISTS radar_incidents_seen_idx ON radar_incidents (first_seen DESC);
+
+CREATE TABLE IF NOT EXISTS radar_events (
+  id               BIGSERIAL PRIMARY KEY,
+  source           TEXT NOT NULL,
+  incident_id      TEXT NOT NULL,
+  at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+  status           TEXT NOT NULL,
+  text             TEXT,
+  source_status_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS radar_events_incident_idx ON radar_events (source, incident_id);

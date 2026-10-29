@@ -183,6 +183,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <button role="tab" data-tab="inbox">Inbox</button>
       <button role="tab" data-tab="calls">Calls</button>
       <button role="tab" data-tab="reports" class="owner-only">Reports</button>
+      <button role="tab" data-tab="uploads">Crash Reports</button>
+      <button role="tab" data-tab="radar">Radar</button>
       <button role="tab" data-tab="sources">Sources</button>
       <button role="tab" data-tab="status">Twilio &amp; Systems</button>
       <button role="tab" data-tab="settings">Settings</button>
@@ -280,6 +282,26 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
 
     <div data-panel="settings" class="hidden"><form class="settings" id="settingsForm"></form></div>
+
+    <div data-panel="uploads" class="hidden">
+      <p class="hint" id="upNote"></p>
+      <div class="tablebox"><table><thead><tr><th>Uploaded</th><th>Case</th><th>Status</th><th>Document</th><th class="num">Files</th><th>Attorney review</th><th>Deletes</th></tr></thead><tbody id="upBody"></tbody></table></div>
+      <p class="hint">Requests for an attorney review are listed first. Opening a case or a file is recorded in the audit log. Files open through links that expire in 5 minutes.</p>
+    </div>
+
+    <div data-panel="radar" class="hidden">
+      <p class="hint" style="border-left:3px solid var(--red);padding-left:10px">For awareness and ad timing only. Never contact, text, call or go to the scene to approach anyone involved in a crash: that is barratry under Texas law (Penal Code §38.12).</p>
+      <div class="toolbar">
+        <select id="rdSeverity"><option value="">All severities</option><option value="MAJOR">Major</option><option value="MINOR">Minor</option><option value="UNKNOWN">Unknown</option></select>
+        <select id="rdStatus"><option value="">Any status</option><option value="ACTIVE">Active</option><option value="CLEARED">Cleared</option><option value="UNKNOWN">Unknown</option></select>
+        <select id="rdHours"><option value="6">Last 6 hours</option><option value="24" selected>Last 24 hours</option><option value="168">Last 7 days</option></select>
+        <button class="btn owner-only" id="rdPoll">Check feed now</button>
+        <span class="hint" id="rdFeed" style="margin:0"></span>
+      </div>
+      <div class="st-card owner-only" id="rdAlerts" style="margin-bottom:12px"></div>
+      <div class="tablebox"><table><thead><tr><th>First seen</th><th>Where</th><th>Type</th><th>Severity</th><th>Status</th><th>Feed time</th></tr></thead><tbody id="rdBody"></tbody></table></div>
+      <p class="hint">Source: Houston TranStar (TxDOT) public incident feed, checked every 3 minutes. The feed gives road and cross street only, no coordinates, so incidents are listed, not mapped. Severity is CrashHelp's rule from lanes affected (2+ main lanes or a heavy truck = major), not an official rating. "Unknown" means the feed is unreachable or the incident left the feed without a "cleared" entry.</p>
+    </div>
 
     <div data-panel="launch" class="hidden">
       <div class="row" style="margin-bottom:12px;align-items:center">
@@ -713,12 +735,84 @@ $('#launchApprovals').addEventListener('change', async (e) => {
   try { await api('launch-approval', { method: 'POST', body: { key: c.dataset.appr, done: c.checked } }); toast(c.checked ? 'Approval recorded' : 'Approval cleared'); loadLaunch(); } catch (err) { c.checked = !c.checked; toast(err.message); }
 });
 
+// ---------- Crash reports (uploads) ----------
+async function apiAt(path, action, { method = 'GET', body, params = {} } = {}) {
+  const res = await fetch(`/api/${path}?` + new URLSearchParams({ a: action, ...params }), {
+    method, credentials: 'same-origin', headers: method === 'POST' ? { 'Content-Type': 'application/json', 'X-CrashHelp': '1' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { showLogin(); throw new Error('Signed out'); }
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+async function loadUploads() {
+  const d = await apiAt('report', 'admin-list');
+  $('#upNote').textContent = `Public upload page: ${d.public ? 'ON' : 'OFF (staff-only testing)'} · Storage: ${d.storage ? 'connected' : 'NOT CONNECTED'} · AI reader: ${d.ai ? 'connected' : 'NOT CONNECTED'}`;
+  $('#upBody').innerHTML = d.cases.length ? d.cases.map((c) => `<tr><td>${esc(when(c.created_at))}</td><td><a href="#" data-case="${esc(c.case_id)}" style="color:var(--amber)">${esc(c.case_id)}</a></td><td>${esc(c.status)}${c.analysis_error ? ' · ' + esc(c.analysis_error) : ''}</td><td>${esc(pretty(c.document_type))}</td><td class="num">${c.files}</td><td>${c.review_requested_at ? `<span class="chip urgent">REQUESTED</span> ${c.lead_id ? `<a href="#${esc(c.lead_id)}" data-open="${esc(c.lead_id)}" style="color:var(--amber)">${esc(c.lead_id)}</a>` : ''}` : '—'}</td><td>${c.deleted_at ? 'deleted' : esc(when(c.delete_after))}</td></tr>`).join('') : '<tr><td colspan="7">No uploads yet.</td></tr>';
+}
+const factTxt = (f) => !f || f.basis === 'unknown' || !f.value ? '<span class="hint">unknown</span>' : `${esc(f.value)} <span class="chip">${esc(f.basis.replace('_', ' '))}</span>`;
+const ul = (a, fn = esc) => a && a.length ? `<ul>${a.map((x) => `<li>${fn(x)}</li>`).join('')}</ul>` : '<p class="hint">None.</p>';
+async function openCase(id) {
+  const d = await apiAt('report', 'admin-case', { params: { case_id: id } });
+  const c = d.case, v = d.visitor_view, at = d.attorney;
+  $('#sheet').innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h2>${esc(c.case_id)}</h2><button class="btn" id="caseClose">Close</button></div>
+    <p class="hint">${esc(c.status)} · uploaded ${esc(when(c.created_at))} · deletes ${esc(when(c.delete_after))}${c.lead_id ? ` · lead ${esc(c.lead_id)}` : ''}</p>
+    <div class="sec">Original files</div>${ul(d.files, (f) => `${f.status === 'CLEAN' ? `<a href="#" data-file="${esc(f.file_id)}" data-c="${esc(c.case_id)}" style="color:var(--amber)">${esc(f.name || f.file_id)}</a>` : esc(f.name || f.file_id)} · ${esc(f.kind)} · ${Math.round(f.size_bytes / 1024)} KB · ${esc(f.status)}${f.scan_level ? ' (' + esc(f.scan_level) + ' check)' : ''}${f.scan_detail ? ' · ' + esc(f.scan_detail) : ''}`)}
+    ${c.description ? `<div class="sec">Their own words</div><p>${esc(c.description)}</p>` : ''}
+    ${at ? `<div class="sec">Attorney research (preliminary)</div><p class="hint">${esc(at.notice)}</p>
+      <h3>Liability issues</h3>${ul(at.liability_issues, (x) => `<strong>${esc(x.party)}: ${esc(x.theory)}</strong><br>For: ${esc(x.supporting.join('; ') || '—')}<br>Against: ${esc(x.contradicting.join('; ') || '—')}`)}
+      <h3>Comparative responsibility</h3>${ul(at.comparative_responsibility_issues)}
+      <h3>Insurance questions</h3>${ul(at.insurance_questions, (x) => `<strong>${esc(pretty(x.coverage))}</strong>: ${esc(x.question)}`)}
+      <h3>Conflicts in the record</h3>${ul(at.conflicts)}
+      <h3>Open questions</h3>${ul(at.open_questions)}<h3>Evidence to obtain</h3>${ul(at.evidence_to_obtain)}
+      <h3>Citations</h3>${ul(at.laws, (l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--amber)">${esc(l.cite)}</a> — ${esc(l.title)}${l.why ? `<br><span class="hint">${esc(l.why)}</span>` : ''}`)}` : `<p class="hint">${c.analysis_error ? 'Analysis failed: ' + esc(c.analysis_error) : 'Not analyzed yet.'}</p>`}
+    ${v ? `<div class="sec">What the person saw</div><p>Crash: ${factTxt(v.overview.crash_date)} ${factTxt(v.overview.crash_time)} · ${factTxt(v.overview.location)}</p><p>Narrative: ${factTxt(v.narrative)}</p><h3>Missing</h3>${ul(v.missing_info)}` : ''}
+    <div class="sec">Consent record</div><p class="hint">${esc(c.consent_text)} — ${esc(when(c.consent_at))}</p>${c.review_consent_text ? `<p class="hint">Review: ${esc(c.review_consent_text)}</p>` : ''}
+    ${me.role === 'owner' && !c.deleted_at ? `<button class="btn" id="caseDelete">Delete this case and its files</button>` : ''}`;
+  $('#drawer').classList.remove('hidden');
+  $('#caseClose').onclick = () => $('#drawer').classList.add('hidden');
+  const del = $('#caseDelete');
+  if (del) del.onclick = async () => {
+    if (del.dataset.ok !== '1') { del.dataset.ok = '1'; del.textContent = 'Click again to delete permanently'; return; }
+    try { await apiAt('report', 'admin-delete', { method: 'POST', body: { case_id: c.case_id } }); toast('Deleted'); $('#drawer').classList.add('hidden'); loadUploads(); } catch (e) { toast(e.message); }
+  };
+}
+document.addEventListener('click', async (e) => {
+  const cs = e.target.closest('[data-case]');
+  if (cs) { e.preventDefault(); openCase(cs.dataset.case).catch((err) => toast(err.message)); return; }
+  const f = e.target.closest('[data-file]');
+  if (f) { e.preventDefault(); try { const r = await apiAt('report', 'admin-file', { params: { case_id: f.dataset.c, file_id: f.dataset.file } }); window.open(r.url, '_blank', 'noopener'); } catch (err) { toast(err.message); } }
+});
+
+// ---------- Crash Radar ----------
+async function loadRadar() {
+  const d = await apiAt('radar', 'list', { params: { severity: $('#rdSeverity').value, status: $('#rdStatus').value, hours: $('#rdHours').value } });
+  const f = d.feed;
+  $('#rdFeed').textContent = !d.enabled ? 'Radar is OFF (RADAR_ENABLED not set)' : `Feed ${f.stale ? '⚠️ NOT REACHABLE' : 'OK'} · last good check ${f.last_ok ? when(f.last_ok) : 'never'}${f.last_error && f.stale ? ' · ' + f.last_error : ''}`;
+  const al = d.alerts;
+  $('#rdAlerts').innerHTML = `<strong>Alerts to you:</strong>
+    <label><input type="checkbox" id="rdSms" ${al.sms ? 'checked' : ''}> Text${al.to_phone ? '' : ' (no phone in Settings)'}</label>
+    <label><input type="checkbox" id="rdEmail" ${al.email ? 'checked' : ''}> Email${al.to_email ? '' : ' (no email in Settings)'}</label>
+    <select id="rdSev"><option value="major">Major only</option><option value="minor">Minor and major</option><option value="all">All crashes</option></select>
+    <label>Max per hour <input type="number" id="rdMax" min="1" max="30" value="${esc(al.max_per_hour)}" style="width:60px"></label>
+    <button class="btn" id="rdSave">Save</button>`;
+  $('#rdSev').value = al.severity || 'major';
+  $('#rdSave').onclick = async () => { try { await apiAt('radar', 'alert-settings', { method: 'POST', body: { sms: $('#rdSms').checked, email: $('#rdEmail').checked, severity: $('#rdSev').value, max_per_hour: $('#rdMax').value } }); toast('Radar alerts saved'); } catch (e) { toast(e.message); } };
+  const stChip = (x) => `<span class="chip ${x.shown_status === 'ACTIVE' ? 'hi' : x.shown_status === 'CLEARED' ? 'ok' : 'warn'}" title="${esc(x.status_note)}">${esc(x.shown_status)}</span>${x.status_note ? `<br><span class="hint">${esc(x.status_note)}</span>` : ''}`;
+  $('#rdBody').innerHTML = d.incidents.length ? d.incidents.map((x) => `<tr><td>${esc(when(x.first_seen))}</td><td>${esc(x.road)} @ ${esc(x.cross_street)}</td><td>${esc(x.types)}${x.is_truck ? ' <span class="chip warn">TRUCK</span>' : ''}</td><td>${esc(x.severity)}<br><span class="hint">${esc(x.lanes_text || '')}</span></td><td>${stChip(x)}</td><td>${x.source_status_at ? esc(when(x.source_status_at)) : '—'}</td></tr>`).join('') : '<tr><td colspan="6">No crashes in this window.</td></tr>';
+}
+['#rdSeverity', '#rdStatus', '#rdHours'].forEach((s) => { $(s).onchange = () => loadRadar().catch((e) => toast(e.message)); });
+$('#rdPoll').onclick = async () => { try { const r = await apiAt('radar', 'poll-now', { method: 'POST' }); toast(r.ok ? `Feed OK · ${r.crashes} crashes · ${r.new} new` : 'Feed error: ' + r.error); loadRadar(); } catch (e) { toast(e.message); } };
+setInterval(() => { const b = document.querySelector('nav button[data-tab="radar"]'); if (b && b.getAttribute('aria-selected') === 'true') loadRadar().catch(() => {}); }, 60000);
+
 // ---------- Boot ----------
 document.querySelectorAll('nav button').forEach((b) => b.onclick = () => {
   document.querySelectorAll('nav button').forEach((x) => x.setAttribute('aria-selected', x === b));
   document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== b.dataset.tab));
   if (b.dataset.tab === 'status') { loadStatus(); loadTestNumbers(); } if (b.dataset.tab === 'settings') loadSettings();
   if (b.dataset.tab === 'inbox') loadInbox(); if (b.dataset.tab === 'calls') loadCalls(); if (b.dataset.tab === 'reports') loadReport(); if (b.dataset.tab === 'launch') loadLaunch().catch((e) => toast(e.message));
+  if (b.dataset.tab === 'uploads') loadUploads().catch((e) => toast(e.message)); if (b.dataset.tab === 'radar') loadRadar().catch((e) => toast(e.message));
 });
 $('#search').oninput = () => { clearTimeout(window._s); window._s = setTimeout(loadLeads, 250); };
 $('#statusFilter').onchange = () => { loadLeads(); loadMetrics(); };

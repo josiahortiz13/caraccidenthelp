@@ -1,6 +1,6 @@
 // GET /api/health — liveness. ?db=1 also checks the database: connection, schema, and that all tables exist.
 // Reports only status and table names, never data or connection details.
-const EXPECTED = ['leads', 'events', 'messages', 'calls', 'opt_outs', 'sms_sessions', 'settings', 'crm_queue', 'audit', 'rate_limits', 'system_status', 'ledger'];
+const EXPECTED = ['leads', 'events', 'messages', 'calls', 'opt_outs', 'sms_sessions', 'settings', 'crm_queue', 'audit', 'rate_limits', 'system_status', 'ledger', 'report_cases', 'report_files', 'radar_incidents', 'radar_events'];
 
 module.exports = async (req, res) => {
   const out = { ok: true, ts: Date.now(), v: 3 };

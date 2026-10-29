@@ -427,6 +427,19 @@
     {
       "source": "/insurance-adjuster-call.html",
       "destination": "/insurance-adjuster-call.html"
+    },
+    {
+      "source": "/report",
+      "destination": "/report.html"
+    },
+    {
+      "source": "/es/report",
+      "destination": "/report.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/report.js": {
+      "maxDuration": 300
+    }
+  }
 }
