@@ -637,6 +637,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 .hero .hero-note{color:#bdbdbd}
 @media(prefers-reduced-motion:reduce){.hero-video video{display:none}.hero-video{background:url(/media/crash-hero-poster.jpg) center/cover}}
 </style>
+<link rel="stylesheet" href="/funnel.css"/>
 </head>
 <body>
 
@@ -693,17 +694,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
         <div class="trust-pill">Texas Only</div>
         <div class="trust-pill">24/7</div>
       </div>
-      <form class="hero-mini-form" onsubmit="handleMiniSubmit(event)">
-        <div class="mini-row">
-          <input type="text" id="h-name"  placeholder="Your Name *" required/>
-          <input type="tel"  id="h-phone" placeholder="Phone Number *" required/>
-        </div>
-        <button type="submit" class="mini-submit">🚀 Get My Free Case Review →</button>
-        <div class="mini-or">or</div>
-        <a href="tel:+13468601929" class="mini-call">📞 Call — (346) 860-1929</a>
-        <p class="hero-note">100% free & confidential · No upfront fees</p>
-        <div class="mini-success" id="mini-success">✅ A specialist will call you shortly. Fastest: <a href="tel:+13468601929" style="color:var(--red)">(346) 860-1929</a></div>
-      </form>
+      <div data-chx-quiz data-lang="en" data-source="home-quiz"></div>
     </div>
 
     <!-- RIGHT -->
@@ -949,9 +940,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 </div>
 
 <!-- STICKY CALL BAR (mobile) -->
-<div class="sticky-call">
-  <a href="tel:+13468601929">📞 Free Case Review — Call (346) 860-1929</a>
-</div>
+<a class="chx-sticky" href="tel:+13468601929" data-call="sticky">📞 Call 24/7 · (346) 860-1929</a>
 
 <script>
 /* ── PARTICLES ── */
@@ -1018,17 +1007,6 @@ function submitLead(data, successEl, btn, btnOriginal){
   });
 }
 
-/* ── HERO MINI FORM ── */
-function handleMiniSubmit(e){
-  e.preventDefault();
-  submitLead(
-    { name: document.getElementById('h-name').value, phone: document.getElementById('h-phone').value, source: 'hero-mini' },
-    document.getElementById('mini-success'),
-    e.target.querySelector('.mini-submit'),
-    '🚀 Get My Free Case Review Now →'
-  );
-  e.target.querySelectorAll('input').forEach(function(i){ i.value=''; });
-}
 
 /* ── MAIN FORM ── */
 function handleSubmit(e){
@@ -1113,9 +1091,6 @@ var counterObs = new IntersectionObserver(function(entries){
 document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe(el); });
 
 </script>
-<script>/* call-tap tracking: counts taps on the phone number as a Contact (no personal data) */
-document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="tel:"]');if(!a)return;
-try{window.fbq&&fbq('track','Contact',{content_name:'call_tap',page:location.pathname});}catch(x){}
-try{window.gtag&&gtag('event','call_tap',{page:location.pathname});}catch(x){}},true);</script>
+<script src="/funnel.js" defer></script>
 </body>
 </html>

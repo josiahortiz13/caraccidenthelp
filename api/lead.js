@@ -3,7 +3,7 @@ const leads = require('../lib/leads');
 const store = require('../lib/store');
 const tw = require('../lib/twilio');
 const email = require('../lib/email');
-const { sendJson, clientIp, fill } = require('../lib/util');
+const { sendJson, clientIp, fill, clean } = require('../lib/util');
 const log = require('../lib/log');
 
 const ALLOWED_ORIGINS = ['https://www.crashhelptx.com', 'https://crashhelptx.com'];
@@ -28,6 +28,15 @@ module.exports = async (req, res) => {
   const data = leads.parseForm(raw);
   if (!data.phone && !data.email) return sendJson(res, 400, { error: 'Enter a valid phone number or email so we can reach you.' });
   if (!data.first_name) return sendJson(res, 400, { error: 'Enter your first name.' });
+  // Consent proof: the server stamps time and IP itself; the page URL falls back to the Referer header.
+  if (data.contact_consent) {
+    data.consent_at = new Date().toISOString();
+    data.consent_ip = clean(ip, 64);
+    data.consent_page_url = data.consent_page_url || clean(req.headers.referer, 300);
+  } else {
+    data.consent_text = '';
+    data.consent_page_url = '';
+  }
 
   try {
     const result = await leads.intake(data, { actor: 'web_form' });

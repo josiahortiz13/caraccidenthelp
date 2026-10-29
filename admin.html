@@ -493,6 +493,7 @@ async function openLead(id) {
   const kv = [['Phone', l.phone], ['Email', l.email], ['Crash date', l.crash_date ? String(l.crash_date).slice(0, 10) : ''], ['City / county', [l.crash_city, l.crash_county].filter(Boolean).join(', ')],
     ['Person', pretty(l.person_type)], ['Injured', pretty(l.injury_status)], ['Medical care', pretty(l.medical_status)], ['Vehicle damage', pretty(l.vehicle_damage)],
     ['Other vehicle', pretty(l.other_vehicle)], ['Insurance info', pretty(l.insurance_available)], ['Prefers', pretty(l.preferred_contact)], ['Consent', l.contact_consent ? 'Yes' : 'No'],
+    ['Consent proof', l.contact_consent ? [l.consent_at && new Date(l.consent_at).toLocaleString(), l.consent_ip && 'IP ' + l.consent_ip, l.consent_page_url].filter(Boolean).join(' · ') : ''],
     ['Source', l.utm_source || l.source], ['Campaign', l.utm_campaign], ['Landing page', l.landing_page], ['Lead ID', l.lead_id],
     ['Time to alert', fmtDur(l.first_alert_at && (new Date(l.first_alert_at) - new Date(l.created_at)) / 1000 | 0)],
     ['Time to first attempt', fmtDur(l.first_response_at && (new Date(l.first_response_at) - new Date(l.created_at)) / 1000 | 0)],

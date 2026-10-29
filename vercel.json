@@ -435,6 +435,18 @@
     {
       "source": "/es/report",
       "destination": "/report.html"
+    },
+    {
+      "source": "/houston/sh-249",
+      "destination": "/houston/sh-249.html"
+    },
+    {
+      "source": "/houston/airline-dr",
+      "destination": "/houston/airline-dr.html"
+    },
+    {
+      "source": "/houston/beechnut",
+      "destination": "/houston/beechnut.html"
     }
   ],
   "functions": {

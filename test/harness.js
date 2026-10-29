@@ -18,6 +18,8 @@ const ENV = {
   INSECURE_COOKIES: '1', CONSUMER_SMS_ENABLED: 'true',
 };
 Object.assign(process.env, ENV);
+// Consumer texts are gated to 8am–9pm Central; pin the clock to midday so tests don't depend on when they run.
+global.__crashhelpNow = () => new Date('2026-06-15T17:00:00Z');
 
 // Fake HighLevel API: records calls; can be told to fail.
 const crmFake = { calls: [], fail: false, n: 0 };
@@ -58,9 +60,10 @@ function start(port = 0) {
       const h = handlers[u.pathname];
       if (!h) {
         // Static files (homepage, city pages, attribution.js) the way Vercel serves them.
-        const f = path.join(root, u.pathname === '/' ? 'index.html' : u.pathname.replace(/^\//, ''));
+        let f = path.join(root, u.pathname === '/' ? 'index.html' : u.pathname.replace(/^\//, ''));
+        if (!path.extname(f) && fs.existsSync(f + '.html')) f += '.html'; // clean URLs (vercel.json rewrites)
         if (f.startsWith(root) && fs.existsSync(f) && fs.statSync(f).isFile()) {
-          res.setHeader('Content-Type', f.endsWith('.js') ? 'text/javascript' : f.endsWith('.html') ? 'text/html' : 'application/octet-stream');
+          res.setHeader('Content-Type', f.endsWith('.js') ? 'text/javascript' : f.endsWith('.css') ? 'text/css' : f.endsWith('.html') ? 'text/html' : 'application/octet-stream');
           return res.end(fs.readFileSync(f));
         }
         res.statusCode = 404; return res.end('not found');

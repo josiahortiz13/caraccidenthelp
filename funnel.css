@@ -1,0 +1,41 @@
+/* CrashHelp TX lead funnel: 3-question quiz card + sticky mobile call button. Used by the homepage, /es and /houston/* pages. */
+.chx-quiz{--q-red:#e03030;--q-red-d:#c0392b;--q-bg:#0f0f0f;--q-line:#262626;--q-text:#f2f2f2;--q-dim:#9a9a9a;
+  position:relative;z-index:2;background:var(--q-bg);border:1px solid rgba(224,48,48,.35);border-radius:18px;padding:22px 20px 18px;
+  max-width:520px;width:100%;margin:22px 0 0;text-align:left;font-family:'Inter',system-ui,sans-serif;color:var(--q-text);box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.chx-quiz *{box-sizing:border-box}
+.chx-q-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.chx-q-step{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--q-dim)}
+.chx-q-lang{background:none;border:1px solid var(--q-line);color:var(--q-dim);font:700 12px 'Inter',sans-serif;border-radius:99px;padding:6px 12px;cursor:pointer}
+.chx-q-bar{display:flex;gap:5px;margin-bottom:16px}.chx-q-bar i{flex:1;height:4px;border-radius:4px;background:var(--q-line)}.chx-q-bar i.on{background:var(--q-red)}
+.chx-q-text{font-family:'Bebas Neue','Arial Narrow',sans-serif;font-size:30px;line-height:1.05;letter-spacing:.5px;margin:0 0 14px;outline:none}
+.chx-q-ans{display:grid;gap:9px}
+.chx-q-ans button{all:unset;box-sizing:border-box;display:block;width:100%;padding:15px 16px;border:1px solid var(--q-line);border-radius:12px;background:#151515;
+  font:600 16px 'Inter',sans-serif;color:var(--q-text);cursor:pointer;transition:border-color .15s,background .15s}
+.chx-q-ans button:hover,.chx-q-ans button.sel{border-color:var(--q-red);background:rgba(224,48,48,.1)}
+.chx-q-ans button:focus-visible,.chx-q-lang:focus-visible,.chx-q-back:focus-visible,.chx-q-form button:focus-visible{outline:3px solid #ffb81c;outline-offset:2px}
+.chx-q-back{background:none;border:none;color:var(--q-dim);font:600 13px 'Inter',sans-serif;margin-top:12px;padding:6px 0;cursor:pointer}
+.chx-q-form{display:grid;gap:10px}
+.chx-q-form label.f span{display:block;font-size:12px;font-weight:700;color:var(--q-dim);margin-bottom:5px}
+.chx-q-form input[type=text],.chx-q-form input[type=tel]{width:100%;background:#151515;border:1px solid var(--q-line);border-radius:10px;padding:14px;font:500 16px 'Inter',sans-serif;color:var(--q-text);outline:none}
+.chx-q-form input:focus{border-color:var(--q-red)}
+.chx-q-consent{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:#cfcfcf;cursor:pointer}
+.chx-q-consent input{width:20px;height:20px;flex:0 0 20px;margin-top:1px;accent-color:var(--q-red)}
+.chx-q-form .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.chx-q-submit{border:none;border-radius:12px;background:var(--q-red);color:#fff;font:900 16px 'Inter',sans-serif;padding:16px;cursor:pointer}
+.chx-q-submit:disabled{opacity:.6;cursor:wait}
+.chx-q-err{color:#ff8a8a;font-size:13px;font-weight:600;min-height:0;margin:0}
+.chx-q-fine{font-size:11.5px;color:var(--q-dim);line-height:1.5;margin:4px 0 0}
+.chx-q-fine a{color:var(--q-text);text-decoration:underline}
+.chx-q-call{display:block;text-align:center;border:1px solid var(--q-line);border-radius:12px;padding:13px;font:800 15px 'Inter',sans-serif;color:var(--q-text);text-decoration:none;margin-top:10px}
+.chx-q-done{text-align:center;padding:6px 0}
+.chx-q-done .ck{width:52px;height:52px;border-radius:50%;background:rgba(60,207,122,.15);color:#3ccf7a;display:grid;place-items:center;font-size:26px;margin:0 auto 10px}
+.chx-q-done p{color:#cfcfcf;margin:6px 0}
+/* Sticky "Call 24/7" button, phones only */
+.chx-sticky{display:none}
+@media(max-width:680px){
+  .chx-sticky{display:flex;align-items:center;justify-content:center;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:300;
+    background:#e03030;color:#fff;font:900 17px 'Inter',sans-serif;text-decoration:none;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(0,0,0,.4)}
+  body.has-chx-sticky{padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+  .chx-quiz{padding:18px 16px 16px;margin-top:18px}
+  .chx-q-text{font-size:27px}
+}

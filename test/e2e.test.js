@@ -893,3 +893,49 @@ test('48. Retry of a NEW-source repeat is suppressed too (callback lead, then ma
   assert.equal(c.json.lead_id, a.json.lead_id);
   assert.equal(fakeMail.sent.filter((m) => m.to === 'owner@example.com').length, before + 2, 'original + one repeat alert; the retry adds none');
 });
+
+test('49. Funnel quiz lead: consent proof (checkbox, text, timestamp, IP, page URL) saved and shown in the owner alert', async () => {
+  const consent = 'I agree to receive calls and texts from CrashHelp TX about my inquiry. Msg & data rates may apply. Reply STOP to opt out.';
+  const r = await submit({ _ip: '203.0.113.49', first_name: 'Ana', phone: '(832) 555-0199', email: '', source: 'lp-sh-249', contact_consent: true, consent_text: consent,
+    consent_page_url: 'https://www.crashhelptx.com/houston/sh-249?utm_source=meta', crash_recency: 'days', injured: 'unsure' });
+  assert.equal(r.status, 200);
+  const l = await lead(r.json.lead_id);
+  assert.equal(l.contact_consent, true); assert.equal(l.consent_text, consent);
+  assert.equal(l.consent_ip, '203.0.113.49');
+  assert.equal(l.consent_page_url, 'https://www.crashhelptx.com/houston/sh-249?utm_source=meta');
+  assert.ok(l.consent_at && Math.abs(new Date(l.consent_at) - Date.now()) < 60e3, 'server-stamped consent time');
+  assert.ok(smsTo(OWNER).some((m) => /Consent: YES \d{4}-/.test(m.body)), 'owner alert shows consent');
+  // No consent box: nothing recorded as proof, and the lead is not texted.
+  const n = await submit({ first_name: 'Bo', phone: '(832) 555-0102', email: '', contact_consent: false, consent_text: consent, consent_page_url: '/x' });
+  const nl = await lead(n.json.lead_id);
+  assert.equal(nl.contact_consent, false); assert.equal(nl.consent_at, null); assert.equal(nl.consent_ip, null); assert.equal(nl.consent_text, '');
+});
+
+test('50. Consumer texts only go out 8am–9pm Central; internal alerts still go out', async () => {
+  const tw = require('../lib/twilio');
+  assert.equal(tw.inTextingHours(new Date('2026-06-15T13:00:00Z')), true, '8:00 CDT');
+  assert.equal(tw.inTextingHours(new Date('2026-06-16T01:59:00Z')), true, '8:59pm CDT');
+  assert.equal(tw.inTextingHours(new Date('2026-06-16T02:00:00Z')), false, '9:00pm CDT');
+  assert.equal(tw.inTextingHours(new Date('2026-01-15T13:59:00Z')), false, '7:59am CST');
+  const pinned = global.__crashhelpNow;
+  global.__crashhelpNow = () => new Date('2026-06-16T04:30:00Z'); // 11:30pm Central
+  try {
+    const r = await submit({ phone: '(832) 555-0199', email: '', contact_consent: true });
+    assert.equal(smsTo(TESTER).length, 0, 'no consumer text at night');
+    assert.ok(smsTo(OWNER).length >= 1, 'owner still alerted');
+    assert.ok((await events(r.json.lead_id)).some((e) => e.type === 'sms_blocked' && e.detail.reason === 'quiet_hours'));
+  } finally { global.__crashhelpNow = pinned; }
+});
+
+test('51. Funnel pages: homepage, /es and the 3 Houston road pages load the quiz and sticky call button', async () => {
+  for (const p of ['/', '/es.html', '/houston/sh-249', '/houston/airline-dr', '/houston/beechnut']) {
+    const html = await (await fetch(base + p)).text();
+    assert.match(html, /data-chx-quiz/, p); assert.match(html, /class="chx-sticky" href="tel:\+13468601929"/, p);
+    assert.match(html, /src="\/funnel\.js"/, p);
+    if (p.startsWith('/houston/')) assert.match(html, /CrashHelp TX is not a law firm/, p);
+  }
+  const js = await (await fetch(base + '/funnel.js')).text();
+  assert.ok(js.includes('CrashHelp TX is not a law firm') && js.includes('CrashHelp TX no es un bufete de abogados'), 'quiz shows the disclaimer in both languages');
+  for (const ev of ['QuizStart', 'QuizComplete', "'Lead'", 'CallClick']) assert.ok(js.includes(ev), ev);
+  assert.ok(js.includes('I agree to receive calls and texts from CrashHelp TX about my inquiry. Msg & data rates may apply. Reply STOP to opt out.'));
+});
