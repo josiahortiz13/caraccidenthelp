@@ -2,6 +2,8 @@
   "name": "caraccidenthelp",
   "version": "1.0.0",
   "dependencies": {
+    "@anthropic-ai/sdk": "0.134.0",
+    "@vercel/blob": "2.8.2",
     "nodemailer": "^6.9.0",
     "pg": "^8.23.1",
     "twilio": "^5.0.0"
@@ -10,7 +12,7 @@
     "@electric-sql/pglite": "^0.2.17"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/e2e.test.js",
+    "test": "node --test --test-concurrency=1 test/e2e.test.js test/report.test.js test/radar.test.js",
     "dev": "node test/harness.js"
   }
 }

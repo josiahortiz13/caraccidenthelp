@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your Crash Report, Explained · CrashHelp TX</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0d0c0d">
+<link rel="icon" href="/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@700;900&family=Overpass+Mono:wght@700&family=Public+Sans:wght@400;500;600&display=swap">
+<!-- No ad pixels or analytics on this page: it handles crash reports and medical details. -->
+<style>
+:root{--bg:#0d0c0d;--panel:#171516;--panel2:#1e1b1c;--line:#2e292a;--text:#f3eee6;--dim:#a59c99;--red:#e3262f;--red-d:#b81c24;--amber:#ffb81c;--ok:#3ccf7a;--blue:#7cb7ff;
+--sign:"Overpass","Arial Narrow",Arial,sans-serif;--body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Overpass Mono",ui-monospace,monospace;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.55 var(--body);padding-bottom:calc(84px + env(safe-area-inset-bottom));-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:inherit}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+h1,h2,h3{font-family:var(--sign);margin:0;line-height:1.05;text-wrap:balance}
+:focus-visible{outline:3px solid var(--amber);outline-offset:3px;border-radius:6px}
+.hidden{display:none!important}
+.top{display:flex;justify-content:space-between;align-items:center;padding-block:12px}
+.logo{font:900 20px var(--sign);text-decoration:none}.logo b{color:var(--red)}
+.lang{font:700 13px var(--sign);color:var(--dim);background:none;border:1px solid var(--line);padding:6px 12px;border-radius:99px;cursor:pointer}
+.hero{padding-block:8px 18px}
+.hero h1{font-size:clamp(32px,8vw,50px);font-weight:900;text-transform:uppercase;letter-spacing:-.01em}
+.hero h1 span{color:var(--red);display:block}
+.hero p{color:var(--dim);margin:12px 0 0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-block:14px}
+.box h2{font-size:20px;text-transform:uppercase;margin-bottom:10px;display:flex;gap:10px;align-items:baseline}
+.box h2 .n{font:700 12px var(--mono);color:var(--red)}
+.note{font-size:13px;color:var(--dim)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:14px 18px;font:900 15px var(--sign);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:var(--red);color:#fff;text-decoration:none;min-height:48px}
+.btn:hover{background:var(--red-d)}.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+label.check{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.5;cursor:pointer}
+label.check input{width:22px;height:22px;flex:0 0 auto;margin-top:2px;accent-color:var(--red)}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:22px;text-align:center;cursor:pointer}
+.drop:hover,.drop.over{border-color:var(--red)}
+.files{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px}
+.files li{display:flex;justify-content:space-between;gap:10px;background:var(--panel2);border-radius:8px;padding:8px 12px;font-size:14px;overflow-wrap:anywhere}
+.st{font:700 11px var(--mono);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.st.ok{color:var(--ok)}.st.bad{color:var(--red)}.st.wait{color:var(--amber)}
+textarea,input[type=text],input[type=tel],input[type=email],select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:16px var(--body)}
+textarea{min-height:110px;resize:vertical}
+.field{display:grid;gap:6px;margin-block:10px}.field span{font-size:13px;color:var(--dim)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+dl{display:grid;grid-template-columns:minmax(110px,30%) 1fr;gap:8px 14px;margin:0}
+dt{color:var(--dim);font-size:14px}dd{margin:0;overflow-wrap:anywhere}
+.tag{display:inline-block;font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;border:1px solid}
+.tag.report_states{color:var(--ok);border-color:var(--ok)}.tag.person_states{color:var(--blue);border-color:var(--blue)}
+.tag.ai_inference{color:var(--amber);border-color:var(--amber)}.tag.unknown{color:var(--dim);border-color:var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--dim);margin-bottom:6px}
+.party{background:var(--panel2);border-radius:10px;padding:12px;margin-top:10px}
+.party h3{font-size:16px;margin-bottom:8px}
+ul.plain{margin:0;padding-left:20px}ul.plain li{margin-block:6px}
+.law{border-left:3px solid var(--red);padding:4px 0 4px 12px;margin-block:12px}
+.law a{font-weight:600}.law p{margin:4px 0 0;font-size:14px}
+.deadline{font:900 24px var(--sign);color:var(--amber)}
+.spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--red);border-radius:50%;animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+.err{background:rgba(227,38,47,.12);border:1px solid var(--red);border-radius:10px;padding:12px;margin-top:10px}
+.callbar{position:fixed;left:0;right:0;bottom:0;background:rgba(13,12,13,.96);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center;z-index:5}
+.callbar .btn{flex:1;max-width:420px}
+.disclaimer{font-size:13px;color:var(--dim);border-top:1px solid var(--line);padding-top:14px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a class="logo" href="/">CRASH<b>HELP</b> TX</a>
+    <button class="lang" id="langBtn" type="button">Español</button>
+  </div>
+
+  <div class="hero">
+    <h1><span data-t="h1a">Your crash report,</span><span data-t="h1b" style="color:var(--text)">explained</span></h1>
+    <p data-t="lead">Upload your Texas police crash report (CR-3), photos, or tell us what happened. We'll organize what it says, show the Texas rules that commonly come up, list what's missing, and tell you the general deadline. Free.</p>
+  </div>
+
+  <!-- Step 1: consent -->
+  <section class="box" id="stepConsent">
+    <h2><span class="n">01</span><span data-t="s1">Before you upload</span></h2>
+    <label class="check"><input type="checkbox" id="consent"><span id="consentText"></span></label>
+    <div class="row" style="margin-top:14px"><button class="btn" id="startBtn" type="button" disabled data-t="start">Start</button></div>
+    <div id="startErr" class="err hidden" role="alert"></div>
+  </section>
+
+  <!-- Step 2: upload -->
+  <section class="box hidden" id="stepUpload">
+    <h2><span class="n">02</span><span data-t="s2">Add your documents</span></h2>
+    <label class="drop" id="drop" for="fileInput">
+      <strong data-t="drop">Tap to choose files</strong><br>
+      <span class="note" data-t="types">PDF, JPG, PNG, HEIC up to 20 MB · MP4/MOV dashcam up to 200 MB · up to 8 files</span>
+    </label>
+    <input type="file" id="fileInput" class="hidden" multiple accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,video/mp4,video/quicktime">
+    <ul class="files" id="fileList"></ul>
+    <div class="field"><span data-t="descLabel">What happened, in your own words (optional)</span><textarea id="desc" maxlength="4000"></textarea></div>
+    <p class="note" data-t="videoNote">Videos are stored for an attorney to review. The automatic summary reads documents and photos.</p>
+    <div class="row"><button class="btn" id="analyzeBtn" type="button" data-t="analyze">Explain my report</button></div>
+    <div id="busy" class="row hidden" style="align-items:center;margin-top:12px"><div class="spin"></div><span data-t="busy">Reading your documents… this can take a minute or two.</span></div>
+    <div id="upErr" class="err hidden" role="alert"></div>
+  </section>
+
+  <!-- Step 3: results -->
+  <div id="results" class="hidden" aria-live="polite"></div>
+
+  <!-- Attorney review -->
+  <section class="box hidden" id="stepReview">
+    <h2><span class="n">09</span><span data-t="s9">Free review by a Texas attorney</span></h2>
+    <p data-t="reviewLead">Want a lawyer to look at this? Leave your details and you'll get a call back. There's no cost for the review.</p>
+    <div class="grid2">
+      <div class="field"><span data-t="first">First name</span><input type="text" id="rvFirst" autocomplete="given-name" maxlength="60"></div>
+      <div class="field"><span data-t="last">Last name</span><input type="text" id="rvLast" autocomplete="family-name" maxlength="60"></div>
+      <div class="field"><span data-t="phone">Phone</span><input type="tel" id="rvPhone" autocomplete="tel" maxlength="20"></div>
+      <div class="field"><span data-t="email">Email (optional)</span><input type="email" id="rvEmail" autocomplete="email" maxlength="200"></div>
+    </div>
+    <div class="field"><span data-t="prefer">Best way to reach you</span>
+      <select id="rvPrefer"><option value="call" data-t="call">Phone call</option><option value="text" data-t="text">Text</option><option value="email" data-t="emailOpt">Email</option></select></div>
+    <label class="check"><input type="checkbox" id="rvConsent"><span id="rvConsentText"></span></label>
+    <div class="row" style="margin-top:14px"><button class="btn" id="reviewBtn" type="button" data-t="send">Request my free review</button></div>
+    <div id="rvMsg" class="hidden" role="status" style="margin-top:12px"></div>
+  </section>
+
+  <section class="box hidden" id="stepDelete">
+    <p class="note" id="keepNote"></p>
+    <button class="btn ghost" id="deleteBtn" type="button" data-t="delete">Delete my files now</button>
+    <div id="delMsg" class="note hidden" role="status" style="margin-top:10px"></div>
+  </section>
+
+  <p class="disclaimer" id="disclaimer"></p>
+</div>
+
+<div class="callbar"><a class="btn" href="tel:+13468601929" data-t="callBar">Call 24/7 · (346) 860-1929</a></div>
+
+<script>
+(() => {
+const T = {
+  en: {
+    h1a: 'Your crash report,', h1b: 'explained',
+    lead: "Upload your Texas police crash report (CR-3), photos, or tell us what happened. We'll organize what it says, show the Texas rules that commonly come up, list what's missing, and tell you the general deadline. Free.",
+    s1: 'Before you upload', start: 'Start', s2: 'Add your documents', drop: 'Tap to choose files',
+    types: 'PDF, JPG, PNG, HEIC up to 20 MB · MP4/MOV dashcam up to 200 MB · up to 8 files',
+    descLabel: 'What happened, in your own words (optional)', videoNote: 'Videos are stored for an attorney to review. The automatic summary reads documents and photos.',
+    analyze: 'Explain my report', busy: 'Reading your documents… this can take a minute or two.',
+    s9: 'Free review by a Texas attorney', reviewLead: "Want a lawyer to look at this? Leave your details and you'll get a call back. There's no cost for the review.",
+    first: 'First name', last: 'Last name', phone: 'Phone', email: 'Email (optional)', prefer: 'Best way to reach you', call: 'Phone call', text: 'Text', emailOpt: 'Email',
+    send: 'Request my free review', delete: 'Delete my files now', callBar: 'Call 24/7 · (346) 860-1929',
+    rvConsent: 'I agree to be contacted about my crash by phone, text or email, including by automated means, by CrashHelp TX and the participating Texas law firm that reviews my report. Consent is not a condition of any purchase. Reply STOP to stop texts.',
+    uploading: 'Uploading', checking: 'Checking', ok: 'Ready', rejected: 'Not accepted', failed: 'Failed',
+    disabled: 'This tool is not open yet. Call us any time and we will help with your report.',
+    keep: (d) => `Your files are kept privately until ${d}, then deleted automatically.`, deleted: 'Your files and summary were deleted.',
+    reviewDone: 'Got it. Expect a call soon. If it is urgent, call (346) 860-1929.',
+    legend: { report_states: 'Report says', person_states: 'You said', ai_inference: 'Our reading — verify', unknown: 'Not in report' },
+    sec: { overview: 'Crash overview', facts: 'What the report says', rules: 'Texas rules that commonly come up', differ: 'Where accounts differ', insurance: 'Insurance basics', evidence: 'Evidence checklist', missing: 'Missing or unclear', next: 'Next steps & your deadline' },
+    f: { crash_date: 'Date', crash_time: 'Time', location: 'Location', crash_type: 'Type of crash', vehicles_involved: 'Vehicles', vehicle: 'Vehicle', commercial_vehicle: 'Commercial vehicle', insurer_named: 'Insurer listed', cited: 'Citation', injuries_reported: 'Injuries reported', narrative: "Officer's narrative", diagram: 'Diagram', road: 'Road', weather: 'Weather', light: 'Light', traffic_control: 'Traffic control', factors: 'Contributing factors the officer listed', citations: 'Citations listed', obs: 'Other officer notes', witnesses: 'Witnesses' },
+    rulesNote: 'General information about Texas law. Whether a rule applies, and who is responsible, is for a lawyer to decide.',
+    insNote: 'Texas requires liability coverage of at least $30,000 per injured person and $60,000 per crash. Your own policy may include uninsured/underinsured motorist (UM/UIM) and personal injury protection (PIP) unless you rejected them in writing. Only the actual policies show the real limits.',
+    deadlineLbl: 'General deadline to file an injury lawsuit:', noDeadline: 'We could not read a crash date, so we cannot estimate the general deadline. In Texas it is generally two years from the crash.',
+    ask: 'Questions to ask a lawyer', have: 'Have', missingS: 'Missing', unknownS: 'Not sure', none: 'Nothing listed.', verified: 'Checked against the official text on',
+    notCrash: "This doesn't look like a crash document. Try uploading your CR-3 crash report or photos of the scene.",
+  },
+  es: {
+    h1a: 'Tu reporte de choque,', h1b: 'explicado',
+    lead: 'Sube tu reporte policial de choque de Texas (CR-3), fotos, o cuéntanos qué pasó. Organizamos lo que dice, te mostramos las reglas de Texas que suelen aplicar, lo que falta y la fecha límite general. Gratis.',
+    s1: 'Antes de subir', start: 'Empezar', s2: 'Agrega tus documentos', drop: 'Toca para elegir archivos',
+    types: 'PDF, JPG, PNG, HEIC hasta 20 MB · video MP4/MOV hasta 200 MB · hasta 8 archivos',
+    descLabel: 'Qué pasó, en tus propias palabras (opcional)', videoNote: 'Los videos se guardan para que un abogado los revise. El resumen automático lee documentos y fotos.',
+    analyze: 'Explicar mi reporte', busy: 'Leyendo tus documentos… puede tardar uno o dos minutos.',
+    s9: 'Revisión gratis con un abogado de Texas', reviewLead: '¿Quieres que un abogado lo revise? Deja tus datos y te llamamos. La revisión no tiene costo.',
+    first: 'Nombre', last: 'Apellido', phone: 'Teléfono', email: 'Correo (opcional)', prefer: 'Mejor forma de contactarte', call: 'Llamada', text: 'Mensaje de texto', emailOpt: 'Correo',
+    send: 'Pedir mi revisión gratis', delete: 'Borrar mis archivos ahora', callBar: 'Llama 24/7 · (346) 860-1929',
+    rvConsent: 'Acepto que CrashHelp TX y el bufete participante de Texas que revise mi reporte me contacten sobre mi choque por llamada, texto o correo, incluso por medios automáticos. El consentimiento no es condición de ninguna compra. Responde STOP para dejar de recibir textos.',
+    uploading: 'Subiendo', checking: 'Revisando', ok: 'Listo', rejected: 'No aceptado', failed: 'Falló',
+    disabled: 'Esta herramienta aún no está abierta. Llámanos a cualquier hora y te ayudamos con tu reporte.',
+    keep: (d) => `Tus archivos se guardan en privado hasta el ${d} y luego se borran automáticamente.`, deleted: 'Tus archivos y tu resumen fueron borrados.',
+    reviewDone: 'Listo. Te llamaremos pronto. Si es urgente, llama al (346) 860-1929.',
+    legend: { report_states: 'Dice el reporte', person_states: 'Dijiste tú', ai_inference: 'Nuestra lectura — verificar', unknown: 'No está en el reporte' },
+    sec: { overview: 'Resumen del choque', facts: 'Lo que dice el reporte', rules: 'Reglas de Texas que suelen aplicar', differ: 'Donde las versiones no coinciden', insurance: 'Seguro: lo básico', evidence: 'Lista de pruebas', missing: 'Falta o no está claro', next: 'Próximos pasos y tu fecha límite' },
+    f: { crash_date: 'Fecha', crash_time: 'Hora', location: 'Lugar', crash_type: 'Tipo de choque', vehicles_involved: 'Vehículos', vehicle: 'Vehículo', commercial_vehicle: 'Vehículo comercial', insurer_named: 'Aseguradora', cited: 'Multa', injuries_reported: 'Lesiones reportadas', narrative: 'Narrativa del oficial', diagram: 'Diagrama', road: 'Camino', weather: 'Clima', light: 'Luz', traffic_control: 'Control de tráfico', factors: 'Factores que anotó el oficial', citations: 'Multas anotadas', obs: 'Otras notas del oficial', witnesses: 'Testigos' },
+    rulesNote: 'Información general sobre la ley de Texas. Si una regla aplica, y quién es responsable, lo decide un abogado.',
+    insNote: 'Texas exige seguro de responsabilidad de al menos $30,000 por persona lesionada y $60,000 por choque. Tu póliza puede incluir cobertura de conductor sin seguro o con seguro insuficiente (UM/UIM) y protección por lesiones personales (PIP), a menos que las rechazaras por escrito. Solo las pólizas muestran los límites reales.',
+    deadlineLbl: 'Fecha límite general para demandar por lesiones:', noDeadline: 'No pudimos leer la fecha del choque. En Texas, generalmente es de dos años desde el choque.',
+    ask: 'Preguntas para un abogado', have: 'Tienes', missingS: 'Falta', unknownS: 'No seguro', none: 'Nada anotado.', verified: 'Verificado con el texto oficial el',
+    notCrash: 'Esto no parece un documento de choque. Sube tu reporte CR-3 o fotos de la escena.',
+  },
+};
+const CONSENT = {
+  en: "I'm uploading documents about my own crash. CrashHelp TX will use them to prepare a summary for me. CrashHelp TX is not a law firm, does not give legal advice, does not recommend lawyers, and is paid by participating law firms for advertising. My files are stored privately and deleted after 30 days unless I ask for an attorney review.",
+  es: 'Estoy subiendo documentos sobre mi propio accidente. CrashHelp TX los usará para preparar un resumen para mí. CrashHelp TX no es un bufete de abogados, no da asesoría legal, no recomienda abogados y recibe pago de bufetes participantes por publicidad. Mis archivos se guardan en privado y se borran después de 30 días, a menos que pida una revisión con un abogado.',
+};
+const DISCLAIMER = {
+  en: 'CrashHelp TX is not a law firm and this is not legal advice. It organizes what your documents say and points to Texas laws that commonly come up. It does not decide who is at fault or what a claim is worth. No attorney-client relationship is created.',
+  es: 'CrashHelp TX no es un bufete de abogados y esto no es asesoría legal. Organiza lo que dicen tus documentos y señala leyes de Texas que suelen aplicar. No decide quién tuvo la culpa ni cuánto vale un reclamo. No se crea una relación abogado-cliente.',
+};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let lang = location.pathname.startsWith('/es') ? 'es' : 'en';
+let caseId = null, token = null, lastView = null;
+const t = () => T[lang];
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach((el) => { const v = t()[el.dataset.t]; if (typeof v === 'string') el.textContent = v; });
+  $('#langBtn').textContent = lang === 'en' ? 'Español' : 'English';
+  $('#consentText').textContent = CONSENT[lang];
+  $('#rvConsentText').textContent = t().rvConsent;
+  $('#disclaimer').textContent = DISCLAIMER[lang];
+  if (lastView) render(lastView);
+}
+$('#langBtn').onclick = () => { lang = lang === 'en' ? 'es' : 'en'; applyLang(); };
+
+// The private link lives in the URL fragment (never sent to servers or logs) and this browser's storage.
+function saveLink() {
+  history.replaceState(null, '', '#' + caseId + '.' + token);
+  try { localStorage.setItem('chx_report', caseId + '.' + token); } catch {}
+}
+function loadLink() {
+  let s = location.hash.slice(1);
+  if (!s) { try { s = localStorage.getItem('chx_report') || ''; } catch {} }
+  const m = /^(RPT-[A-F0-9]+)\.([\w-]{20,})$/.exec(s);
+  if (m) { caseId = m[1]; token = m[2]; }
+}
+function forget() { try { localStorage.removeItem('chx_report'); } catch {} history.replaceState(null, '', location.pathname); }
+
+async function api(action, body) {
+  const r = await fetch('/api/report?a=' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ case_id: caseId, token, ...body }) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(data.error || 'Request failed'); e.status = r.status; e.disabled = data.disabled; throw e; }
+  return data;
+}
+function showErr(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
+
+$('#consent').onchange = (e) => { $('#startBtn').disabled = !e.target.checked; };
+$('#startBtn').onclick = async () => {
+  $('#startErr').classList.add('hidden');
+  try {
+    const r = await api('start', { consent: $('#consent').checked, lang });
+    caseId = r.case_id; token = r.token; saveLink();
+    $('#stepConsent').classList.add('hidden'); $('#stepUpload').classList.remove('hidden'); $('#stepDelete').classList.remove('hidden');
+  } catch (e) { showErr($('#startErr'), e.disabled ? t().disabled : e.message); }
+};
+
+// ---------- Uploads ----------
+const fileState = [];
+function drawFiles() {
+  $('#fileList').innerHTML = fileState.map((f) => `<li><span>${esc(f.name)}</span><span class="st ${f.cls}">${esc(f.label)}</span></li>`).join('');
+}
+async function addFiles(list) {
+  $('#upErr').classList.add('hidden');
+  for (const file of list) {
+    const row = { name: file.name, label: t().uploading, cls: 'wait' }; fileState.push(row); drawFiles();
+    try {
+      const type = file.type || (/\.heic$/i.test(file.name) ? 'image/heic' : /\.mov$/i.test(file.name) ? 'video/quicktime' : '');
+      const u = await api('upload-url', { name: file.name, type, size: file.size });
+      const put = await fetch(u.upload_url, { method: 'PUT', headers: u.headers, body: file });
+      if (!put.ok) throw new Error(t().failed);
+      row.label = t().checking; drawFiles();
+      const c = await api('uploaded', { file_id: u.file_id });
+      row.label = c.status === 'CLEAN' ? t().ok : t().rejected; row.cls = c.status === 'CLEAN' ? 'ok' : 'bad';
+    } catch (e) { row.label = t().failed; row.cls = 'bad'; showErr($('#upErr'), e.message); }
+    drawFiles();
+  }
+}
+$('#fileInput').onchange = (e) => { addFiles([...e.target.files]); e.target.value = ''; };
+const drop = $('#drop');
+drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); addFiles([...e.dataTransfer.files]); });
+
+$('#analyzeBtn').onclick = async () => {
+  $('#upErr').classList.add('hidden'); $('#busy').classList.remove('hidden'); $('#analyzeBtn').disabled = true;
+  try { render(await api('analyze', { description: $('#desc').value })); }
+  catch (e) { showErr($('#upErr'), e.message); }
+  finally { $('#busy').classList.add('hidden'); $('#analyzeBtn').disabled = false; }
+};
+
+// ---------- Results ----------
+const tag = (b) => `<span class="tag ${esc(b)}">${esc(t().legend[b] || b)}</span>`;
+const factVal = (f) => !f || f.basis === 'unknown' || !f.value ? `<span class="note">—</span>${tag('unknown')}` : `${esc(f.value)}${tag(f.basis)}${f.source ? ` <span class="note">(${esc(f.source)})</span>` : ''}`;
+const box = (n, title, inner) => `<section class="box"><h2><span class="n">${n}</span><span>${esc(title)}</span></h2>${inner}</section>`;
+const list = (items) => items.length ? `<ul class="plain">${items.map((x) => `<li>${x}</li>`).join('')}</ul>` : `<p class="note">${esc(t().none)}</p>`;
+
+function render(v) {
+  lastView = v;
+  const keep = v.delete_after ? new Date(v.delete_after).toLocaleDateString(lang === 'es' ? 'es-US' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
+  $('#keepNote').textContent = keep ? t().keep(keep) : '';
+  const r = v.result;
+  if (!r) return;
+  $('#stepConsent').classList.add('hidden');
+  $('#stepUpload').classList.add('hidden');
+  if (!v.review_requested) $('#stepReview').classList.remove('hidden');
+  $('#stepDelete').classList.remove('hidden');
+  const L = t(), F = L.f, S = L.sec;
+  if (r.document_type === 'not_a_crash_document' || r.document_type === 'unreadable') {
+    $('#results').innerHTML = box('!', S.overview, `<p>${esc(L.notCrash)}</p>`); $('#results').classList.remove('hidden');
+    $('#stepUpload').classList.remove('hidden'); return;
+  }
+  const legend = `<div class="legend">${Object.keys(L.legend).map(tag).join('')}</div>`;
+  const ov = r.overview || {};
+  let html = box('01', S.overview, legend + `<dl>${['crash_date', 'crash_time', 'location', 'crash_type', 'vehicles_involved'].map((k) => `<dt>${esc(F[k])}</dt><dd>${factVal(ov[k])}</dd>`).join('')}</dl>`);
+
+  const parties = (r.parties || []).map((p) => `<div class="party"><h3>${esc(p.label)}</h3><dl>${['vehicle', 'commercial_vehicle', 'insurer_named', 'cited', 'injuries_reported'].map((k) => `<dt>${esc(F[k])}</dt><dd>${factVal(p[k])}</dd>`).join('')}</dl></div>`).join('');
+  const c = r.conditions || {}, of = r.officer_findings || {};
+  html += box('02', S.facts,
+    `<dl><dt>${esc(F.narrative)}</dt><dd>${factVal(r.narrative)}</dd><dt>${esc(F.diagram)}</dt><dd>${factVal(r.diagram)}</dd>${['road', 'weather', 'light', 'traffic_control'].map((k) => `<dt>${esc(F[k])}</dt><dd>${factVal(c[k])}</dd>`).join('')}</dl>` +
+    parties +
+    `<h3 style="margin-top:16px;font-size:16px">${esc(F.factors)}</h3>${list((of.contributing_factors || []).map(factVal))}` +
+    `<h3 style="margin-top:12px;font-size:16px">${esc(F.citations)}</h3>${list((of.citations_issued || []).map(factVal))}` +
+    `<h3 style="margin-top:12px;font-size:16px">${esc(F.obs)}</h3>${list((of.observations || []).map(factVal))}` +
+    ((r.witnesses || []).length ? `<h3 style="margin-top:12px;font-size:16px">${esc(F.witnesses)}</h3>${list(r.witnesses.map((w) => `<strong>${esc(w.label)}:</strong> ${factVal(w.account)}`))}` : ''));
+
+  html += box('03', S.rules, `<p class="note">${esc(L.rulesNote)}</p>` + ((r.laws || []).length ? r.laws.map((l) => `<div class="law"><a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.cite)} — ${esc(l.title)}</a><p>${esc(l.summary)}</p>${l.why ? `<p class="note">${esc(l.why)}</p>` : ''}<p class="note">${esc(L.verified)} ${esc(l.verified_on)}</p></div>`).join('') : `<p class="note">${esc(L.none)}</p>`));
+  html += box('04', S.differ, list((r.conflicts || []).map(esc)));
+  html += box('05', S.insurance, `<p>${esc(L.insNote)}</p>`);
+  const st = { have: L.have, missing: L.missingS, unknown: L.unknownS };
+  html += box('06', S.evidence, list((r.evidence_checklist || []).map((e) => `<strong>${esc(e.item)}</strong> <span class="st ${e.status === 'have' ? 'ok' : e.status === 'missing' ? 'bad' : 'wait'}">${esc(st[e.status] || '')}</span><br><span class="note">${esc(e.why)}</span>`)));
+  html += box('07', S.missing, list((r.missing_info || []).map(esc)));
+  const dl = r.deadline ? `<p>${esc(L.deadlineLbl)}</p><p class="deadline">${esc(new Date(r.deadline.general_deadline + 'T12:00:00').toLocaleDateString(lang === 'es' ? 'es-US' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' }))}</p><p class="note">${esc(r.deadline.note)} <a href="${esc(r.deadline.url)}" target="_blank" rel="noopener noreferrer">${esc(r.deadline.cite)}</a></p>` : `<p>${esc(L.noDeadline)}</p>`;
+  html += box('08', S.next, dl + `<h3 style="margin-top:14px;font-size:16px">${esc(L.ask)}</h3>${list((r.questions_for_lawyer || []).map(esc))}`);
+  $('#results').innerHTML = html;
+  $('#results').classList.remove('hidden');
+  if (v.disclaimer && lang === 'en') $('#disclaimer').textContent = v.disclaimer;
+}
+
+// ---------- Attorney review ----------
+$('#reviewBtn').onclick = async () => {
+  const msg = $('#rvMsg'); msg.classList.add('hidden');
+  if (!$('#rvConsent').checked) { msg.className = 'err'; msg.textContent = lang === 'es' ? 'Marca la casilla para aceptar que te contacten.' : 'Please check the box to agree to be contacted.'; return; }
+  $('#reviewBtn').disabled = true;
+  try {
+    await api('review', { first_name: $('#rvFirst').value, last_name: $('#rvLast').value, phone: $('#rvPhone').value, email: $('#rvEmail').value, preferred_contact: $('#rvPrefer').value, contact_consent: true, consent_text: t().rvConsent, landing_page: location.pathname });
+    msg.className = ''; msg.textContent = t().reviewDone;
+    document.querySelectorAll('#stepReview .grid2, #stepReview .field, #stepReview label.check, #reviewBtn').forEach((el) => el.classList.add('hidden'));
+  } catch (e) { msg.className = 'err'; msg.textContent = e.message; $('#reviewBtn').disabled = false; }
+  msg.classList.remove('hidden');
+};
+
+$('#deleteBtn').onclick = async () => {
+  if ($('#deleteBtn').dataset.confirm !== '1') { $('#deleteBtn').dataset.confirm = '1'; $('#deleteBtn').textContent = lang === 'es' ? 'Toca otra vez para confirmar' : 'Tap again to confirm'; return; }
+  try {
+    await api('delete', {});
+    forget();
+    ['#stepUpload', '#results', '#stepReview', '#stepDelete'].forEach((s) => $(s).classList.add('hidden'));
+    const m = $('#delMsg'); $('#stepDelete').classList.remove('hidden'); $('#deleteBtn').classList.add('hidden'); m.textContent = t().deleted; m.classList.remove('hidden');
+  } catch (e) { alertBox(e.message); }
+};
+function alertBox(m) { showErr($('#upErr'), m); }
+
+// ---------- Resume a saved link ----------
+applyLang();
+loadLink();
+if (caseId) {
+  api('result', {}).then((v) => {
+    $('#stepConsent').classList.add('hidden'); $('#stepDelete').classList.remove('hidden');
+    if (v.result) render(v); else { $('#stepUpload').classList.remove('hidden'); v.files.forEach((f) => fileState.push({ name: f.name || f.file_id, label: f.status === 'CLEAN' ? t().ok : f.status, cls: f.status === 'CLEAN' ? 'ok' : 'bad' })); drawFiles(); render(v); }
+  }).catch(() => { forget(); caseId = token = null; });
+}
+})();
+</script>
+</body>
+</html>
