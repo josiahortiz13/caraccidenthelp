@@ -765,14 +765,14 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   // Phones get the vertical cut; everything else gets the wide one. Chosen once, before anything loads.
   if (window.matchMedia && matchMedia('(max-width: 680px)').matches) {
     wrap.classList.add('portrait');
-    v.setAttribute('poster', '/media/crashhelptx-ad-9x16-v3.jpg');
-    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-16x9-v6', '-9x16-v3')); });
+    v.setAttribute('poster', '/media/crashhelptx-ad-9x16-v6.jpg');
+    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-16x9-v6', '-9x16-v6')); });
     v.load();
   }
   var sent = {};
   function ev(name) {
     if (sent[name]) return; sent[name] = 1;
-    var d = { video: wrap.classList.contains('portrait') ? 'crashhelptx-ad-v3' : 'crashhelptx-ad-v6', format: wrap.classList.contains('portrait') ? 'vertical' : 'feed' };
+    var d = { video: wrap.classList.contains('portrait') ? 'crashhelptx-ad-v6-vertical' : 'crashhelptx-ad-v6', format: wrap.classList.contains('portrait') ? 'vertical' : 'feed' };
     try { window.gtag && gtag('event', name, d); } catch (e) {}
     try { window.fbq && fbq('trackCustom', name, d); } catch (e) {}
   }

@@ -116,7 +116,7 @@ footer p{margin:0 0 8px}
 
   <section class="more">
     <h2 data-t="vidH">What a crash feels like</h2>
-    <div class="vid"><video id="vid" controls playsinline muted preload="none" poster="/media/crashhelptx-ad-4x5-v3.jpg"><source id="vidSrc" src="/media/crashhelptx-ad-4x5-v3.mp4" type="video/mp4"></video></div>
+    <div class="vid"><video id="vid" controls playsinline muted preload="none" poster="/media/crashhelptx-ad-4x5-v6.jpg"><source id="vidSrc" src="/media/crashhelptx-ad-4x5-v6.mp4" type="video/mp4"></video></div>
   </section>
 
   <section class="more">
@@ -241,7 +241,7 @@ footer p{margin:0 0 8px}
     document.title = L().title;
     document.querySelectorAll('[data-t]').forEach((el) => { const s = L()[el.dataset.t]; if (typeof s === 'string') el.textContent = s; });
     $('#langBtn').textContent = L().langBtn;
-    const src = lang === 'es' ? '/media/crashhelptx-ad-4x5-es.mp4' : '/media/crashhelptx-ad-4x5-v3.mp4';
+    const src = lang === 'es' ? '/media/crashhelptx-ad-4x5-es-v6.mp4' : '/media/crashhelptx-ad-4x5-v6.mp4';
     const vid = $('#vid'); if ($('#vidSrc').getAttribute('src') !== src) { $('#vidSrc').setAttribute('src', src); vid.load(); }
     render(false);
   }
