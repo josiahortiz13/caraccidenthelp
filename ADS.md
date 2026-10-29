@@ -252,17 +252,22 @@ Slug: `houston-beechnut`, e.g. `https://www.crashhelptx.com/houston/beechnut?utm
 
 > **⚠️ Creative blocked until re-cut**
 >
-> The current v6 files can't run as-is, for two reasons:
+> Blocked files: `media/crashhelptx-ad-16x9-v6.mp4`, `media/crashhelptx-ad-4x5-v6.mp4`, `media/crashhelptx-ad-9x16-v6.mp4`, `media/crashhelptx-ad-4x5-es-v6.mp4`, `media/crashhelptx-ad-9x16-es.mp4`. They can't run as-is, for these reasons:
 > 1. **Money card.** "You may be owed money for your crash. Finding out is FREE." / "Podrías tener derecho a dinero por tu choque. Averiguarlo es GRATIS." breaks the no-money/no-outcome rule.
 > 2. **End-card phone mockup.** It shows the old homepage with "Injured in a Texas Crash?" (states the viewer's situation) and "Get My Free Case Review" (we don't promise a free case review).
+> 3. **"Hit by another driver in Texas?" / "¿Te chocó otro conductor en Texas?"** states the viewer's situation and implies the other driver was at fault.
+> 4. **"Referral service, not a law firm."** on the EN end card. "Referral service" can trigger Texas lawyer-referral-service rules (Tex. Occ. Code ch. 952), so it goes to the partner attorney. Default: "CrashHelp TX is not a law firm."
 >
 > **Replacement card text (same slot, same timing):**
 > - EN: "If you've been in a crash, finding out your options is FREE."
 > - ES: "Si tuviste un choque, conocer tus opciones es GRATIS."
+> - Situation card, EN: "Been in a crash in Texas?" / ES: "¿Tuviste un choque en Texas?"
 >
 > **Replacement end-card mockup:** Show the current homepage's 3-question quiz (when it happened, whether anyone was hurt, whose fault it was) on the phone. No "Injured..." headline and no "Case Review" button. Also add "CrashHelp TX no es un bufete de abogados." to the ES end card, which has no not-a-law-firm line right now (the EN card says "Referral service, not a law firm.").
 >
 > The copy below is written for the re-cut. Once it exists, swap the new file names into the placement table. The same v6 4:5 files are also embedded in quiz.html, and the 16:9/9:16 files in index.html, so the block applies on-site too.
+>
+> **Ship condition:** these video ads don't run until (a) the re-cut exists, (b) the landing pages no longer embed the old files and no longer say "Free Case Review" (index.html, es.html, quiz.html), and (c) the partner attorney approves the copy. If (b) isn't done in time, point the video ads at the `/houston/*` pages instead, which are clean.
 
 ### Placement
 

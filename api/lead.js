@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     if (!data.consent_text) data.consent_text = /-es$/.test(data.source) ? leads.CONSENT_TEXT.es : leads.CONSENT_TEXT.en;
     const ownPage = (u) => ALLOWED_ORIGINS.concat(previewOrigin ? [origin] : []).some((o) => u === o || u.startsWith(o + '/'));
     const referer = clean(req.headers.referer, 300);
-    data.consent_page_url = ownPage(data.consent_page_url) ? data.consent_page_url : referer;
+    data.consent_page_url = ownPage(data.consent_page_url) ? data.consent_page_url : referer || (data.landing_page ? `${origin || 'unknown-origin'}${data.landing_page}`.slice(0, 300) : '(no page URL sent)');
   } else {
     data.consent_text = '';
     data.consent_page_url = '';
