@@ -734,7 +734,13 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 
 /* LEAD SUBMISSION */
 function submitLead(data, successEl, btn, btnOriginal){
-  if(btn){ btn.textContent = 'Enviando…'; btn.disabled = true; }
+  // Same rule as the server (normalizePhone): a typo gets a clear message instead of a generic error.
+  var raw = String(data.phone || '').trim(), pd = raw.replace(/\D/g, '');
+  if(!(pd.length === 10 || (pd.length === 11 && pd[0] === '1') || (raw[0] === '+' && pd.length >= 10 && pd.length <= 15))){
+    if(btn){ btn.textContent = '⚠️ Revisa tu teléfono (10 dígitos)'; btn.style.background = '#333'; }
+    return;
+  }
+  if(btn){ btn.textContent = 'Enviando…'; btn.disabled = true; btn.style.background = ''; }
   fetch('/api/lead', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -782,7 +788,6 @@ function handleSubmit(e){
   e.target.querySelector('.submit-btn'),
   '📞 Obtener Mi Revisión de Caso Gratis →'
   );
-  e.target.querySelectorAll('input,select').forEach(function(i){ i.value=''; });
 }
 
 /* EXIT-INTENT POPUP */
