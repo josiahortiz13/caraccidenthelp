@@ -468,6 +468,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 .hero .hero-note{color:#bdbdbd}
 @media(prefers-reduced-motion:reduce){.hero-video video{display:none}.hero-video{background:url(/media/crash-hero-poster.jpg) center/cover}}
 </style>
+<link rel="stylesheet" href="/funnel.css"/>
 </head>
 <body>
 
@@ -530,22 +531,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
         <div class="trust-pill">Solo Texas</div>
         <div class="trust-pill">24/7</div>
       </div>
-      <form class="hero-mini-form" onsubmit="handleMiniSubmit(event)">
-        <div class="mini-row">
-          <input type="text" id="h-name"  placeholder="Tu Nombre *" required/>
-          <input type="tel"  id="h-phone" placeholder="Número de Teléfono *" required/>
-        </div>
-        <div class="mini-row">
-          <select id="h-when" aria-label="¿Cuándo fue el choque?"><option value="">¿Cuándo fue el choque?</option><option value="today">Hoy</option><option value="days">Esta semana</option><option value="month">Este mes</option><option value="older">Hace más de un mes</option></select>
-          <select id="h-hurt" aria-label="¿Alguien resultó herido?"><option value="">¿Alguien resultó herido?</option><option value="yes">Sí</option><option value="no">No</option><option value="unsure">No estoy seguro</option></select>
-        </div>
-        <button type="submit" class="mini-submit">🚀 Obtener Mi Revisión Gratis →</button>
-        <div class="mini-or">o</div>
-        <a href="tel:+13468601929" class="mini-call">📞 Llamar — (346) 860-1929</a>
-        <a href="/es/quiz" class="mini-call" style="margin-top:8px">✅ Haz la prueba de 60 segundos →</a>
-        <p class="hero-note">100% gratis y confidencial · Sin costo por adelantado</p>
-        <div class="mini-success" id="mini-success">✅ Un especialista te llamará pronto. Más rápido: <a href="tel:+13468601929" style="color:var(--red)">(346) 860-1929</a></div>
-      </form>
+      <div data-chx-quiz data-lang="es" data-source="home-quiz"></div>
     </div>
 
     <!-- RIGHT -->
@@ -687,9 +673,7 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 </div>
 
 <!-- STICKY CALL BAR (mobile) -->
-<div class="sticky-call">
-  <a href="tel:+13468601929">📞 Revisión Gratis — Llama (346) 860-1929</a>
-</div>
+<a class="chx-sticky" href="tel:+13468601929" data-call="sticky">📞 Llama 24/7 · (346) 860-1929</a>
 
 <script>
 /* PARTICLES */
@@ -757,15 +741,6 @@ function submitLead(data, successEl, btn, btnOriginal){
 }
 
 /* HERO MINI FORM */
-function handleMiniSubmit(e){
-  e.preventDefault();
-  submitLead(
-    { name: document.getElementById('h-name').value, phone: document.getElementById('h-phone').value, crash_recency: document.getElementById('h-when').value, injured: document.getElementById('h-hurt').value, source: 'hero-mini-es' },
-    document.getElementById('mini-success'),
-    e.target.querySelector('.mini-submit'),
-    '🚀 Obtener Mi Revisión Gratis →'
-  );
-}
 
 /* MAIN FORM */
 function handleSubmit(e){
@@ -850,9 +825,6 @@ var counterObs = new IntersectionObserver(function(entries){
 }, {threshold:0.4});
 document.querySelectorAll('.stat-item').forEach(function(el){ counterObs.observe(el); });
 </script>
-<script>/* call-tap tracking: counts taps on the phone number as a Contact (no personal data) */
-document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="tel:"]');if(!a)return;
-try{window.fbq&&fbq('track','Contact',{content_name:'call_tap',page:location.pathname});}catch(x){}
-try{window.gtag&&gtag('event','call_tap',{page:location.pathname});}catch(x){}},true);</script>
+<script src="/funnel.js" defer></script>
 </body>
 </html>

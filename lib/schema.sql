@@ -64,6 +64,10 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_callback_task_done BOOLEAN NOT NU
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_followup_task_id TEXT;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_followup_task_at TIMESTAMPTZ;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS crm_dnd_synced BOOLEAN NOT NULL DEFAULT false;
+-- TCPA consent proof, captured server-side when the consent box is checked.
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS consent_at TIMESTAMPTZ;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS consent_ip TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS consent_page_url TEXT;
 CREATE INDEX IF NOT EXISTS leads_phone_idx   ON leads (phone);
 CREATE INDEX IF NOT EXISTS leads_email_idx   ON leads (lower(email));
 CREATE INDEX IF NOT EXISTS leads_status_idx  ON leads (lead_status);

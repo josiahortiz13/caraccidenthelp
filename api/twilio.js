@@ -63,9 +63,9 @@ async function setSession(phone, step, data = {}) {
   );
 }
 
-async function reply(res, phone, text, leadId) {
+async function reply(res, phone, text, leadId, { quietExempt = false } = {}) {
   // Replies go out through the REST API (not TwiML) so they're logged, gated by test mode, and get delivery status.
-  await tw.sendSms({ to: phone, body: text, leadId, kind: 'consumer', purpose: 'sms_flow_reply' });
+  await tw.sendSms({ to: phone, body: text, leadId, kind: 'consumer', purpose: 'sms_flow_reply', quietExempt });
   return sendXml(res, empty());
 }
 
@@ -110,7 +110,7 @@ async function handleSms(req, res) {
 
   // HELP: carrier-required help reply (never starts a conversation).
   if (HELP_WORDS.includes(word)) {
-    return reply(res, from, `CrashHelp TX: help after a Texas crash. Call (346) 860-1929 or visit ${landingUrl()}. Msg & data rates may apply. Reply STOP to opt out.`, lead?.lead_id);
+    return reply(res, from, `CrashHelp TX: help after a Texas crash. Call (346) 860-1929 or visit ${landingUrl()}. Msg & data rates may apply. Reply STOP to opt out.`, lead?.lead_id, { quietExempt: true });
   }
 
   if (KEYWORDS.includes(word) && !(step === 'awaiting_yes' && word === 'START')) {
@@ -153,10 +153,11 @@ async function handleSms(req, res) {
     const pending = lead && lead.lead_status === 'PENDING CONSENT' ? lead : null;
     if (pending) {
       await db.query(
-        `UPDATE leads SET first_name = $2, crash_city = $3, preferred_contact = $4, contact_consent = true, consent_text = $5, lead_status = 'NEW',
+        `UPDATE leads SET first_name = $2, crash_city = $3, preferred_contact = $4, contact_consent = true, consent_text = $5, consent_at = $10, lead_status = 'NEW',
            injury_status = $6, medical_status = $7, description = $8, lead_priority = $9, updated_at = now() WHERE lead_id = $1`,
         [pending.lead_id, fields.first_name, fields.crash_city, fields.preferred_contact, next.consent_text, fields.injured, fields.medical_care, summary,
-          leads.priorityFor({ phone: from, crash_city: fields.crash_city, injury_status: fields.injured, medical_status: fields.medical_care, crash_recency: recency })]
+          leads.priorityFor({ phone: from, crash_city: fields.crash_city, injury_status: fields.injured, medical_status: fields.medical_care, crash_recency: recency }),
+          next.consent_at || new Date().toISOString()]
       );
       await store.event(pending.lead_id, 'consent_received', { via: 'sms_yes' });
       const settings = await store.getSettings();
@@ -165,7 +166,7 @@ async function handleSms(req, res) {
       await leads.alertNewLead(fresh, settings);
       await require('../lib/crm').sync(pending.lead_id, 'consent_received');
     } else {
-      await leads.intake({ ...fields, injury_status: fields.injured, medical_status: fields.medical_care, phone: from, contact_consent: true, consent_text: next.consent_text, source: 'sms-quiz', utm_source: 'sms', keyword: data.keyword || null }, { actor: 'sms' });
+      await leads.intake({ ...fields, injury_status: fields.injured, medical_status: fields.medical_care, phone: from, contact_consent: true, consent_text: next.consent_text, consent_at: next.consent_at, source: 'sms-quiz', utm_source: 'sms', keyword: data.keyword || null }, { actor: 'sms' });
     }
     return sendXml(res, empty());
   }
