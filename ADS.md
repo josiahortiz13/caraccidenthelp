@@ -51,7 +51,7 @@ Slug: `houston-sh249`, e.g. `https://www.crashhelptx.com/houston/sh-249?utm_sour
 ### V3: Local commute (`utm_content=v3`)
 
 **EN**
-- **Primary text:** FM 1960. Willowbrook. The Beltway 8 interchange. If you drive 249 every day and you've been in a crash, you want a straight answer, not a runaround. Answer 3 quick questions and we'll help you find the right attorney. Free to you. CrashHelp TX is not a law firm.
+- **Primary text:** FM 1960. Willowbrook. The Beltway 8 interchange. If you drive 249 every day and you've been in a crash, get a straight answer, not a runaround. Answer 3 quick questions and we'll help you find the right attorney. Free to you. CrashHelp TX is not a law firm.
 - **Headline:** For 249 drivers, Tomball to BW8 (31)
 - **Description:** 3 quick questions. Free to you.
 - **CTA:** Learn More
@@ -100,13 +100,13 @@ Slug: `houston-airline`, e.g. `https://www.crashhelptx.com/houston/airline-dr?ut
 ### V1: 24/7 availability (`utm_content=v1`)
 
 **EN**
-- **Primary text:** If you've been in a crash on Airline Drive, whether that's near Little York, Aldine Bender or Greenspoint, call when it works for you, even at 2 a.m. We pick up 24/7. Free to you. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
+- **Primary text:** If you've been in a crash on Airline Drive, whether that's near Little York, Aldine Bender or Greenspoint, call when it works for you, even at 2 a.m. Free to you. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
 - **Headline:** Airline Dr crash help, 24/7 (27)
 - **Description:** Free to call. crashhelptx.com
 - **CTA:** Call Now
 
 **ES**
-- **Primary text:** Si tuviste un choque en la Airline, por Little York, Aldine Bender o Greenspoint, llama cuando puedas, aunque sean las 2 de la mañana. Contestamos 24/7. Gratis para ti. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
+- **Primary text:** Si tuviste un choque en la Airline, por Little York, Aldine Bender o Greenspoint, llama cuando puedas, aunque sean las 2 de la mañana. Gratis para ti. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
 - **Headline:** Ayuda por choques en la Airline (31)
 - **Description:** Llamada gratis. Se habla español.
 - **CTA:** Call Now (auto-localizes to "Llamar ahora")
@@ -121,7 +121,7 @@ Slug: `houston-airline`, e.g. `https://www.crashhelptx.com/houston/airline-dr?ut
 
 **ES**
 - **Primary text:** Si tuviste un choque en la Airline, hay algo que debes saber: en Texas generalmente tienes 2 años para presentar la mayoría de los reclamos por lesiones. Si esperas mucho, se te pueden cerrar puertas. Llamar es gratis para ti, y te ayudamos a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929, 24/7.
-- **Headline:** El plazo en Texas: unos 2 años (30)
+- **Headline:** Texas: generalmente 2 años (26)
 - **Description:** Generalmente 2 años. Pregunta ya.
 - **CTA:** Learn More (auto-localizes to "Más información")
 
@@ -142,7 +142,7 @@ Slug: `houston-airline`, e.g. `https://www.crashhelptx.com/houston/airline-dr?ut
 ### V4: Spanish-first (`utm_content=v4`)
 
 **EN**
-- **Primary text:** Se habla español. If you or a family member has been in a crash on Airline Drive and Spanish is easier, call us. We'll take it from there in the language you're comfortable with. Available 24/7 to help you find the right attorney. Free to call. CrashHelp TX is not a law firm. (346) 860-1929
+- **Primary text:** Se habla español. If you or a family member has been in a crash on Airline Drive and Spanish is easier, call us. We'll help you find the right attorney, in Spanish if you prefer. Available 24/7 to help you find the right attorney. Free to call. CrashHelp TX is not a law firm. (346) 860-1929
 - **Headline:** Airline Dr: se habla español (28)
 - **Description:** English or Spanish. Free, 24/7.
 - **CTA:** Call Now
@@ -177,13 +177,13 @@ Slug: `houston-beechnut`, e.g. `https://www.crashhelptx.com/houston/beechnut?utm
 ### V1: 24/7 availability (`utm_content=v1`)
 
 **EN**
-- **Primary text:** If you've been in a crash on Beechnut, out by Alief, Sharpstown or Gulfton, you can call us any hour, any day. We answer 24/7, and it's free to you. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
+- **Primary text:** If you've been in a crash on Beechnut, out by Alief, Sharpstown or Gulfton, you can call us any hour, any day, and it's free to you. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
 - **Headline:** Beechnut crash help, call 24/7 (30)
 - **Description:** Free to call. crashhelptx.com
 - **CTA:** Call Now
 
 **ES**
-- **Primary text:** Si tuviste un choque en la Beechnut, por Alief, Sharpstown o Gulfton, llámanos a cualquier hora, cualquier día. Contestamos 24/7, y es gratis para ti. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
+- **Primary text:** Si tuviste un choque en la Beechnut, por Alief, Sharpstown o Gulfton, llámanos a cualquier hora, cualquier día, y es gratis para ti. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
 - **Headline:** Ayuda por choques en Beechnut (29)
 - **Description:** Llamada gratis. Se habla español.
 - **CTA:** Call Now (auto-localizes to "Llamar ahora")
@@ -219,7 +219,7 @@ Slug: `houston-beechnut`, e.g. `https://www.crashhelptx.com/houston/beechnut?utm
 ### V4: Spanish-first (`utm_content=v4`)
 
 **EN**
-- **Primary text:** Se habla español. Southwest Houston speaks a lot of languages, and if Spanish is yours, we've got you. If you or someone you love has been in a crash on Beechnut, call us. Available 24/7 to help you find the right attorney. Free to call. CrashHelp TX is not a law firm. (346) 860-1929
+- **Primary text:** Se habla español. Prefer Spanish? Call us. If you or someone you love has been in a crash on Beechnut, call us. Available 24/7 to help you find the right attorney. Free to call. CrashHelp TX is not a law firm. (346) 860-1929
 - **Headline:** Beechnut: se habla español 24/7 (31)
 - **Description:** English or Spanish. Free to call.
 - **CTA:** Call Now
@@ -235,11 +235,11 @@ Slug: `houston-beechnut`, e.g. `https://www.crashhelptx.com/houston/beechnut?utm
 **EN**
 - **Primary text:** If you've been in a crash on Beechnut, you don't have to guess about what to do next. Ask. Take the 3-question quiz or call any time, and we'll help you find the right attorney. Free to you. CrashHelp TX is not a law firm. crashhelptx.com
 - **Headline:** Not sure what's next? Just ask. (31)
-- **Description:** Free to you. Answered 24/7.
+- **Description:** Free to you. Available 24/7.
 - **CTA:** Contact Us
 
 **ES**
 - **Primary text:** Si tuviste un choque en la Beechnut, no tienes que adivinar qué hacer. Pregunta. Contesta las 3 preguntas o llama cuando quieras, y te ayudamos a encontrar al abogado adecuado. Gratis para ti. CrashHelp TX no es un bufete de abogados. crashhelptx.com
 - **Headline:** Si no sabes qué sigue, pregunta (31)
-- **Description:** Gratis para ti. Contestamos 24/7.
+- **Description:** Gratis para ti. Disponibles 24/7.
 - **CTA:** Contact Us (auto-localizes to "Contáctanos")

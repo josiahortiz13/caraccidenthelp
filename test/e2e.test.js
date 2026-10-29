@@ -909,6 +909,10 @@ test('49. Funnel quiz lead: consent proof (checkbox, text, timestamp, IP, page U
   const n = await submit({ first_name: 'Bo', phone: '(832) 555-0102', email: '', contact_consent: false, consent_text: consent, consent_page_url: '/x' });
   const nl = await lead(n.json.lead_id);
   assert.equal(nl.contact_consent, false); assert.equal(nl.consent_at, null); assert.equal(nl.consent_ip, null); assert.equal(nl.consent_text, '');
+  // Consent with no text or an off-site page URL: server stores the canonical wording and ignores the URL.
+  const x = await submit({ phone: '(832) 555-0103', email: '', source: 'lp-beechnut-es', contact_consent: true, consent_text: '', consent_page_url: 'https://evil.example/x' });
+  const xl = await lead(x.json.lead_id);
+  assert.match(xl.consent_text, /^Acepto recibir llamadas/); assert.notEqual(xl.consent_page_url, 'https://evil.example/x');
 });
 
 test('50. Consumer texts only go out 8am–9pm Central; internal alerts still go out', async () => {
@@ -924,6 +928,11 @@ test('50. Consumer texts only go out 8am–9pm Central; internal alerts still go
     assert.equal(smsTo(TESTER).length, 0, 'no consumer text at night');
     assert.ok(smsTo(OWNER).length >= 1, 'owner still alerted');
     assert.ok((await events(r.json.lead_id)).some((e) => e.type === 'sms_blocked' && e.detail.reason === 'quiet_hours'));
+    reset();
+    await h.twilioPost(base, 'r=sms', { MessageSid: 'SMq1', From: TESTER, To: '+13468601929', Body: 'CRASH' });
+    assert.equal(smsTo(TESTER).length, 0, 'keyword flow reply waits for texting hours');
+    await h.twilioPost(base, 'r=sms', { MessageSid: 'SMq2', From: TESTER, To: '+13468601929', Body: 'HELP' });
+    assert.equal(smsTo(TESTER).length, 1, 'carrier-required HELP reply still answers at night');
   } finally { global.__crashhelpNow = pinned; }
 });
 

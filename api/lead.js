@@ -32,7 +32,10 @@ module.exports = async (req, res) => {
   if (data.contact_consent) {
     data.consent_at = new Date().toISOString();
     data.consent_ip = clean(ip, 64);
-    data.consent_page_url = data.consent_page_url || clean(req.headers.referer, 300);
+    if (!data.consent_text) data.consent_text = /-es$/.test(data.source) ? leads.CONSENT_TEXT.es : leads.CONSENT_TEXT.en;
+    const ownPage = (u) => ALLOWED_ORIGINS.concat(previewOrigin ? [origin] : []).some((o) => u === o || u.startsWith(o + '/'));
+    const referer = clean(req.headers.referer, 300);
+    data.consent_page_url = ownPage(data.consent_page_url) ? data.consent_page_url : referer;
   } else {
     data.consent_text = '';
     data.consent_page_url = '';

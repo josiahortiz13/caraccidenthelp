@@ -130,7 +130,7 @@ def page(r):
       <div class="card"><b>1. Get safe, call 911 if needed</b><p>If anyone may be hurt or the road is blocked, call 911.</p></div>
       <div class="card"><b>2. Save what you have</b><p>Photos of the vehicles, plates and the scene, the other driver's insurance, and the officer's report number. <a href="/houston-car-accident-checklist">Full checklist →</a></p></div>
       <div class="card"><b>3. Get your crash report</b><p>Texas crash reports (CR-3) are usually available within about 10 days. <a href="/texas-crash-report">How to get yours →</a></p></div>
-      <div class="card"><b>4. Be careful with insurance calls</b><p>Think before giving a recorded statement to the other driver's insurance. <a href="/insurance-adjuster-call">What to know first →</a></p></div>
+      <div class="card"><b>4. Getting insurance calls?</b><p>Questions about calls from the other driver's insurance? <a href="/insurance-adjuster-call">See what to know first →</a></p></div>
     </div>
   </section>
 
