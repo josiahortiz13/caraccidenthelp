@@ -742,16 +742,16 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
 
 <!-- VIDEO -->
 <section class="video-section" id="video" aria-labelledby="video-title">
-  <p class="sec-label">Watch · 15 seconds</p>
+  <p class="sec-label">Watch · Under 20 seconds</p>
   <h2 class="sec-title" id="video-title">A crash changes<br/>everything.</h2>
   <p class="sec-sub">Available 24/7 to help you find the right attorney.</p>
   <div class="vid-wrap" id="vid-wrap">
-    <video id="chx-video" controls playsinline preload="metadata" poster="/media/crashhelptx-ad-16x9-v5.jpg" aria-describedby="video-desc">
-      <source src="/media/crashhelptx-ad-16x9-v5.mp4" type="video/mp4"/>
-      <source src="/media/crashhelptx-ad-16x9-v5.webm" type="video/webm"/>
+    <video id="chx-video" controls playsinline preload="metadata" poster="/media/crashhelptx-ad-16x9-v6.jpg" aria-describedby="video-desc">
+      <source src="/media/crashhelptx-ad-16x9-v6.mp4" type="video/mp4"/>
+      <source src="/media/crashhelptx-ad-16x9-v6.webm" type="video/webm"/>
     </video>
   </div>
-  <p class="vid-desc" id="video-desc">Dramatized in-car footage of a crash. On-screen text: "Just another drive home." "It only takes one second." "Everything changes." "Hit by another driver in Texas?" Then the CrashHelp TX end card with the website on a phone: "Just crashed? Start here." crashhelptx.com. Free case review, 24/7, se habla español. No spoken words.</p>
+  <p class="vid-desc" id="video-desc">Dramatized in-car footage of a crash. On-screen text: "Just another drive home." "It only takes one second." "Everything changes." "Hit by another driver in Texas?" "You may be owed money for your crash. Finding out is free." Then the CrashHelp TX end card: "We point you in the right direction." Call free 24/7, (346) 860-1929, crashhelptx.com, se habla español. Referral service, not a law firm. No outcome promised. No spoken words.</p>
   <div class="vid-cta">
     <a href="/quiz" class="btn-call" data-vcta="quiz">Just crashed? Take the 60-second check →</a>
     <a href="/houston-car-accident-checklist" class="btn-scroll" data-vcta="checklist">Read the after-a-crash checklist</a>
@@ -766,13 +766,13 @@ footer p{color:var(--muted);font-size:12px;line-height:1.8;max-width:600px;margi
   if (window.matchMedia && matchMedia('(max-width: 680px)').matches) {
     wrap.classList.add('portrait');
     v.setAttribute('poster', '/media/crashhelptx-ad-9x16-v3.jpg');
-    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-16x9-v5', '-9x16-v3')); });
+    v.querySelectorAll('source').forEach(function (src) { src.setAttribute('src', src.getAttribute('src').replace('-16x9-v6', '-9x16-v3')); });
     v.load();
   }
   var sent = {};
   function ev(name) {
     if (sent[name]) return; sent[name] = 1;
-    var d = { video: wrap.classList.contains('portrait') ? 'crashhelptx-ad-v3' : 'crashhelptx-ad-v5', format: wrap.classList.contains('portrait') ? 'vertical' : 'feed' };
+    var d = { video: wrap.classList.contains('portrait') ? 'crashhelptx-ad-v3' : 'crashhelptx-ad-v6', format: wrap.classList.contains('portrait') ? 'vertical' : 'feed' };
     try { window.gtag && gtag('event', name, d); } catch (e) {}
     try { window.fbq && fbq('trackCustom', name, d); } catch (e) {}
   }
