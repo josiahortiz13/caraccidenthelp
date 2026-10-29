@@ -243,3 +243,109 @@ Slug: `houston-beechnut`, e.g. `https://www.crashhelptx.com/houston/beechnut?utm
 - **Headline:** Si no sabes qué sigue, pregunta (31)
 - **Description:** Gratis para ti. Disponibles 24/7.
 - **CTA:** Contact Us (auto-localizes to "Contáctanos")
+
+---
+
+## 4. Video ad: "Everything Changes" (v6)
+
+19-second video, no spoken words, music only, "DRAMATIZATION" label top-right. The burned-in cards run: "Just another drive home." → "It only takes one second." → "EVERYTHING CHANGES." → "Hit by another driver in Texas?" → money card → end card. The Spanish cut runs the same cards in Spanish.
+
+> **⚠️ Creative blocked until re-cut**
+>
+> The current v6 files can't run as-is, for two reasons:
+> 1. **Money card.** "You may be owed money for your crash. Finding out is FREE." / "Podrías tener derecho a dinero por tu choque. Averiguarlo es GRATIS." breaks the no-money/no-outcome rule.
+> 2. **End-card phone mockup.** It shows the old homepage with "Injured in a Texas Crash?" (states the viewer's situation) and "Get My Free Case Review" (we don't promise a free case review).
+>
+> **Replacement card text (same slot, same timing):**
+> - EN: "If you've been in a crash, finding out your options is FREE."
+> - ES: "Si tuviste un choque, conocer tus opciones es GRATIS."
+>
+> **Replacement end-card mockup:** Show the current homepage's 3-question quiz (when it happened, whether anyone was hurt, whose fault it was) on the phone. No "Injured..." headline and no "Case Review" button. Also add "CrashHelp TX no es un bufete de abogados." to the ES end card, which has no not-a-law-firm line right now (the EN card says "Referral service, not a law firm.").
+>
+> The copy below is written for the re-cut. Once it exists, swap the new file names into the placement table. The same v6 4:5 files are also embedded in quiz.html, and the 16:9/9:16 files in index.html, so the block applies on-site too.
+
+### Placement
+
+| Meta placement | Language | File | Landing URL |
+|---|---|---|---|
+| Feed (4:5, preferred) | EN | `media/crashhelptx-ad-4x5-v6.mp4` | `https://www.crashhelptx.com/?utm_source=meta&utm_medium=paid&utm_campaign=video-v6&utm_content=v1..v5` |
+| Feed (16:9, alternate) | EN | `media/crashhelptx-ad-16x9-v6.mp4` | same as above |
+| Reels / Stories (9:16) | EN | `media/crashhelptx-ad-9x16-v6.mp4` | same as above |
+| Feed (4:5) | ES | `media/crashhelptx-ad-4x5-es-v6.mp4` | `https://www.crashhelptx.com/es?utm_source=meta&utm_medium=paid&utm_campaign=video-v6-es&utm_content=v1..v5` |
+| Reels / Stories (9:16) | ES | `media/crashhelptx-ad-9x16-es.mp4` | same as above |
+
+- There is **no 16:9 Spanish cut**. Spanish Feed uses 4:5 only.
+- The ES 9:16 file name has no `-v6` suffix. Confirm it is the v6 edit before upload.
+- Set `utm_content` to match the variation (v1 to v5). EN copy always goes with an EN file and EN URL, and ES copy with an ES file and the `/es` URL.
+
+### V1: One second (`utm_content=v1`)
+
+**EN**
+- **Primary text:** It only takes one second. If you've been in a crash in Texas, the next step doesn't have to be a guess. Answer 3 quick questions or call (346) 860-1929. Free to you. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm.
+- **Headline:** One second. Then what? (22)
+- **Description:** 3 quick questions. Free to you.
+- **CTA:** Learn More
+
+**ES**
+- **Primary text:** Solo toma un segundo. Si tuviste un choque en Texas, el siguiente paso no tiene que ser adivinar. Contesta 3 preguntas rápidas o llama al (346) 860-1929. Gratis para ti. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados.
+- **Headline:** Un segundo. ¿Y luego qué? (25)
+- **Description:** 3 preguntas rápidas. Gratis para ti.
+- **CTA:** Learn More (auto-localizes to "Más información")
+
+### V2: 24/7 availability (`utm_content=v2`)
+
+**EN**
+- **Primary text:** Everything changes in a second, and it rarely happens during business hours. If you've been in a crash in Houston or anywhere in Texas, call when it works for you, even at 2 a.m. Free to call. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
+- **Headline:** Crash help in Houston, 24/7 (27)
+- **Description:** Free to call. crashhelptx.com
+- **CTA:** Call Now
+
+**ES**
+- **Primary text:** Todo cambia en un segundo, y casi nunca en horas de oficina. Si tuviste un choque en Houston o en cualquier parte de Texas, llama cuando puedas, aunque sean las 2 de la mañana. La llamada es gratis. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
+- **Headline:** Todo cambia. Llama 24/7, gratis (31)
+- **Description:** Llamada gratis. crashhelptx.com/es
+- **CTA:** Call Now (auto-localizes to "Llamar ahora")
+
+### V3: The 2-year deadline (`utm_content=v3`)
+
+**EN**
+- **Primary text:** Everything changes after a crash, except the calendar. If you've been in a crash, Texas generally gives you 2 years to file most injury claims, and that time can slip by. A quick call is free to you. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
+- **Headline:** Texas claims: generally 2 years (31)
+- **Description:** Ask before time runs short.
+- **CTA:** Learn More
+
+**ES**
+- **Primary text:** Todo cambia después de un choque, menos el calendario. Si tuviste un choque, en Texas generalmente tienes 2 años para presentar la mayoría de los reclamos por lesiones, y el tiempo se va rápido. Llamar es gratis para ti. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
+- **Headline:** En Texas, generalmente 2 años (29)
+- **Description:** Pregunta antes de que se acabe el tiempo.
+- **CTA:** Learn More (auto-localizes to "Más información")
+
+### V4: Prefer Spanish? (`utm_content=v4`)
+
+**EN**
+- **Primary text:** Prefer Spanish? Se habla español. If you or someone in your family has been in a crash in Texas, call and talk it through in English or Spanish, whichever is easier. Free to call. Available 24/7 to help you find the right attorney. CrashHelp TX is not a law firm. (346) 860-1929
+- **Headline:** Prefer Spanish? Call 24/7, free (31)
+- **Description:** English or Spanish. Free to call.
+- **CTA:** Call Now
+
+**ES**
+- **Primary text:** ¿Prefieres hablar en español? Aquí se habla español. Si tú o alguien de tu familia tuvo un choque en Texas, llámanos y platícanos con calma. La llamada es gratis. Disponibles 24/7 para ayudarte a encontrar al abogado adecuado. CrashHelp TX no es un bufete de abogados. (346) 860-1929
+- **Headline:** ¿En español? Llama 24/7, gratis (31)
+- **Description:** Llama o llena el formulario.
+- **CTA:** Call Now (auto-localizes to "Llamar ahora")
+
+### V5: Don't guess, ask (`utm_content=v5`)
+
+**EN**
+- **Primary text:** One second can leave a lot of questions. If you've been in a crash, the insurance calls can start fast. Don't guess. Ask. Take our 3-question quiz or call any time, and we'll help you find the right attorney. Free to you. CrashHelp TX is not a law firm. crashhelptx.com
+- **Headline:** After a crash, don't guess. Ask. (32)
+- **Description:** 3 quick questions. Free, 24/7.
+- **CTA:** Contact Us
+
+**ES**
+- **Primary text:** Un segundo puede dejar muchas preguntas. Si tuviste un choque, las llamadas del seguro pueden llegar rápido. No adivines. Pregunta. Contesta nuestras 3 preguntas o llama cuando quieras, y te ayudamos a encontrar al abogado adecuado. Gratis para ti. CrashHelp TX no es un bufete de abogados. crashhelptx.com/es
+- **Headline:** Tras un choque, no adivines (27)
+- **Description:** 3 preguntas rápidas. Gratis, 24/7.
+- **CTA:** Contact Us (auto-localizes to "Contáctanos")
+
+**Video caption/accessibility:** The video description on index.html (`#video-desc`) still quotes the money card ("You may be owed money for your crash..."). Update it to match the new card text when the re-cut ships. index.html has not been edited.
