@@ -46,7 +46,7 @@ test.beforeEach(async () => {
   fakeTw.sent.length = 0; fakeTw.fail = false; fakeMail.sent.length = 0; fakeMail.fail = false;
   await db.query('DELETE FROM radar_incidents'); await db.query('DELETE FROM radar_events');
   await db.query("DELETE FROM system_status WHERE key = 'radar'");
-  await store.saveSettings({ radar_alert_sms: true, radar_alert_email: true, radar_alert_severity: 'major', radar_alert_max_per_hour: 6 });
+  await store.saveSettings({ radar_alert_sms: true, radar_alert_email: true, radar_alert_severity: 'major', radar_alert_max_per_hour: 6, radar_alert_emails: [] });
 });
 
 test('X1. parses the real TranStar format: road, direction, cross street, type, lanes, status, time', () => {
@@ -66,7 +66,7 @@ test('X2. first run is a baseline (no alerts, not listed); later crashes alert t
   const r = await poll(feed(MINOR(), STALL, MAJOR()));
   assert.equal(r.new, 1); assert.equal(r.alerted, 1);
   assert.deepEqual(radarTexts().map((m) => m.to), ['+18325550101'], 'text goes to the owner phone from Settings');
-  assert.match(radarTexts()[0].body, /never contact people involved/);
+  assert.match(radarTexts()[0].body, /Never contact, text, call, message or approach anyone involved/);
   const list = await api('list');
   assert.deepEqual(list.json.incidents.map((i) => i.incident_id), ['300'], 'baseline incidents are not shown as new');
   assert.equal(list.json.feed.coordinates, false);
@@ -160,4 +160,19 @@ test('X10. access: login required, staff can view, only the owner can change ale
   assert.equal((await api('poll-now', { cookie: staffCookie, method: 'POST' })).status, 403);
   nextFeed = feed(STALL);
   assert.equal((await api('poll-now', { method: 'POST' })).status, 200);
+});
+
+test('X11. extra staff emails get radar alerts; owner-only; invalid addresses refused; never contact reminder', async () => {
+  assert.equal((await api('alert-settings', { cookie: staffCookie, method: 'POST', body: { extra_emails: 'staff@example.com' } })).status, 403);
+  assert.equal((await api('alert-settings', { method: 'POST', body: { extra_emails: 'not-an-email' } })).status, 400);
+  assert.equal((await api('alert-settings', { method: 'POST', body: { extra_emails: 'Chelsie@Example.com, chelsie@example.com' } })).status, 200);
+  assert.deepEqual((await api('list')).json.alerts.extra_emails, ['chelsie@example.com'], 'normalized and de-duplicated');
+  assert.equal((await api('list', { cookie: staffCookie })).json.alerts.extra_emails, undefined, 'staff do not see the list');
+  await poll(feed(STALL));
+  await poll(feed(STALL, MAJOR()));
+  const mail = radarMails();
+  assert.equal(mail.length, 1, 'one email, both recipients');
+  assert.match(mail[0].to, /owner@example\.com/); assert.match(mail[0].to, /chelsie@example\.com/);
+  assert.match(mail[0].text, /Never contact, text, call, message or approach anyone involved/);
+  assert.equal(radarTexts().length, 1, 'texts still go only to the owner phone');
 });

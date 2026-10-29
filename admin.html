@@ -796,9 +796,10 @@ async function loadRadar() {
     <label><input type="checkbox" id="rdEmail" ${al.email ? 'checked' : ''}> Email${al.to_email ? '' : ' (no email in Settings)'}</label>
     <select id="rdSev"><option value="major">Major only</option><option value="minor">Minor and major</option><option value="all">All crashes</option></select>
     <label>Max per hour <input type="number" id="rdMax" min="1" max="30" value="${esc(al.max_per_hour)}" style="width:60px"></label>
+    <label>Also email (staff, comma-separated) <input type="text" id="rdExtra" value="${esc((al.extra_emails || []).join(', '))}" placeholder="name@example.com" style="min-width:220px"></label>
     <button class="btn" id="rdSave">Save</button>`;
   $('#rdSev').value = al.severity || 'major';
-  $('#rdSave').onclick = async () => { try { await apiAt('radar', 'alert-settings', { method: 'POST', body: { sms: $('#rdSms').checked, email: $('#rdEmail').checked, severity: $('#rdSev').value, max_per_hour: $('#rdMax').value } }); toast('Radar alerts saved'); } catch (e) { toast(e.message); } };
+  $('#rdSave').onclick = async () => { try { await apiAt('radar', 'alert-settings', { method: 'POST', body: { sms: $('#rdSms').checked, email: $('#rdEmail').checked, severity: $('#rdSev').value, max_per_hour: $('#rdMax').value, extra_emails: $('#rdExtra').value } }); toast('Radar alerts saved'); } catch (e) { toast(e.message); } };
   const stChip = (x) => `<span class="chip ${x.shown_status === 'ACTIVE' ? 'hi' : x.shown_status === 'CLEARED' ? 'ok' : 'warn'}" title="${esc(x.status_note)}">${esc(x.shown_status)}</span>${x.status_note ? `<br><span class="hint">${esc(x.status_note)}</span>` : ''}`;
   $('#rdBody').innerHTML = d.incidents.length ? d.incidents.map((x) => `<tr><td>${esc(when(x.first_seen))}</td><td>${esc(x.road)} @ ${esc(x.cross_street)}</td><td>${esc(x.types)}${x.is_truck ? ' <span class="chip warn">TRUCK</span>' : ''}</td><td>${esc(x.severity)}<br><span class="hint">${esc(x.lanes_text || '')}</span></td><td>${stChip(x)}</td><td>${x.source_status_at ? esc(when(x.source_status_at)) : '—'}</td></tr>`).join('') : '<tr><td colspan="6">No crashes in this window.</td></tr>';
 }
